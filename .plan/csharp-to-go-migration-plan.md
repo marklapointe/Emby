@@ -246,12 +246,13 @@ emby-go/
 
 #### 4.1.1 Project Setup
 
+**Note:** Docker configuration will be deferred to Phase 12 (Documentation and Deployment).
+
 **Tasks:**
 1. Initialize Go module with proper structure
 2. Create Makefile for build, test, run
 3. Set up CI/CD pipeline (GitHub Actions)
 4. Configure logging, configuration management
-5. Create Dockerfile for containerized builds
 
 **Deliverables:**
 - Working Go project skeleton
@@ -261,12 +262,13 @@ emby-go/
 
 #### 4.1.2 Database Layer
 
+**Note**: Database migration is NOT required. The existing SQLite database files from the C# implementation will be used directly.
+
 **Tasks:**
-1. Analyze existing SQLite schema from C# code
-2. Create Go migrations for schema creation
-3. Implement base repository pattern
-4. Create connection pool management
-5. Implement transaction support
+1. Analyze existing SQLite schema from C# code (for reference only)
+2. Implement base repository pattern
+3. Create connection pool management
+4. Implement transaction support
 
 **Files:**
 ```go
@@ -281,9 +283,9 @@ func (r *BaseRepository) WithTransaction(fn func(*sql.Tx) error) error
 ```
 
 **Deliverables:**
-- Database migration system
 - Base repository implementation
 - Connection pooling configured
+- Existing SQLite databases work without migration
 
 #### 4.1.3 Configuration System
 
@@ -317,12 +319,13 @@ type Config struct {
 
 #### 4.2.1 HTTP Server
 
+**Note:** TLS/SSL will be handled by nginx and certbot in production. The Go application will run behind nginx as a reverse proxy.
+
 **Tasks:**
 1. Set up `net/http` server with `chi` router
 2. Implement middleware chain (logging, recovery, CORS)
-3. Configure TLS support
-4. Implement request/response logging
-5. Add graceful shutdown
+3. Implement request/response logging
+4. Add graceful shutdown
 
 **Files:**
 ```go
@@ -340,8 +343,8 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error
 **Deliverables:**
 - HTTP server running
 - Middleware chain
-- TLS support
 - Graceful shutdown
+- nginx reverse proxy configuration (no TLS in Go)
 
 #### 4.2.2 API Router
 
@@ -557,6 +560,148 @@ func (e *Encoder) GetTranscodeOptions(source *model.MediaSource) *TranscodeOptio
 - FFmpeg integration works
 - Transcoding profiles work
 - Live transcoding works
+
+#### 4.4.5 Stream Pooling and Resource Sharing
+
+**Goal:** Implement intelligent stream management to reduce resource consumption by allowing multiple users to share the same content stream.
+
+**Design Principles:**
+1. **Live TV Streams:** Always shared automatically (no user choice needed) - all viewers watch the same live feed
+2. **Recorded Media (MKV, MPG, etc.):** Present user with option before playback:
+   - "Share Content" - Join existing stream if available (starts from current position)
+   - "Start From Beginning" - Create new independent stream
+3. **Managed Threading:** Each unique content stream runs in a managed goroutine with proper lifecycle management
+
+**Architecture:**
+```go
+// internal/service/media/stream_manager.go
+type StreamManager struct {
+    mu           sync.RWMutex
+    activeStreams map[string]*ActiveStream  // key: content ID + transcode profile
+    streamPool   *sync.Pool                // Reusable stream buffers
+}
+
+type ActiveStream struct {
+    ContentID      string
+    TranscodeProfile string
+    Position       time.Duration
+    Viewers        map[string]*Viewer  // key: session ID
+    Source         io.ReadCloser
+    mu             sync.RWMutex
+    createdAt      time.Time
+    lastAccessed   time.Time
+}
+
+type Viewer struct {
+    SessionID   string
+    UserID      string
+    Position    time.Duration
+    ConnectedAt time.Time
+}
+```
+
+**Key Features:**
+1. **Stream Identification:**
+   - Unique stream key = ContentID + TranscodeProfile (bitrate, codec, resolution)
+   - Live TV: ContentID includes channel ID + timestamp window
+   
+2. **Stream Sharing Logic:**
+   ```go
+   func (m *StreamManager) GetOrCreateStream(contentID, profile, sessionID string) (*ActiveStream, error) {
+       m.mu.Lock()
+       defer m.mu.Unlock()
+       
+       key := fmt.Sprintf("%s:%s", contentID, profile)
+       
+       // Check for existing stream
+       if stream, exists := m.activeStreams[key]; exists {
+           // For live TV: always share
+           // For recorded media: only share if user chose "Share Content"
+           stream.AddViewer(sessionID)
+           return stream, nil
+       }
+       
+       // Create new stream
+       stream := NewActiveStream(contentID, profile)
+       m.activeStreams[key] = stream
+       return stream, nil
+   }
+   ```
+
+3. **User Prompt for Recorded Media:**
+   ```go
+   // internal/api/handlers/playback.go
+   type PlaybackStartRequest struct {
+       ContentID       string `json:"contentId"`
+       ShareContent    bool   `json:"shareContent"`    // User's choice
+       StartFromBeginning bool `json:"startFromBeginning"`
+   }
+   
+   func (h *PlaybackHandler) StartPlayback(w http.ResponseWriter, r *http.Request) {
+       var req PlaybackStartRequest
+       // ... parse request ...
+       
+       if !req.ShareContent {
+           // Force new stream
+           stream = streamManager.CreateNewStream(...)
+       } else {
+           // Try to join existing stream
+           stream = streamManager.GetOrCreateStream(...)
+       }
+   }
+   ```
+
+4. **Stream Lifecycle Management:**
+   - Automatic cleanup when last viewer disconnects
+   - Periodic health checks on active streams
+   - Resource limits (max concurrent unique streams)
+   - Graceful stream termination
+
+5. **Position Tracking:**
+   - Each viewer maintains independent position
+   - Shared stream continues from original source
+   - Late joiners can seek to their preferred position (buffer permitting)
+
+**Files:**
+```go
+// internal/service/media/stream_manager.go    - Stream pooling logic
+// internal/service/media/active_stream.go    - Active stream representation
+// internal/api/handlers/playback.go          - Playback start with sharing option
+// internal/model/playback_request.go         - Playback request with share flag
+```
+
+**API Changes:**
+```json
+// POST /Sessions/Playing
+{
+  "ItemId": "abc123",
+  "ShareContent": true,  // NEW: User opts to share existing stream
+  "MediaSourceId": "xyz789",
+  "PlaySessionId": "session-uuid"
+}
+```
+
+**Deliverables:**
+- Stream manager with pooling logic
+- User prompt in playback UI (web/mobile/TV clients)
+- Live TV streams always shared automatically
+- Recorded media respects user choice
+- Resource monitoring and limits
+- Automatic cleanup of abandoned streams
+- Reduced CPU/memory usage during concurrent playback
+
+**Performance Benefits:**
+- **Live TV:** 1 FFmpeg process per channel instead of per viewer
+- **Popular Content:** Single transcode stream serves multiple viewers
+- **Resource Savings:** ~60-80% reduction for concurrent viewers of same content
+- **Memory:** Shared buffers reduce overall memory footprint
+
+**Edge Cases to Handle:**
+1. Viewer joins mid-stream → buffer management for catch-up
+2. Network hiccups → reconnection to same stream
+3. Stream source fails → notify all viewers, offer restart
+4. Maximum viewers per stream → limit to prevent overload
+5. Different quality requests → separate streams per transcode profile
 
 ### Phase 5: API Endpoints Implementation
 
@@ -1018,24 +1163,25 @@ func (m *TaskManager) ExecuteTask(taskID string) error
 1. Write API documentation
 2. Write deployment guide
 3. Write configuration guide
-4. Write migration guide from C# version
 
 **Deliverables:**
 - Complete documentation
-- Migration guide
+- No migration guide needed (existing databases work directly)
 
 #### 4.12.2 Deployment
+
+**Note:** Docker configuration will be handled in this final phase, not Phase 1.
 
 **Tasks:**
 1. Create Docker images
 2. Create installation packages
 3. Test on multiple platforms (Linux, FreeBSD, macOS, Windows)
-4. Create upgrade scripts
 
 **Deliverables:**
 - Production-ready packages
 - Docker images
 - Installation guides
+- No upgrade scripts needed at this time
 
 ---
 
@@ -1558,8 +1704,7 @@ This section is the master checklist for implementing the Go migration. Each tas
 | 1.4 | Implement logging infrastructure | NOT STARTED | | | | 1.1 | `internal/util/log.go` | Zap logger setup |
 | 1.5 | Implement configuration system | NOT STARTED | | | | 1.1 | `internal/config/config.go` | YAML config loading |
 | 1.6 | Create Dockerfile | NOT STARTED | | | | 1.2 | `Dockerfile` | Multi-stage build |
-| 1.7 | Analyze existing SQLite schema | NOT STARTED | | | | | All `*.cs` files | Extract schema from C# code |
-| 1.8 | Create database migration system | NOT STARTED | | | | 1.7 | `internal/migrate/` | Schema creation |
+| 1.7 | Analyze existing SQLite schema | NOT STARTED | | | | | All `*.cs` files | Extract schema from C# code (reference only) |
 
 ### Phase 2: Core HTTP Server and API Framework
 
@@ -1567,9 +1712,9 @@ This section is the master checklist for implementing the Go migration. Each tas
 |---|------|--------|-------|-------|-----|--------------|-------|-------|
 | 2.1 | Set up HTTP server with chi router | NOT STARTED | | | | 1.5 | `internal/server/http.go` | Basic server |
 | 2.2 | Implement middleware chain | NOT STARTED | | | | 2.1 | `internal/api/middleware/` | Logger, recovery, CORS |
-| 2.3 | Configure TLS support | NOT STARTED | | | | 2.1 | `internal/server/tls.go` | HTTPS support |
-| 2.4 | Implement graceful shutdown | NOT STARTED | | | | 2.1 | `internal/server/http.go` | Signal handling |
-| 2.5 | Create API router framework | NOT STARTED | | | | 2.1 | `internal/api/router.go` | Route registration |
+| 2.3 | Implement graceful shutdown | NOT STARTED | | | | 2.1 | `internal/server/http.go` | Signal handling |
+| 2.4 | Create API router framework | NOT STARTED | | | | 2.1 | `internal/api/router.go` | Route registration |
+| 2.5 | Create nginx reverse proxy config | NOT STARTED | | | | 2.1 | `deploy/nginx.conf` | SSL termination |
 | 2.6 | Implement request binding | NOT STARTED | | | | 2.5 | `internal/api/binding.go` | JSON to struct |
 | 2.7 | Analyze C# authentication flow | NOT STARTED | | | | | `AuthorizationContext.cs` | Understand auth flow |
 | 2.8 | Implement auth middleware | NOT STARTED | | | | 2.7 | `internal/api/middleware/auth.go` | API key + session |
@@ -1579,7 +1724,7 @@ This section is the master checklist for implementing the Go migration. Each tas
 | # | Task | Status | Owner | Start | End | Dependencies | Files | Notes |
 |---|------|--------|-------|-------|-----|--------------|-------|-------|
 | 3.1 | Create Go models for items | NOT STARTED | | | | 1.7 | `internal/model/item.go` | Match C# structures |
-| 3.2 | Implement base repository | NOT STARTED | | | | 1.8 | `internal/repository/base.go` | DB connection pool |
+| 3.2 | Implement base repository | NOT STARTED | | | | | `internal/repository/base.go` | DB connection pool |
 | 3.3 | Migrate item repository | NOT STARTED | | | | 3.1, 3.2 | `internal/repository/item.go` | `SqliteItemRepository.cs` |
 | 3.4 | Create user models | NOT STARTED | | | | 1.7 | `internal/model/user.go` | Match C# structures |
 | 3.5 | Migrate user repository | NOT STARTED | | | | 3.4 | `internal/repository/user.go` | `UserManager.cs` |
@@ -1599,6 +1744,12 @@ This section is the master checklist for implementing the Go migration. Each tas
 | 4.6 | Implement media encoder | NOT STARTED | | | | | `internal/service/media/encoder.go` | `FFMpegLoader.cs`, `EncodingManager.cs` |
 | 4.7 | Implement FFmpeg process management | NOT STARTED | | | | 4.6 | `internal/service/media/ffmpeg.go` | Process control |
 | 4.8 | Implement transcoding profiles | NOT STARTED | | | | 4.6 | `internal/service/media/profiles.go` | Quality profiles |
+| 4.9 | Implement stream pooling manager | NOT STARTED | | | | | `internal/service/media/stream_manager.go` | Stream sharing architecture |
+| 4.10 | Implement active stream tracking | NOT STARTED | | | | 4.9 | `internal/service/media/active_stream.go` | Viewer management |
+| 4.11 | Implement stream sharing logic (Live TV) | NOT STARTED | | | | 4.9 | `internal/service/media/stream_manager.go` | Auto-share live streams |
+| 4.12 | Implement user prompt for recorded media | NOT STARTED | | | | 4.9 | `internal/api/handlers/playback.go` | "Share Content" vs "Start From Beginning" |
+| 4.13 | Implement stream lifecycle management | NOT STARTED | | | | 4.9 | `internal/service/media/stream_manager.go` | Cleanup, health checks |
+| 4.14 | Implement resource limits and monitoring | NOT STARTED | | | | 4.9 | `internal/service/media/stream_manager.go` | Max concurrent streams |
 
 ### Phase 5: API Endpoints Implementation
 
