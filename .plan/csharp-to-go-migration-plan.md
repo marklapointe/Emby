@@ -10,6 +10,44 @@ This document outlines a comprehensive, phased approach to migrating the Emby Se
 
 ---
 
+## Table of Contents
+
+- [1. Executive Summary](#1-executive-summary)
+- [2. Current Architecture Analysis](#2-current-architecture-analysis)
+  - [2.1 Technology Stack](#21-technology-stack)
+  - [2.2 Project Structure](#22-project-structure)
+  - [2.3 Key Components Identified](#23-key-components-identified)
+  - [2.4 Architecture Patterns](#24-architecture-patterns)
+- [3. Proposed Go Architecture](#3-proposed-go-architecture)
+  - [3.1 High-Level Design](#31-high-level-design)
+  - [3.2 Go Module Structure](#32-go-module-structure)
+  - [3.3 Technology Recommendations](#33-technology-recommendations)
+  - [3.4 Stream Pooling Architecture](#34-stream-pooling-architecture)
+- [4. Migration Phases](#4-migration-phases)
+  - [Phase 1: Foundation and Infrastructure](#phase-1-foundation-and-infrastructure)
+  - [Phase 2: HTTP Server and Networking](#phase-2-http-server-and-networking)
+  - [Phase 3: Data Layer and SQLite](#phase-3-data-layer-and-sqlite)
+  - [Phase 4: Core Services and Stream Management](#phase-4-core-services-and-stream-management)
+  - [Phase 5: API Endpoints Migration](#phase-5-api-endpoints-migration)
+  - [Phase 6: DLNA Server (Local Only)](#phase-6-dlna-server-local-only)
+  - [Phase 6B: Emby Premiere Licensing](#phase-6b-emby-premiere-licensing)
+  - [Phase 7: Image Processing](#phase-7-image-processing)
+  - [Phase 8: Metadata Providers](#phase-8-metadata-providers)
+  - [Phase 9: WebSocket and Real-time Communication](#phase-9-websocket-and-real-time-communication)
+  - [Phase 10: Scheduled Tasks and Background Jobs](#phase-10-scheduled-tasks-and-background-jobs)
+  - [Phase 11: Testing and Quality Assurance](#phase-11-testing-and-quality-assurance)
+  - [Phase 12: Deployment and Production](#phase-12-deployment-and-production)
+- [5. Testing Strategy](#5-testing-strategy)
+  - [5.1 Unit Testing](#51-unit-testing)
+  - [5.2 Integration Testing](#52-integration-testing)
+  - [5.3 End-to-End Testing](#53-end-to-end-testing)
+  - [5.4 Performance Testing](#54-performance-testing)
+- [6. Risk Mitigation](#6-risk-mitigation)
+- [7. Success Criteria](#7-success-criteria)
+- [8. Timeline Estimates](#8-timeline-estimates)
+
+---
+
 ## 2. Current Architecture Analysis
 
 ### 2.1 Technology Stack
