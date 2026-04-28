@@ -22,7 +22,7 @@ This document outlines a comprehensive, phased approach to migrating the Emby Se
 | HTTP Server | Custom (SocketHttpListener) | REST API server |
 | Media Processing | FFmpeg | Transcoding, metadata extraction |
 | Image Processing | ImageMagick/Skia | Thumbnail generation, image manipulation |
-| Protocols | DLNA/UPnP, HTTP, WebSocket | Client communication |
+| Protocols | DLNA, HTTP, WebSocket | Client communication |
 
 ### 2.2 Project Structure
 
@@ -43,7 +43,7 @@ Emby/
 ├── MediaBrowser.Api/                    # REST API endpoints
 ├── MediaBrowser.Providers/              # Metadata providers
 ├── MediaBrowser.LocalMetadata/          # Local metadata parsing
-├── Emby.Dlna/                           # DLNA/UPnP support
+├── Emby.Dlna/                           # DLNA support (UPnP removed for security)
 ├── Emby.Drawing/                        # Image abstraction
 ├── Emby.Drawing.ImageMagick/            # ImageMagick implementation
 ├── Emby.Drawing.Skia/                   # Skia implementation
@@ -101,7 +101,7 @@ Emby/
 │                      Emby Go Server                          │
 ├─────────────────────────────────────────────────────────────┤
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
-│  │   HTTP/1.1  │  │  WebSocket  │  │   DLNA/UPnP         │  │
+│  │   HTTP/1.1  │  │  WebSocket  │  │   DLNA (local)      │  │
 │  │   Server    │  │   Server    │  │   Server            │  │
 │  └──────┬──────┘  └──────┬──────┘  └──────────┬──────────┘  │
 │         │                │                     │             │
@@ -147,7 +147,7 @@ emby-go/
 │   ├── server/
 │   │   ├── http.go              # HTTP server setup
 │   │   ├── websocket.go         # WebSocket handling
-│   │   └── dlna.go              # DLNA/UPnP server
+│   │   └── dlna.go              # DLNA server (UPnP removed)
 │   ├── api/
 │   │   ├── router.go            # API routing
 │   │   ├── middleware/
@@ -194,10 +194,13 @@ emby-go/
 │   │       ├── provider.go      # Image provider interface
 │   │       └── processor.go     # Image processing
 │   ├── dlna/
-│   │   ├── server.go            # DLNA server
-│   │   ├── upnp.go              # UPnP discovery
+│   │   ├── server.go            # DLNA server (local network only)
 │   │   └── xml/
 │   │       └── descriptors.go   # DLNA XML descriptors
+│   ├── licensing/
+│   │   ├── manager.go           # Emby Premiere license management
+│   │   ├── features.go          # Premium feature gating
+│   │   └── cache.go             # License status caching
 │   └── util/
 │       ├── fs/                  # File system utilities
 │       ├── hash/                # Hashing utilities
@@ -227,7 +230,8 @@ emby-go/
 | Configuration | `gopkg.in/yaml.v3` | YAML support |
 | Image Processing | `github.com/davidbyttow/govips` | libvips bindings, fast |
 | FFmpeg | `os/exec` | Direct FFmpeg binary execution |
-| DLNA/UPnP | Custom + `github.com/koron/go-upnp` | Limited Go options |
+| DLNA | Custom (SSDP local only) | UPnP excluded for security |
+| Licensing | Custom + HTTP client | mb3admin.com validation |
 | Testing | `testing` + `testify` | Standard + assertions |
 
 ---
@@ -635,37 +639,21 @@ func (h *LibraryHandler) RegisterRoutes(r chi.Router) {
 - All API endpoints implemented
 - Compatible with existing clients
 
-### Phase 6: DLNA/UPnP Support
+### Phase 6: DLNA Support (UPnP Removed)
 
-**Duration:** 4-6 weeks
+**Duration:** 3-4 weeks
 
-**Goal:** Implement DLNA/UPnP server for media discovery
+**Goal:** Implement DLNA server for media discovery (UPnP functionality removed for security reasons)
 
-#### 4.6.1 UPnP Discovery
+**Security Note:** UPnP (Universal Plug and Play) has been intentionally excluded from this migration due to well-documented security concerns:
+- UPnP has historically been vulnerable to remote exploitation
+- SSDP amplification attacks can be used for DDoS
+- Automatic port forwarding poses security risks in multi-tenant environments
+- Modern networks increasingly block UPnP traffic by default
 
-**Tasks:**
-1. Implement SSDP discovery
-2. Create device description XML
-3. Implement device advertisement
-4. Handle M-SEARCH requests
+DLNA browsing and streaming functionality will be preserved for local network media discovery, but UPnP's automatic port forwarding and remote access features will not be implemented.
 
-**Files:**
-```go
-// internal/dlna/upnp.go
-type UPnPService struct {
-    server *HTTPServer
-    port   int
-}
-
-func (s *UPnPService) Start() error
-func (s *UPnPService) sendAdvertisements() error
-```
-
-**Deliverables:**
-- Device discovery works
-- Clients can find Emby server
-
-#### 4.6.2 DLNA Media Server
+#### 4.6.1 DLNA Media Server
 
 **Tasks:**
 1. Implement ContentDirectory service
@@ -673,10 +661,139 @@ func (s *UPnPService) sendAdvertisements() error
 3. Create DIDL-Lite XML responses
 4. Implement browse/search operations
 5. Implement protocol info
+6. Implement SSDP discovery (local network only)
+
+**Files:**
+```go
+// internal/dlna/server.go
+type DLNAService struct {
+    server *HTTPServer
+    port   int
+}
+
+func (s *DLNAService) Start() error
+func (s *DLNAService) Stop() error
+```
 
 **Deliverables:**
-- DLNA clients can browse library
+- DLNA clients can browse library on local network
 - Media streaming works via DLNA
+- No UPnP remote access functionality
+
+### Phase 6B: Emby Premiere / Supporter Features
+
+**Duration:** 2-3 weeks
+
+**Goal:** Preserve and migrate Emby Premiere licensing and premium features functionality
+
+**Background:** Emby Premiere (also known as "Supporter" or "MBSupporter") is the licensing system that unlocks premium features. This includes:
+- Supporter Key validation and management
+- License file handling (MBLicenseFile)
+- App Store purchase registration
+- Premium feature gating (DVR, hardware transcoding, etc.)
+- Registration status caching and validation
+
+**Current Implementation Analysis:**
+- **PluginSecurityManager.cs** - Main license validation logic
+- **MBLicenseFile** - License file storage and retrieval
+- **SupporterKey** - User-provided license key
+- **IsSupporter()** - Check if user has active license
+- **UpdateSupporterKey()** - Update license key
+- **RegisterAppStoreSale()** - Handle app store purchases
+- **GetRegistrationStatus()** - Validate license with mb3admin.com
+
+#### 4.6B.1 License Management System
+
+**Tasks:**
+1. Create license file reader/writer (compatible with existing .mblicense files)
+2. Implement SupporterKey storage and retrieval
+3. Implement license validation against mb3admin.com API
+4. Implement registration status caching (14-day cache)
+5. Handle app store purchase registration flow
+
+**Files:**
+```go
+// internal/service/licensing/manager.go
+type LicenseManager struct {
+    httpClient   *http.Client
+    licensePath  string
+    cache        *LicenseCache
+    systemID     string
+    appVersion   string
+}
+
+func (m *LicenseManager) LoadLicense() error
+func (m *LicenseManager) GetSupporterKey() string
+func (m *LicenseManager) UpdateSupporterKey(key string) error
+func (m *LicenseManager) IsSupporter() (bool, error)
+func (m *LicenseManager) ValidateWithServer(ctx context.Context) error
+func (m *LicenseManager) RegisterAppStoreSale(params string) error
+```
+
+**API Endpoints to Preserve:**
+- `POST /Plugins/SecurityInfo` - Get/update supporter status
+- `POST /Plugins/SecurityInfo/Update` - Update supporter key
+- `POST /Plugins/Registration/AppStore` - Register app store purchase
+
+**Deliverables:**
+- Existing license keys work without migration
+- License validation works (online and cached)
+- App store purchases can be registered
+- Premium features can be gated by license status
+
+#### 4.6B.2 Premium Feature Gating
+
+**Tasks:**
+1. Identify all premium features in current codebase:
+   - Hardware acceleration transcoding
+   - Live TV and DVR functionality
+   - Offline media downloads
+   - Premium metadata providers
+   - Advanced codec support
+2. Create feature flag system based on license status
+3. Implement graceful degradation for non-supporters
+
+**Files:**
+```go
+// internal/service/licensing/features.go
+type FeatureGate struct {
+    licenseMgr *LicenseManager
+}
+
+func (f *FeatureGate) IsEnabled(feature string) (bool, error)
+func (f *FeatureGate) RequireSupporter(feature string) error
+```
+
+**Premium Features to Gate:**
+| Feature | Current Implementation | Go Implementation |
+|---------|----------------------|-------------------|
+| Hardware Transcoding | FFMpegLoader.cs | internal/service/media/encoder.go |
+| Live TV / DVR | LiveTvManager.cs | internal/service/livetv/manager.go |
+| Offline Downloads | MediaBrowser.Api | internal/api/handlers/downloads.go |
+| Premium Metadata | MediaBrowser.Providers | internal/provider/metadata/premium.go |
+
+**Deliverables:**
+- All premium features properly gated
+- Clear error messages for non-supporters
+- Upgrade prompts in API responses
+
+#### 4.6B.3 License File Compatibility
+
+**Tasks:**
+1. Analyze existing .mblicense file format
+2. Implement compatible reader/writer in Go
+3. Support existing license migration without re-issue
+4. Handle license expiration and renewal
+
+**Current License File Location:**
+- `%APPDATA%/Emby-Server/mblicense.txt` (Windows)
+- `~/.config/emby-server/mblicense.txt` (Linux/FreeBSD)
+- License contains: RegKey, expiration date, last checked timestamp
+
+**Deliverables:**
+- Existing licenses work without user action
+- License file format preserved
+- Graceful handling of expired licenses
 
 ### Phase 7: WebSocket and Real-time Features
 
@@ -1503,16 +1620,34 @@ This section is the master checklist for implementing the Go migration. Each tas
 | 5.14 | Implement subtitles API handlers | NOT STARTED | | | | | `internal/api/handlers/subtitles.go` | `SubtitleService.cs` |
 | 5.15 | Test API compatibility with clients | NOT STARTED | | | | 5.2-5.14 | | Verify all clients work |
 
-### Phase 6: DLNA/UPnP Support
+### Phase 6: DLNA Support (UPnP Removed for Security)
 
 | # | Task | Status | Owner | Start | End | Dependencies | Files | Notes |
 |---|------|--------|-------|-------|-----|--------------|-------|-------|
-| 6.1 | Implement SSDP discovery | NOT STARTED | | | | | `internal/dlna/upnp.go` | UPnP discovery |
+| 6.1 | Implement SSDP discovery (local only) | NOT STARTED | | | | | `internal/dlna/server.go` | Local network discovery |
 | 6.2 | Create device description XML | NOT STARTED | | | | 6.1 | `internal/dlna/xml/device.go` | DLNA device descriptor |
 | 6.3 | Implement ContentDirectory service | NOT STARTED | | | | 6.1 | `internal/dlna/content.go` | Browse/search |
 | 6.4 | Implement ConnectionManager service | NOT STARTED | | | | 6.1 | `internal/dlna/connection.go` | Protocol info |
 | 6.5 | Create DIDL-Lite XML responses | NOT STARTED | | | | 6.3 | `internal/dlna/xml/didl.go` | Media metadata |
-| 6.6 | Test with DLNA clients | NOT STARTED | | | | 6.3-6.5 | | Verify compatibility |
+| 6.6 | Test with DLNA clients | NOT STARTED | | | | 6.3-6.5 | | Verify local network compatibility |
+| 6.7 | Document UPnP security decision | NOT STARTED | | | | | `docs/upnp-removal.md` | Security rationale |
+
+### Phase 6B: Emby Premiere / Supporter Features
+
+| # | Task | Status | Owner | Start | End | Dependencies | Files | Notes |
+|---|------|--------|-------|-------|-----|--------------|-------|-------|
+| 6B.1 | Analyze existing .mblicense format | NOT STARTED | | | | | `Emby.Server.Implementations/Security/` | License file format |
+| 6B.2 | Implement license file reader/writer | NOT STARTED | | | | 6B.1 | `internal/service/licensing/manager.go` | Compatible with existing |
+| 6B.3 | Implement SupporterKey storage | NOT STARTED | | | | 6B.2 | `internal/service/licensing/manager.go` | Key management |
+| 6B.4 | Implement license validation API | NOT STARTED | | | | | `internal/service/licensing/manager.go` | mb3admin.com integration |
+| 6B.5 | Implement registration status caching | NOT STARTED | | | | 6B.4 | `internal/service/licensing/cache.go` | 14-day cache |
+| 6B.6 | Implement app store purchase flow | NOT STARTED | | | | 6B.4 | `internal/service/licensing/manager.go` | App Store registration |
+| 6B.7 | Identify premium features | NOT STARTED | | | | | Documentation | Feature inventory |
+| 6B.8 | Implement feature gating system | NOT STARTED | | | | 6B.7 | `internal/service/licensing/features.go` | License-based gating |
+| 6B.9 | Gate hardware transcoding | NOT STARTED | | | | 6B.8 | `internal/service/media/encoder.go` | Premiere feature |
+| 6B.10 | Gate Live TV / DVR | NOT STARTED | | | | 6B.8 | `internal/service/livetv/manager.go` | Premiere feature |
+| 6B.11 | Preserve API endpoints | NOT STARTED | | | | 6B.2 | `internal/api/handlers/licensing.go` | /Plugins/SecurityInfo |
+| 6B.12 | Test license migration | NOT STARTED | | | | 6B.2-6B.11 | | Existing licenses work |
 
 ### Phase 7: WebSocket and Real-time Features
 
