@@ -272,6 +272,116 @@ emby-go/
 | Licensing | Custom + HTTP client | mb3admin.com validation |
 | Testing | `testing` + `testify` | Standard + assertions |
 
+### 3.4 Stream Pooling Architecture
+
+**Overview:** A critical performance optimization for the Go implementation is the stream pooling architecture, which allows multiple users to share the same content stream, significantly reducing resource consumption.
+
+#### 3.4.1 Design Principles
+
+1. **Live TV Streams**: Always shared automatically - one FFmpeg process per channel regardless of viewer count
+2. **Recorded Media (MKV, MPG, etc.)**: User choice presented before playback:
+   - "Share Content" - Join existing stream at current playback position
+   - "Start From Beginning" - Create new independent stream
+3. **Managed Threading**: Each unique content stream runs in a managed goroutine with proper lifecycle management
+4. **Automatic Cleanup**: Streams are closed when the last viewer disconnects
+
+#### 3.4.2 Architecture Components
+
+```go
+// StreamManager - Central pool management
+type StreamManager struct {
+    mu           sync.RWMutex
+    activeStreams map[string]*ActiveStream  // key: contentID+profile
+    maxStreams   int
+    metrics      *StreamMetrics
+}
+
+// ActiveStream - Represents a single content stream being shared
+type ActiveStream struct {
+    ContentID      string
+    Profile        *TranscodingProfile
+    Viewers        map[string]*Viewer  // key: sessionID
+    Position       time.Duration
+    LastAccessTime time.Time
+    Health         *StreamHealth
+    CancelFunc     context.CancelFunc
+}
+
+// Viewer - Per-user session tracking
+type Viewer struct {
+    SessionID       string
+    UserID          string
+    ConnectedAt     time.Time
+    LastPingTime    time.Time
+    PlaybackPosition time.Duration
+}
+```
+
+#### 3.4.3 Stream Lifecycle
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Stream Lifecycle                         │
+└─────────────────────────────────────────────────────────────┘
+
+1. User requests content
+         │
+         ▼
+2. Check if stream exists in pool (contentID + profile)
+         │
+    ┌────┴────┐
+    │         │
+   Yes       No
+    │         │
+    ▼         ▼
+3a. Add    4a. Create new stream
+    viewer     (spawn goroutine)
+    │         │
+    │         ▼
+    │      5a. Start FFmpeg
+    │         │
+    └────┬────┘
+         │
+         ▼
+6. Stream content to all viewers
+         │
+         ▼
+7. Track individual positions
+         │
+         ▼
+8. On viewer disconnect: remove from pool
+         │
+         ▼
+9. If last viewer: cleanup stream resources
+```
+
+#### 3.4.4 Expected Benefits
+
+| Scenario | Current (per-user threads) | With Stream Pooling | Savings |
+|----------|---------------------------|---------------------|---------|
+| Live TV (10 viewers, same channel) | 10 FFmpeg processes | 1 FFmpeg process | 90% |
+| Movie (5 viewers, shared) | 5 read threads | 1 read thread + 5 HTTP streams | 80% |
+| Movie (5 viewers, separate) | 5 read threads | 5 read threads | 0% |
+| Mixed usage (typical) | ~20 concurrent streams | ~8 concurrent streams | 60% |
+
+#### 3.4.5 Implementation Locations
+
+- **Stream Manager**: `internal/service/media/stream_manager.go`
+- **Active Stream**: `internal/service/media/active_stream.go`
+- **Playback API**: `internal/api/handlers/playback.go` (add sharing logic)
+- **WebSocket Updates**: `internal/service/session/websocket.go` (position tracking)
+
+#### 3.4.6 Configuration
+
+```yaml
+stream_pooling:
+  enabled: true
+  max_concurrent_streams: 50
+  idle_timeout: 5m  # Close stream after last viewer disconnects
+  health_check_interval: 30s
+  metrics_enabled: true
+```
+
 ---
 
 ## 4. Migration Phases
