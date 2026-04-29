@@ -1,6 +1,7 @@
 package session
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -37,7 +38,6 @@ func TestManager_CreateSession(t *testing.T) {
 			VolumePercent:   80,
 			IsMuted:         false,
 			IsPaused:        false,
-			PlaybackStartTime: time.Now(),
 		},
 	}
 
@@ -88,7 +88,6 @@ func TestManager_UpdateSession(t *testing.T) {
 			VolumePercent:   80,
 			IsMuted:         false,
 			IsPaused:        false,
-			PlaybackStartTime: time.Now(),
 		},
 	}
 
@@ -130,7 +129,6 @@ func TestManager_DeleteSession(t *testing.T) {
 			VolumePercent:   80,
 			IsMuted:         false,
 			IsPaused:        false,
-			PlaybackStartTime: time.Now(),
 		},
 	}
 
@@ -155,9 +153,9 @@ func TestManager_GetAllSessions(t *testing.T) {
 	mgr := NewManager(cfg, logger)
 
 	sessions := []*SessionInfo{
-		{ID: "session-1", Client: "Client 1", DeviceName: "Device 1", DisplayName: "User 1", MachineID: "machine-1", LastActivityTime: time.Now(), PlayState: model.PlayState{PositionTicks: 0, VolumePercent: 80, IsMuted: false, IsPaused: false, PlaybackStartTime: time.Now()}},
-		{ID: "session-2", Client: "Client 2", DeviceName: "Device 2", DisplayName: "User 2", MachineID: "machine-2", LastActivityTime: time.Now(), PlayState: model.PlayState{PositionTicks: 0, VolumePercent: 80, IsMuted: false, IsPaused: false, PlaybackStartTime: time.Now()}},
-		{ID: "session-3", Client: "Client 3", DeviceName: "Device 3", DisplayName: "User 3", MachineID: "machine-3", LastActivityTime: time.Now(), PlayState: model.PlayState{PositionTicks: 0, VolumePercent: 80, IsMuted: false, IsPaused: false, PlaybackStartTime: time.Now()}},
+		{ID: "session-1", Client: "Client 1", DeviceName: "Device 1", DisplayName: "User 1", MachineID: "machine-1", LastActivityTime: time.Now(), PlayState: model.PlayState{PositionTicks: 0, VolumePercent: 80, IsMuted: false, IsPaused: false}},
+		{ID: "session-2", Client: "Client 2", DeviceName: "Device 2", DisplayName: "User 2", MachineID: "machine-2", LastActivityTime: time.Now(), PlayState: model.PlayState{PositionTicks: 0, VolumePercent: 80, IsMuted: false, IsPaused: false}},
+		{ID: "session-3", Client: "Client 3", DeviceName: "Device 3", DisplayName: "User 3", MachineID: "machine-3", LastActivityTime: time.Now(), PlayState: model.PlayState{PositionTicks: 0, VolumePercent: 80, IsMuted: false, IsPaused: false}},
 	}
 
 	for _, s := range sessions {
@@ -179,9 +177,9 @@ func TestManager_GetSessionsByDevice(t *testing.T) {
 	mgr := NewManager(cfg, logger)
 
 	sessions := []*SessionInfo{
-		{ID: "session-1", Client: "Client 1", DeviceName: "Device 1", DisplayName: "User 1", MachineID: "machine-1", LastActivityTime: time.Now(), PlayState: model.PlayState{PositionTicks: 0, VolumePercent: 80, IsMuted: false, IsPaused: false, PlaybackStartTime: time.Now()}},
-		{ID: "session-2", Client: "Client 2", DeviceName: "Device 1", DisplayName: "User 2", MachineID: "machine-2", LastActivityTime: time.Now(), PlayState: model.PlayState{PositionTicks: 0, VolumePercent: 80, IsMuted: false, IsPaused: false, PlaybackStartTime: time.Now()}},
-		{ID: "session-3", Client: "Client 3", DeviceName: "Device 2", DisplayName: "User 3", MachineID: "machine-3", LastActivityTime: time.Now(), PlayState: model.PlayState{PositionTicks: 0, VolumePercent: 80, IsMuted: false, IsPaused: false, PlaybackStartTime: time.Now()}},
+		{ID: "session-1", Client: "Client 1", DeviceName: "Device 1", DisplayName: "User 1", MachineID: "machine-1", LastActivityTime: time.Now(), PlayState: model.PlayState{PositionTicks: 0, VolumePercent: 80, IsMuted: false, IsPaused: false}},
+		{ID: "session-2", Client: "Client 2", DeviceName: "Device 1", DisplayName: "User 2", MachineID: "machine-2", LastActivityTime: time.Now(), PlayState: model.PlayState{PositionTicks: 0, VolumePercent: 80, IsMuted: false, IsPaused: false}},
+		{ID: "session-3", Client: "Client 3", DeviceName: "Device 2", DisplayName: "User 3", MachineID: "machine-3", LastActivityTime: time.Now(), PlayState: model.PlayState{PositionTicks: 0, VolumePercent: 80, IsMuted: false, IsPaused: false}},
 	}
 
 	for _, s := range sessions {
@@ -203,9 +201,9 @@ func TestManager_GetSessionsByUser(t *testing.T) {
 	mgr := NewManager(cfg, logger)
 
 	sessions := []*SessionInfo{
-		{ID: "session-1", Client: "Client 1", DeviceName: "Device 1", DisplayName: "User 1", MachineID: "machine-1", LastActivityTime: time.Now(), PlayState: model.PlayState{PositionTicks: 0, VolumePercent: 80, IsMuted: false, IsPaused: false, PlaybackStartTime: time.Now()}},
-		{ID: "session-2", Client: "Client 2", DeviceName: "Device 2", DisplayName: "User 1", MachineID: "machine-2", LastActivityTime: time.Now(), PlayState: model.PlayState{PositionTicks: 0, VolumePercent: 80, IsMuted: false, IsPaused: false, PlaybackStartTime: time.Now()}},
-		{ID: "session-3", Client: "Client 3", DeviceName: "Device 3", DisplayName: "User 2", MachineID: "machine-3", LastActivityTime: time.Now(), PlayState: model.PlayState{PositionTicks: 0, VolumePercent: 80, IsMuted: false, IsPaused: false, PlaybackStartTime: time.Now()}},
+		{ID: "session-1", Client: "Client 1", DeviceName: "Device 1", DisplayName: "User 1", MachineID: "machine-1", LastActivityTime: time.Now(), PlayState: model.PlayState{PositionTicks: 0, VolumePercent: 80, IsMuted: false, IsPaused: false}},
+		{ID: "session-2", Client: "Client 2", DeviceName: "Device 2", DisplayName: "User 1", MachineID: "machine-2", LastActivityTime: time.Now(), PlayState: model.PlayState{PositionTicks: 0, VolumePercent: 80, IsMuted: false, IsPaused: false}},
+		{ID: "session-3", Client: "Client 3", DeviceName: "Device 3", DisplayName: "User 2", MachineID: "machine-3", LastActivityTime: time.Now(), PlayState: model.PlayState{PositionTicks: 0, VolumePercent: 80, IsMuted: false, IsPaused: false}},
 	}
 
 	for _, s := range sessions {
@@ -229,18 +227,17 @@ func TestManager_GetActiveSessionCount(t *testing.T) {
 	// Create sessions with recent activity
 	for i := 0; i < 5; i++ {
 		session := &SessionInfo{
-			ID:               "session-123",
+			ID:               fmt.Sprintf("session-%d", i),
 			Client:           "Emby for Android",
 			DeviceName:       "Test Device",
 			DisplayName:      "Test User",
 			MachineID:        "machine-456",
 			LastActivityTime: time.Now(),
 			PlayState: model.PlayState{
-				PositionTicks:   0,
-				VolumePercent:   80,
-				IsMuted:         false,
-				IsPaused:        false,
-				PlaybackStartTime: time.Now(),
+				PositionTicks: 0,
+				VolumePercent: 80,
+				IsMuted:       false,
+				IsPaused:      false,
 			},
 		}
 		if err := mgr.CreateSession(session); err != nil {
