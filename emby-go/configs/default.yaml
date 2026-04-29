@@ -1,0 +1,39 @@
+# Emby Server Go Configuration
+
+server:
+  host: "0.0.0.0"
+  port: 8096
+  max_header_bytes: 1048576
+  read_timeout: 30
+  write_timeout: 30
+
+database:
+  path: "data/emby-server.db"
+  max_open_conns: 25
+  max_idle_conns: 10
+  conn_max_lifetime: 300
+  enable_wal: true
+  pragma_journal_mode: "WAL"
+
+library:
+  scan_interval_minutes: 24
+  enable_auto_deep_scan: true
+  content_types:
+    - "Video"
+    - "Music"
+    - "Photos"
+    - "Books"
+  ignore_paths:
+    - ".cache"
+    - "tmp"
+
+logging:
+  level: "info"
+  format: "json"
+
+stream_pooling:
+  enabled: true
+  max_concurrent_streams: 50
+  idle_timeout: "5m"
+  health_check_interval: "30s"
+  metrics_enabled: true
