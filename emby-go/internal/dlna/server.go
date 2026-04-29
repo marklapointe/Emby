@@ -3,174 +3,122 @@ package dlna
 import (
 	"fmt"
 	"net"
+	"net/http"
+	"sync"
+	"time"
 
+	"github.com/emby/emby-go/internal/dlna/xml"
 	"go.uber.org/zap"
 )
 
 // Server represents the DLNA/SSDP server.
 type Server struct {
-	addr     string
 	port     int
 	logger   *zap.Logger
-	listener net.PacketConn
-	alive    bool
+	mu       sync.RWMutex
+	listener net.Listener
+	running  bool
 }
 
 // NewServer creates a new DLNA server.
 func NewServer(port int, logger *zap.Logger) *Server {
 	return &Server{
-		addr:   "239.255.255.250",
 		port:   port,
 		logger: logger,
 	}
 }
 
-// Start begins listening for SSDP messages.
+// Start starts the DLNA/SSDP server.
 func (s *Server) Start() error {
-	listener, err := net.ListenMulticastUDP("udp4", nil, &net.UDPAddr{
-		IP:   net.ParseIP(s.addr),
-		Port: 1900,
-	})
+	addr := fmt.Sprintf("0.0.0.0:%d", s.port)
+
+	listener, err := net.Listen("tcp", addr)
 	if err != nil {
-		return fmt.Errorf("listen multicast UDP: %w", err)
+		return fmt.Errorf("failed to start DLNA server: %w", err)
 	}
 
+	s.mu.Lock()
 	s.listener = listener
-	s.alive = true
+	s.running = true
+	s.mu.Unlock()
 
-	s.logger.Info("DLNA server started",
-		zap.String("address", s.addr),
-		zap.Int("port", s.port),
-	)
+	s.logger.Info("DLNA server started", zap.String("addr", addr))
 
-	go s.listenLoop()
+	go s.serve()
 	return nil
 }
 
-// Stop shuts down the DLNA server.
-func (s *Server) Stop() {
-	s.alive = false
+// Stop stops the DLNA/SSDP server.
+func (s *Server) Stop() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if !s.running {
+		return nil
+	}
+
+	s.running = false
+
 	if s.listener != nil {
 		s.listener.Close()
 	}
+
+	s.logger.Info("DLNA server stopped")
+	return nil
 }
 
-// listenLoop handles incoming SSDP messages.
-func (s *Server) listenLoop() {
-	buf := make([]byte, 65536)
-	for s.alive {
-		n, remote, err := s.listener.ReadFrom(buf)
-		if err != nil {
-			if s.alive {
-				s.logger.Error("read error", zap.Error(err))
-			}
-			continue
+// IsRunning returns whether the server is running.
+func (s *Server) IsRunning() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.running
+}
+
+// serve handles incoming DLNA/SSDP requests.
+func (s *Server) serve() {
+	http.HandleFunc("/upnp/desc/uuid:emby-go/EmbyServer/device.xml", s.handleDeviceDescriptor)
+	http.HandleFunc("/upnp/control/ConnectionManager", s.handleConnectionManager)
+	http.HandleFunc("/upnp/control/ContentDirectory", s.handleContentDirectory)
+	http.HandleFunc("/upnp/event/ConnectionManager", s.handleConnectionManagerEvent)
+	http.HandleFunc("/upnp/event/ContentDirectory", s.handleContentDirectoryEvent)
+
+	if err := http.Serve(s.listener, nil); err != nil {
+		if !s.running {
+			return
 		}
-
-		msg := string(buf[:n])
-		s.logger.Debug("received SSDP message",
-			zap.String("from", remote.String()),
-			zap.String("message", msg[:min(n, 100)]),
-		)
-
-		// Parse and respond to SSDP messages
-		s.handleSSDPMessage(msg, remote)
+		s.logger.Error("DLNA server error", zap.Error(err))
 	}
 }
 
-// handleSSDPMessage processes incoming SSDP messages.
-func (s *Server) handleSSDPMessage(msg string, remote net.Addr) {
-	// Check for M-SEARCH requests
-	if !contains(msg, "M-SEARCH") {
-		return
-	}
-
-	// Parse ST (Search Target) header
-	st := extractHeader(msg, "ST:")
-	if st == "" {
-		return
-	}
-
-	// Respond to relevant search targets
-	switch {
-	case contains(st, "upnp:rootdevice"), contains(st, "ssdp:all"):
-		s.sendRootDeviceResponse(remote)
-	case contains(st, "uuid:"), contains(st, "upnp:device"):
-		s.sendDeviceResponse(remote)
-	}
+// handleDeviceDescriptor handles device descriptor requests.
+func (s *Server) handleDeviceDescriptor(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/xml")
+	w.Header().Set("EXT", "")
+	w.Write([]byte(s.DescriptorXML()))
 }
 
-// sendRootDeviceResponse sends a root device response.
-func (s *Server) sendRootDeviceResponse(remote net.Addr) {
-	response := fmt.Sprintf(
-		"HTTP/1.1 200 OK\r\n"+
-			"CACHE-CONTROL: max-age=1800\r\n"+
-			"EXT:\r\n"+
-			"LOCATION: http://127.0.0.1:%d/descriptor.xml\r\n"+
-			"SERVER: Emby Go Server/1.0 UPnP/1.1\r\n"+
-			"ST: upnp:rootdevice\r\n"+
-			"USN: uuid:emby-go::upnp:rootdevice\r\n"+
-			"\r\n",
-		s.port,
-	)
-	s.sendResponse(response, remote)
+// handleConnectionManager handles ConnectionManager SOAP actions.
+func (s *Server) handleConnectionManager(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/xml")
+	w.Write([]byte(xml.ContentDirectoryAction("ConnectionManager", r.Body)))
 }
 
-// sendDeviceResponse sends a device response.
-func (s *Server) sendDeviceResponse(remote net.Addr) {
-	response := fmt.Sprintf(
-		"HTTP/1.1 200 OK\r\n"+
-			"CACHE-CONTROL: max-age=1800\r\n"+
-			"EXT:\r\n"+
-			"LOCATION: http://127.0.0.1:%d/descriptor.xml\r\n"+
-			"SERVER: Emby Go Server/1.0 UPnP/1.1\r\n"+
-			"ST: uuid:emby-go\r\n"+
-			"USN: uuid:emby-go\r\n"+
-			"\r\n",
-		s.port,
-	)
-	s.sendResponse(response, remote)
+// handleContentDirectory handles ContentDirectory SOAP actions.
+func (s *Server) handleContentDirectory(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/xml")
+	w.Write([]byte(xml.ContentDirectoryAction("ContentDirectory", r.Body)))
 }
 
-// sendResponse sends an SSDP response.
-func (s *Server) sendResponse(response string, remote net.Addr) {
-	conn, err := net.DialUDP("udp4", nil, remote.(*net.UDPAddr))
-	if err != nil {
-		s.logger.Error("dial UDP", zap.Error(err))
-		return
-	}
-	defer conn.Close()
-
-	_, err = conn.Write([]byte(response))
-	if err != nil {
-		s.logger.Error("write response", zap.Error(err))
-	}
+// handleConnectionManagerEvent handles ConnectionManager event notifications.
+func (s *Server) handleConnectionManagerEvent(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("CONTENT-TYPE", "text/xml")
+	w.Write([]byte(xml.ConnectionManagerEvent()))
 }
 
-// sendAlive broadcasts that the server is alive.
-func (s *Server) sendAlive() {
-	aliveMsg := fmt.Sprintf(
-		"NOTIFY * HTTP/1.1\r\n"+
-			"HOST: 239.255.255.250:1900\r\n"+
-			"NT: uuid:emby-go\r\n"+
-			"NTS: ssdp:alive\r\n"+
-			"LOCATION: http://127.0.0.1:%d/descriptor.xml\r\n"+
-			"SERVER: Emby Go Server/1.0 UPnP/1.1\r\n"+
-			"Cache-Control: max-age=1800\r\n"+
-			"\r\n",
-		s.port,
-	)
-
-	conn, err := net.DialUDP("udp4", nil, &net.UDPAddr{
-		IP:   net.ParseIP("239.255.255.250"),
-		Port: 1900,
-	})
-	if err != nil {
-		return
-	}
-	defer conn.Close()
-
-	conn.Write([]byte(aliveMsg))
+// handleContentDirectoryEvent handles ContentDirectory event notifications.
+func (s *Server) handleContentDirectoryEvent(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("CONTENT-TYPE", "text/xml")
+	w.Write([]byte(xml.ContentDirectoryEvent()))
 }
 
 // DescriptorXML returns the DLNA device descriptor XML.
@@ -216,49 +164,4 @@ func (s *Server) DescriptorXML() string {
     </serviceList>
   </device>
 </root>`
-}
-
-// Helper functions
-func contains(s, substr string) bool {
-	return len(s) > 0 && len(substr) > 0 && (len(s) >= len(substr)) && (s == substr || len(s) > len(substr) && (s[:len(substr)] == substr || s[len(s)-len(substr):] == substr || findSubstring(s, substr)))
-}
-
-func findSubstring(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
-}
-
-func extractHeader(msg, header string) string {
-	for _, line := range splitLines(msg) {
-		if len(line) >= len(header) && line[:len(header)] == header {
-			return line[len(header):]
-		}
-	}
-	return ""
-}
-
-func splitLines(s string) []string {
-	var lines []string
-	start := 0
-	for i := 0; i < len(s); i++ {
-		if s[i] == '\n' {
-			lines = append(lines, s[start:i])
-			start = i + 1
-		}
-	}
-	if start < len(s) {
-		lines = append(lines, s[start:])
-	}
-	return lines
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }
