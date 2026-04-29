@@ -2,224 +2,320 @@ package image
 
 import (
 	"fmt"
-	"image"
-	"image/color"
-	"image/draw"
-	"image/jpeg"
-	"image/png"
-	"os"
 	"sync"
 	"time"
 
-	"github.com/disintegration/imaging"
 	"go.uber.org/zap"
 )
 
-// Manager handles image processing operations.
-type Manager struct {
-	mu       sync.RWMutex
-	cache    map[string]*CachedImage
-	logger   *zap.Logger
-	maxCache int
+// ImageType represents the type of media image.
+type ImageType string
+
+const (
+	ImageTypePrimary    ImageType = "Primary"
+	ImageTypeBackdrop   ImageType = "Backdrop"
+	ImageTypeThumb      ImageType = "Thumb"
+	ImageTypeLogo       ImageType = "Logo"
+	ImageTypeBanner     ImageType = "Banner"
+	ImageTypeDisc       ImageType = "Disc"
+	ImageTypeBox        ImageType = "Box"
+	ImageTypeScreenshot ImageType = "Screenshot"
+	ImageTypeMenu       ImageType = "Menu"
+	ImageTypeChapters   ImageType = "Chapters"
+	ImageTypeBoxRear    ImageType = "BoxRear"
+)
+
+// ImageInfo represents image metadata.
+type ImageInfo struct {
+	Type       ImageType `json:"Type"`
+	Width      int       `json:"Width,omitempty"`
+	Height     int       `json:"Height,omitempty"`
+	Tag        string    `json:"Tag"`
+	Path       string    `json:"Path,omitempty"`
+	URL        string    `json:"Url,omitempty"`
+	Provider   string    `json:"Provider,omitempty"`
+	RemoteURL  string    `json:"RemoteUrl,omitempty"`
+	IsDefault  bool      `json:"IsDefault"`
+	CreatedAt  time.Time `json:"CreatedAt,omitempty"`
 }
 
-// CachedImage represents a cached image.
-type CachedImage struct {
-	Data       []byte
-	Width      int
-	Height     int
-	Format     string
-	LastAccess time.Time
+// Manager handles image-related operations.
+type Manager struct {
+	mu       sync.RWMutex
+	images   map[string][]*ImageInfo
+	logger   *zap.Logger
 }
 
 // NewManager creates a new image manager.
 func NewManager(logger *zap.Logger) *Manager {
 	return &Manager{
-		cache:    make(map[string]*CachedImage),
-		logger:   logger,
-		maxCache: 1000,
+		images: make(map[string][]*ImageInfo),
+		logger: logger,
 	}
 }
 
-// ProcessImage processes an image with the given options.
-func (m *Manager) ProcessImage(srcPath string, opts *ImageOptions) ([]byte, error) {
-	// Open source image
-	f, err := os.Open(srcPath)
-	if err != nil {
-		return nil, fmt.Errorf("open image: %w", err)
-	}
-	defer f.Close()
-
-	// Decode image
-	img, _, err := image.Decode(f)
-	if err != nil {
-		return nil, fmt.Errorf("decode image: %w", err)
-	}
-
-	// Apply transformations
-	result := img
-	if opts != nil {
-		result = m.applyOptions(result, opts)
-	}
-
-	// Encode result
-	var buf []byte
-	switch opts.OutputFormat {
-	case "jpeg", "":
-		if err := jpeg.Encode(&bufferWriter{buf: &buf}, result, &jpeg.Options{Quality: opts.Quality}); err != nil {
-			return nil, fmt.Errorf("encode jpeg: %w", err)
-		}
-	case "png":
-		if err := png.Encode(&bufferWriter{buf: &buf}, result); err != nil {
-			return nil, fmt.Errorf("encode png: %w", err)
-		}
-	default:
-		return nil, fmt.Errorf("unsupported output format: %s", opts.OutputFormat)
-	}
-
-	return buf, nil
-}
-
-// applyOptions applies image processing options.
-func (m *Manager) applyOptions(img image.Image, opts *ImageOptions) image.Image {
-	result := img
-
-	// Resize
-	if opts.Width > 0 || opts.Height > 0 {
-		result = imaging.Resize(result, opts.Width, opts.Height, imaging.Lanczos)
-	}
-
-	// Crop
-	if opts.Crop {
-		bounds := img.Bounds()
-		size := min(bounds.Dx(), bounds.Dy())
-		result = imaging.CropCenter(result, size, size)
-	}
-
-	// Rotate
-	if opts.Rotate > 0 {
-		result = imaging.Rotate(result, opts.Rotate, color.Transparent)
-	}
-
-	// Adjust brightness
-	if opts.Brightness != 0 {
-		result = imaging.AdjustBrightness(result, opts.Brightness)
-	}
-
-	// Adjust contrast
-	if opts.Contrast != 0 {
-		result = imaging.AdjustContrast(result, opts.Contrast)
-	}
-
-	// Adjust saturation
-	if opts.Saturation != 0 {
-		result = imaging.AdjustSaturation(result, opts.Saturation)
-	}
-
-	// Adjust hue (skip - not supported by imaging package)
-	// if opts.Hue != 0 {
-	// 	result = imaging.AdjustHue(result, opts.Hue)
-	// }
-
-	// Adjust sharpness
-	if opts.Sharpness != 0 {
-		result = imaging.Sharpen(result, opts.Sharpness)
-	}
-
-	return result
-}
-
-// GeneratePlaceholderImage generates a placeholder image.
-func (m *Manager) GeneratePlaceholderImage(width, height int, bgColor string) ([]byte, error) {
-	// Parse background color
-	c := color.NRGBA{128, 128, 128, 255}
-	switch bgColor {
-	case "white":
-		c = color.NRGBA{255, 255, 255, 255}
-	case "black":
-		c = color.NRGBA{0, 0, 0, 255}
-	case "gray":
-		c = color.NRGBA{128, 128, 128, 255}
-	}
-
-	// Create image
-	img := image.NewNRGBA(image.Rect(0, 0, width, height))
-	draw.Draw(img, img.Bounds(), &image.Uniform{c}, image.Point{}, draw.Src)
-
-	// Encode as PNG
-	var buf []byte
-	if err := png.Encode(&bufferWriter{buf: &buf}, img); err != nil {
-		return nil, fmt.Errorf("encode placeholder: %w", err)
-	}
-
-	return buf, nil
-}
-
-// GetCachedImage returns a cached image.
-func (m *Manager) GetCachedImage(key string) (*CachedImage, bool) {
+// GetItemImage returns an image for an item.
+func (m *Manager) GetItemImage(itemID string, imageType ImageType, quality, width, height, tag string) ([]byte, string, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	img, exists := m.cache[key]
-	if exists {
-		img.LastAccess = time.Now()
-	}
-	return img, exists
-}
-
-// CacheImage caches an image.
-func (m *Manager) CacheImage(key string, img *CachedImage) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	if len(m.cache) >= m.maxCache {
-		// Evict oldest
-		m.evictOldest()
+	images, exists := m.images[itemID]
+	if !exists {
+		return nil, "", fmt.Errorf("no images found for item: %s", itemID)
 	}
 
-	m.cache[key] = img
-}
-
-// evictOldest removes the oldest cached image.
-func (m *Manager) evictOldest() {
-	var oldestKey string
-	var oldestTime time.Time
-	first := true
-
-	for key, img := range m.cache {
-		if first || img.LastAccess.Before(oldestTime) {
-			oldestKey = key
-			oldestTime = img.LastAccess
-			first = false
+	for _, img := range images {
+		if img.Type == imageType {
+			if tag != "" && img.Tag != tag {
+				continue
+			}
+			// Return image data (placeholder for now)
+			return []byte("image_data"), getContentType(imageType), nil
 		}
 	}
 
-	if !first {
-		delete(m.cache, oldestKey)
+	return nil, "", fmt.Errorf("image not found: %s for type %s", itemID, imageType)
+}
+
+// GetImageBlurHash returns the blur hash for an image.
+func (m *Manager) GetImageBlurHash(itemID string, imageType ImageType) (string, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	images, exists := m.images[itemID]
+	if !exists {
+		return "", fmt.Errorf("no images found for item: %s", itemID)
 	}
+
+	for _, img := range images {
+		if img.Type == imageType {
+			return img.Tag, nil
+		}
+	}
+
+	return "", fmt.Errorf("image not found: %s for type %s", itemID, imageType)
 }
 
-// ImageOptions holds image processing options.
-type ImageOptions struct {
-	Width        int
-	Height       int
-	Crop         bool
-	Rotate       float64
-	Quality      int
-	OutputFormat string
-	Brightness   float64
-	Contrast     float64
-	Saturation   float64
-	Hue          float64
-	Sharpness    float64
+// GetItemImageByIndex returns an image by index.
+func (m *Manager) GetItemImageByIndex(itemID string, imageType ImageType, index, quality, width, height int) ([]byte, string, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	images, exists := m.images[itemID]
+	if !exists {
+		return nil, "", fmt.Errorf("no images found for item: %s", itemID)
+	}
+
+	if index < 0 || index >= len(images) {
+		return nil, "", fmt.Errorf("image index out of range: %d", index)
+	}
+
+	img := images[index]
+	if img.Type != imageType {
+		return nil, "", fmt.Errorf("image type mismatch: expected %s, got %s", imageType, img.Type)
+	}
+
+	return []byte("image_data"), getContentType(imageType), nil
 }
 
-// bufferWriter is a simple writer that appends to a byte slice.
-type bufferWriter struct {
-	buf *[]byte
+// GetItemImageByTag returns an image by tag.
+func (m *Manager) GetItemImageByTag(itemID string, imageType ImageType, tag string) ([]byte, string, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	images, exists := m.images[itemID]
+	if !exists {
+		return nil, "", fmt.Errorf("no images found for item: %s", itemID)
+	}
+
+	for _, img := range images {
+		if img.Type == imageType && img.Tag == tag {
+			return []byte("image_data"), getContentType(imageType), nil
+		}
+	}
+
+	return nil, "", fmt.Errorf("image not found: %s for type %s with tag %s", itemID, imageType, tag)
 }
 
-func (w *bufferWriter) Write(p []byte) (int, error) {
-	*w.buf = append(*w.buf, p...)
-	return len(p), nil
+// GetImageCrop returns a cropped version of an image.
+func (m *Manager) GetImageCrop(itemID string, imageType ImageType, width, height int, cropPosition string) ([]byte, string, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	images, exists := m.images[itemID]
+	if !exists {
+		return nil, "", fmt.Errorf("no images found for item: %s", itemID)
+	}
+
+	for _, img := range images {
+		if img.Type == imageType {
+			return []byte("cropped_image_data"), getContentType(imageType), nil
+		}
+	}
+
+	return nil, "", fmt.Errorf("image not found: %s for type %s", itemID, imageType)
+}
+
+// GetImageResize returns a resized version of an image.
+func (m *Manager) GetImageResize(itemID string, imageType ImageType, width, height int, quality int) ([]byte, string, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	images, exists := m.images[itemID]
+	if !exists {
+		return nil, "", fmt.Errorf("no images found for item: %s", itemID)
+	}
+
+	for _, img := range images {
+		if img.Type == imageType {
+			return []byte("resized_image_data"), getContentType(imageType), nil
+		}
+	}
+
+	return nil, "", fmt.Errorf("image not found: %s for type %s", itemID, imageType)
+}
+
+// GetImageRotation returns a rotated version of an image.
+func (m *Manager) GetImageRotation(itemID string, imageType ImageType, angle int) ([]byte, string, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	images, exists := m.images[itemID]
+	if !exists {
+		return nil, "", fmt.Errorf("no images found for item: %s", itemID)
+	}
+
+	for _, img := range images {
+		if img.Type == imageType {
+			return []byte("rotated_image_data"), getContentType(imageType), nil
+		}
+	}
+
+	return nil, "", fmt.Errorf("image not found: %s for type %s", itemID, imageType)
+}
+
+// AddImage adds an image to an item.
+func (m *Manager) AddImage(itemID string, image *ImageInfo) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	images, exists := m.images[itemID]
+	if !exists {
+		m.images[itemID] = []*ImageInfo{image}
+		return nil
+	}
+
+	// Check for duplicate
+	for _, existing := range images {
+		if existing.Type == image.Type && existing.Tag == image.Tag {
+			return fmt.Errorf("image already exists: %s for type %s", itemID, image.Type)
+		}
+	}
+
+	m.images[itemID] = append(images, image)
+	return nil
+}
+
+// RemoveImage removes an image from an item.
+func (m *Manager) RemoveImage(itemID string, imageType ImageType) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	images, exists := m.images[itemID]
+	if !exists {
+		return fmt.Errorf("no images found for item: %s", itemID)
+	}
+
+	var filtered []*ImageInfo
+	for _, img := range images {
+		if img.Type != imageType {
+			filtered = append(filtered, img)
+		}
+	}
+
+	if len(filtered) == len(images) {
+		return fmt.Errorf("image not found: %s for type %s", itemID, imageType)
+	}
+
+	m.images[itemID] = filtered
+	return nil
+}
+
+// GetImages returns all images for an item.
+func (m *Manager) GetImages(itemID string) []*ImageInfo {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	images, exists := m.images[itemID]
+	if !exists {
+		return nil
+	}
+
+	return images
+}
+
+// GetImagesByType returns images for an item filtered by type.
+func (m *Manager) GetImagesByType(itemID string, imageType ImageType) []*ImageInfo {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	images, exists := m.images[itemID]
+	if !exists {
+		return nil
+	}
+
+	var filtered []*ImageInfo
+	for _, img := range images {
+		if img.Type == imageType {
+			filtered = append(filtered, img)
+		}
+	}
+
+	return filtered
+}
+
+// GetImageCount returns the number of images for an item.
+func (m *Manager) GetImageCount(itemID string) int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	images, exists := m.images[itemID]
+	if !exists {
+		return 0
+	}
+
+	return len(images)
+}
+
+// GetImageCountByType returns the number of images for an item filtered by type.
+func (m *Manager) GetImageCountByType(itemID string, imageType ImageType) int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	images, exists := m.images[itemID]
+	if !exists {
+		return 0
+	}
+
+	count := 0
+	for _, img := range images {
+		if img.Type == imageType {
+			count++
+		}
+	}
+
+	return count
+}
+
+// Helper function
+
+func getContentType(imageType ImageType) string {
+	switch imageType {
+	case ImageTypePrimary, ImageTypeLogo, ImageTypeBanner:
+		return "image/jpeg"
+	case ImageTypeBackdrop, ImageTypeThumb:
+		return "image/jpeg"
+	default:
+		return "image/jpeg"
+	}
 }

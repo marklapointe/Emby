@@ -1,219 +1,186 @@
 package metadata
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"sync"
 	"time"
 
 	"go.uber.org/zap"
 )
 
-// Provider represents a metadata provider.
-type Provider struct {
-	ID            string
-	Name          string
-	Enabled       bool
-	BaseURL       string
-	APIKey        string
-	LastUpdated   time.Time
-	Items         []MediaMetadata
-	Logger        *zap.Logger
+// MetadataProvider represents a metadata provider.
+type MetadataProvider struct {
+	ID          string `json:"Id"`
+	Name        string `json:"Name"`
+	Type        string `json:"Type"`
+	Enabled     bool   `json:"Enabled"`
+	Order       int    `json:"Order"`
+	Capabilities struct {
+		SupportsAlternateTitles bool `json:"SupportsAlternateTitles"`
+		CanRetrieveImages       bool `json:"CanRetrieveImages"`
+		ImageProviders          []string `json:"ImageProviders"`
+		SubtitleProviders       []string `json:"SubtitleProviders"`
+	} `json:"Capabilities"`
 }
 
-// MediaMetadata represents metadata for a media item.
-type MediaMetadata struct {
-	ID              string    `json:"id"`
-	Name            string    `json:"name"`
-	Overview        string    `json:"overview"`
-	Tagline         string    `json:"tagline"`
-	Rating          float32   `json:"rating"`
-	Year            int       `json:"year"`
-	Genres          []string  `json:"genres"`
-	Studios         []string  `json:"studios"`
-	Actors          []Person  `json:"actors"`
-	Directors       []Person  `json:"directors"`
-	Writers         []Person  `json:"writers"`
-	PosterURL       string    `json:"posterUrl"`
-	BackdropURL     string    `json:"backdropUrl"`
-	TrailerURL      string    `json:"trailerUrl"`
-	IMDBID          string    `json:"imdbId"`
-	TMDBID          string    `json:"tmdbId"`
-	Language        string    `json:"language"`
-	Certification   string    `json:"certification"`
-	Runtime         int       `json:"runtime"`
-	ContentType     string    `json:"contentType"`
+// MetadataResult represents the result of a metadata search.
+type MetadataResult struct {
+	ItemID       string        `json:"ItemId"`
+	Name         string        `json:"Name"`
+	Overview     string        `json:"Overview,omitempty"`
+	Tagline      string        `json:"Tagline,omitempty"`
+	Taglines     []string      `json:"Taglines,omitempty"`
+	HomePageURL  string        `json:"HomePageUrl,omitempty"`
+	IMDBID       string        `json:"ImdbId,omitempty"`
+	TVDBID       string        `json:"TvdbId,omitempty"`
+	TVMAZEID     string        `json:"TvMazeId,omitempty"`
+	IMDBRating   float64       `json:"ImdbRating,omitempty"`
+	Year         int           `json:"Year,omitempty"`
+	Runtime      int           `json:"Runtime,omitempty"`
+	Studios      []string      `json:"Studios,omitempty"`
+	Genres       []string      `json:"Genres,omitempty"`
+	ProductionLocations []string `json:"ProductionLocations,omitempty"`
+	Certification string       `json:"Certification,omitempty"`
+	Networks     []string      `json:"Networks,omitempty"`
+	Trailers     []Trailer     `json:"Trailers,omitempty"`
+	People       []Person      `json:"People,omitempty"`
+	Images       []MediaImage  `json:"Images,omitempty"`
+	BackdropImages []MediaImage `json:"BackdropImages,omitempty"`
+	LocalImages  []MediaImage  `json:"LocalImages,omitempty"`
+	Providers    []ProviderID  `json:"ProviderIds,omitempty"`
+	ParentIndex  int           `json:"ParentIndex,omitempty"`
+	IndexNumberEnd int          `json:"IndexNumberEnd,omitempty"`
+	IndexNumber  int           `json:"IndexNumber,omitempty"`
+	IndexNumberStart int        `json:"IndexNumberStart,omitempty"`
+	SeasonName   string        `json:"SeasonName,omitempty"`
+	EpisodeName  string        `json:"EpisodeName,omitempty"`
+	AirTime      string        `json:"AirTime,omitempty"`
+	Aired        time.Time     `json:"Aired,omitempty"`
+	OverviewType string        `json:"OverviewType,omitempty"`
+	ProviderTypes []string      `json:"ProviderTypes,omitempty"`
 }
 
-// Person represents a person in the media.
+// Trailer represents a video trailer.
+type Trailer struct {
+	Name   string `json:"Name"`
+	Type   string `json:"Type"`
+	URL    string `json:"Url"`
+	Path   string `json:"Path,omitempty"`
+	Internal bool  `json:"Internal"`
+}
+
+// Person represents a person associated with media.
 type Person struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Role string `json:"role"`
-	Type string `json:"type"`
+	Name     string `json:"Name"`
+	Role     string `json:"Role,omitempty"`
+	Character []string `json:"Characters,omitempty"`
+	Type    string `json:"Type"`
+	ID      string `json:"Id,omitempty"`
+	Primary bool   `json:"Primary"`
+	Order   int    `json:"Order,omitempty"`
+	Profile string `json:"Profile,omitempty"`
 }
 
-// Manager manages metadata providers.
+// MediaImage represents a media image.
+type MediaImage struct {
+	Type       string `json:"Type"`
+	URL        string `json:"Url,omitempty"`
+	Path       string `json:"Path,omitempty"`
+	Width      int    `json:"Width,omitempty"`
+	Height     int    `json:"Height,omitempty"`
+	HeightRaw  int    `json:"HeightRaw,omitempty"`
+	WidthRaw   int    `json:"WidthRaw,omitempty"`
+	Index      int    `json:"Index,omitempty"`
+	Tag        string `json:"Tag,omitempty"`
+	Provider   string `json:"Provider,omitempty"`
+	RemoteURL  string `json:"RemoteUrl,omitempty"`
+	AspectRatio string `json:"AspectRatio,omitempty"`
+}
+
+// ProviderID represents a provider identifier.
+type ProviderID struct {
+	ProviderName string `json:"ProviderName"`
+	ID           string `json:"Id"`
+}
+
+// Manager handles metadata operations.
 type Manager struct {
-	mu         sync.RWMutex
-	providers  map[string]*Provider
-	httpClient *http.Client
-	logger     *zap.Logger
+	mu          sync.RWMutex
+	providers   map[string]*MetadataProvider
+	logger      *zap.Logger
 }
 
 // NewManager creates a new metadata manager.
 func NewManager(logger *zap.Logger) *Manager {
 	return &Manager{
-		providers:  make(map[string]*Provider),
-		httpClient: &http.Client{Timeout: 30 * time.Second},
-		logger:     logger,
+		providers: make(map[string]*MetadataProvider),
+		logger:    logger,
 	}
 }
 
 // RegisterProvider registers a new metadata provider.
-func (m *Manager) RegisterProvider(p *Provider) error {
+func (m *Manager) RegisterProvider(provider *MetadataProvider) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if _, exists := m.providers[p.ID]; exists {
-		return fmt.Errorf("provider already registered: %s", p.ID)
+	if _, exists := m.providers[provider.ID]; exists {
+		return fmt.Errorf("provider already registered: %s", provider.ID)
 	}
 
-	p.Logger = m.logger
-	m.providers[p.ID] = p
-	m.logger.Info("metadata provider registered", zap.String("id", p.ID))
+	m.providers[provider.ID] = provider
+	if m.logger != nil {
+		m.logger.Info("metadata provider registered", zap.String("id", provider.ID), zap.String("name", provider.Name))
+	}
 	return nil
 }
 
 // GetProvider returns a provider by ID.
-func (m *Manager) GetProvider(id string) (*Provider, bool) {
+func (m *Manager) GetProvider(id string) (*MetadataProvider, bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	p, exists := m.providers[id]
-	return p, exists
+	provider, exists := m.providers[id]
+	return provider, exists
 }
 
-// GetProviders returns all registered providers.
-func (m *Manager) GetProviders() []*Provider {
+// GetAllProviders returns all registered providers.
+func (m *Manager) GetAllProviders() []*MetadataProvider {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	providers := make([]*Provider, 0, len(m.providers))
-	for _, p := range m.providers {
-		providers = append(providers, p)
+	providers := make([]*MetadataProvider, 0, len(m.providers))
+	for _, provider := range m.providers {
+		providers = append(providers, provider)
 	}
 	return providers
 }
 
-// SearchMetadata searches for metadata using all enabled providers.
-func (m *Manager) SearchMetadata(query string) ([]MediaMetadata, error) {
+// GetEnabledProviders returns all enabled providers.
+func (m *Manager) GetEnabledProviders() []*MetadataProvider {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	var results []MediaMetadata
-
+	var providers []*MetadataProvider
 	for _, provider := range m.providers {
-		if !provider.Enabled {
-			continue
+		if provider.Enabled {
+			providers = append(providers, provider)
 		}
+	}
+	return providers
+}
 
-		metadata, err := m.searchProvider(provider, query)
-		if err != nil {
-			m.logger.Error("provider search error", zap.String("provider", provider.ID), zap.Error(err))
-			continue
+// GetProvidersByType returns providers filtered by type.
+func (m *Manager) GetProvidersByType(providerType string) []*MetadataProvider {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	var providers []*MetadataProvider
+	for _, provider := range m.providers {
+		if providerType == "" || provider.Type == providerType {
+			providers = append(providers, provider)
 		}
-
-		results = append(results, metadata...)
 	}
-
-	return results, nil
-}
-
-// searchProvider searches a single provider.
-func (m *Manager) searchProvider(provider *Provider, query string) ([]MediaMetadata, error) {
-	url := fmt.Sprintf("%s/Search?query=%s&apiKey=%s", provider.BaseURL, query, provider.APIKey)
-
-	resp, err := m.httpClient.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("search request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("search error: %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("read response: %w", err)
-	}
-
-	var results []MediaMetadata
-	if err := json.Unmarshal(body, &results); err != nil {
-		return nil, fmt.Errorf("parse response: %w", err)
-	}
-
-	return results, nil
-}
-
-// GetMetadata retrieves metadata for a specific item.
-func (m *Manager) GetMetadata(providerID, itemID string) (*MediaMetadata, error) {
-	provider, exists := m.GetProvider(providerID)
-	if !exists {
-		return nil, fmt.Errorf("provider not found: %s", providerID)
-	}
-
-	url := fmt.Sprintf("%s/Items/%s?apiKey=%s", provider.BaseURL, itemID, provider.APIKey)
-
-	resp, err := m.httpClient.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("metadata request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("metadata error: %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("read response: %w", err)
-	}
-
-	var metadata MediaMetadata
-	if err := json.Unmarshal(body, &metadata); err != nil {
-		return nil, fmt.Errorf("parse response: %w", err)
-	}
-
-	return &metadata, nil
-}
-
-// UpdateProvider updates a provider's configuration.
-func (m *Manager) UpdateProvider(id string, name, baseURL, apiKey string, enabled bool) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	p, exists := m.providers[id]
-	if !exists {
-		return fmt.Errorf("provider not found: %s", id)
-	}
-
-	if name != "" {
-		p.Name = name
-	}
-	if baseURL != "" {
-		p.BaseURL = baseURL
-	}
-	if apiKey != "" {
-		p.APIKey = apiKey
-	}
-	p.Enabled = enabled
-	p.LastUpdated = time.Now()
-
-	return nil
+	return providers
 }
 
 // EnableProvider enables a provider.
@@ -221,12 +188,12 @@ func (m *Manager) EnableProvider(id string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	p, exists := m.providers[id]
+	provider, exists := m.providers[id]
 	if !exists {
 		return fmt.Errorf("provider not found: %s", id)
 	}
 
-	p.Enabled = true
+	provider.Enabled = true
 	return nil
 }
 
@@ -235,11 +202,32 @@ func (m *Manager) DisableProvider(id string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	p, exists := m.providers[id]
+	provider, exists := m.providers[id]
 	if !exists {
 		return fmt.Errorf("provider not found: %s", id)
 	}
 
-	p.Enabled = false
+	provider.Enabled = false
 	return nil
+}
+
+// GetProviderCount returns the total number of providers.
+func (m *Manager) GetProviderCount() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return len(m.providers)
+}
+
+// GetEnabledProviderCount returns the number of enabled providers.
+func (m *Manager) GetEnabledProviderCount() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	count := 0
+	for _, provider := range m.providers {
+		if provider.Enabled {
+			count++
+		}
+	}
+	return count
 }
