@@ -1,240 +1,331 @@
 package transcoding
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"sync"
 	"time"
 
+	"github.com/emby/emby-go/internal/config"
 	"go.uber.org/zap"
 )
 
-// Transcoder handles media transcoding operations.
-type Transcoder struct {
-	mu         sync.RWMutex
-	activeJobs map[string]*TranscodeJob
-	logger     *zap.Logger
-	ffmpegPath string
-}
-
-// TranscodeJob represents a transcoding job.
-type TranscodeJob struct {
-	ID           string
-	SourcePath   string
-	OutputPath   string
-	Profile      *TranscodeProfile
-	Status       string // pending, running, completed, failed
-	Progress     float64
-	StartTime    time.Time
-	EndTime      time.Time
-	FFmpegPID    int
-	CancelFunc   context.CancelFunc
-	Logger       *zap.Logger
-}
-
-// TranscodeProfile represents a transcoding profile.
-type TranscodeProfile struct {
-	Container       string
+// TranscodeConfig holds configuration for transcoding.
+type TranscodeConfig struct {
 	VideoCodec      string
-	VideoBitrate    int
-	MaxVideoBitrate int
 	AudioCodec      string
-	AudioBitrate    int
-	MaxAudioBitrate int
-	MaxAudioChannels string
-	Width           int
-	Height          int
-	MaxFrameRate    int
+	MaxVideoBitrate string
+	MaxAudioBitrate string
+	Container       string
+	StreamType      string
 	Protocol        string
-	AnalyzeDuration int
-	ProbeSize       string
+	MaxWidth        int
+	MaxHeight       int
+	Profile         string
+	Level           string
+	AnalyzeDuration string
+	Probesize       string
 }
 
-// NewTranscoder creates a new transcoder.
-func NewTranscoder(logger *zap.Logger) *Transcoder {
-	return &Transcoder{
-		activeJobs: make(map[string]*TranscodeJob),
-		logger:     logger,
-		ffmpegPath: "ffmpeg",
+// AudioTranscodeConfig holds configuration for audio transcoding.
+type AudioTranscodeConfig struct {
+	AudioCodec    string
+	MaxAudioBitrate string
+	Container     string
+	SampleRate    int
+	Channels      int
+}
+
+// StreamInfo represents a stream URL or output.
+type StreamInfo struct {
+	URL            string    `json:"Url"`
+	Protocol       string    `json:"Protocol"`
+	Container      string    `json:"Container"`
+	VideoCodec     string    `json:"VideoCodec,omitempty"`
+	AudioCodec     string    `json:"AudioCodec,omitempty"`
+	Bitrate        int       `json:"Bitrate,omitempty"`
+	StartTime      time.Time `json:"StartTime"`
+	IsLive         bool      `json:"IsLive"`
+}
+
+// Manager handles transcoding operations.
+type Manager struct {
+	config *config.Config
+	logger *zap.Logger
+	mu     sync.RWMutex
+	activeStreams map[string]*ActiveStream
+}
+
+// ActiveStream represents an active transcoding stream.
+type ActiveStream struct {
+	ID         string
+	Process    *os.Process
+	StartTime  time.Time
+	VideoCodec string
+	AudioCodec string
+	Container  string
+}
+
+// NewManager creates a new transcoding manager.
+func NewManager(cfg *config.Config, logger *zap.Logger) *Manager {
+	return &Manager{
+		config:        cfg,
+		logger:        logger,
+		activeStreams: make(map[string]*ActiveStream),
 	}
 }
 
-// SetFFmpegPath sets the path to the ffmpeg binary.
-func (t *Transcoder) SetFFmpegPath(path string) {
-	t.ffmpegPath = path
+// GetStreamURL returns a stream URL for the given item and profile.
+func (m *Manager) GetStreamURL(itemID, profile string) (*StreamInfo, error) {
+	// For now, return a placeholder URL
+	return &StreamInfo{
+		URL:       fmt.Sprintf("/Videos/%s/stream", itemID),
+		Protocol:  "Http",
+		Container: "ts",
+		StartTime: time.Now(),
+		IsLive:    true,
+	}, nil
 }
 
-// StartTranscode starts a new transcoding job.
-func (t *Transcoder) StartTranscode(ctx context.Context, sourcePath, outputPath string, profile *TranscodeProfile) (*TranscodeJob, error) {
-	jobID := fmt.Sprintf("transcode-%d", time.Now().UnixNano())
+// BuildTranscodeCommand builds an FFmpeg transcoding command.
+func (m *Manager) BuildTranscodeCommand(itemID, mediaSourceID string, config TranscodeConfig) (*exec.Cmd, error) {
+	// Get media info first
+	// Build FFmpeg command
+	args := []string{
+		"-nostdin",
+		"-y",
+		"-fflags", "+genpts",
+		"-flags", "global_header",
+		"-i", fmt.Sprintf("/media/%s", itemID),
+		"-map_metadata", "-1",
+		"-map_chapters", "-1",
+		"-threads", "0",
+		"-analyzeduration", config.AnalyzeDuration,
+		"-probesize", config.Probesize,
+		"-max_muxing_queue_size", "2048",
+		"-max_delay", "0",
+		"-vsync", "-1",
+	}
 
-	job := &TranscodeJob{
-		ID:         jobID,
-		SourcePath: sourcePath,
-		OutputPath: outputPath,
-		Profile:    profile,
-		Status:     "pending",
+	// Add video filter
+	if config.VideoCodec != "" {
+		args = append(args,
+			"-c:v", config.VideoCodec,
+			"-maxrate", config.MaxVideoBitrate,
+			"-bufsize", config.MaxVideoBitrate,
+		)
+	}
+
+	// Add audio filter
+	if config.AudioCodec != "" {
+		args = append(args,
+			"-c:a", config.AudioCodec,
+			"-maxrate", config.MaxAudioBitrate,
+			"-bufsize", config.MaxAudioBitrate,
+		)
+	}
+
+	// Add output format
+	if config.Container != "" {
+		args = append(args,
+			"-f", config.Container,
+		)
+	}
+
+	// Add output
+	args = append(args, "-")
+
+	cmd := exec.Command("ffmpeg", args...)
+	return cmd, nil
+}
+
+// ExecuteTranscode executes a transcoding command and returns the output.
+func (m *Manager) ExecuteTranscode(cmd *exec.Cmd) (*os.File, error) {
+	// Create output pipe
+	output, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create stdout pipe: %w", err)
+	}
+
+	// Start the command
+	if err := cmd.Start(); err != nil {
+		return nil, fmt.Errorf("failed to start ffmpeg: %w", err)
+	}
+
+	// Track active stream
+	streamID := fmt.Sprintf("stream-%d", time.Now().UnixNano())
+	m.mu.Lock()
+	m.activeStreams[streamID] = &ActiveStream{
+		ID:         streamID,
+		Process:    cmd.Process,
 		StartTime:  time.Now(),
-		Logger:     t.logger,
+		VideoCodec: "h264",
+		AudioCodec: "aac",
+		Container:  "ts",
+	}
+	m.mu.Unlock()
+
+	return output, nil
+}
+
+// BuildAudioTranscodeCommand builds an FFmpeg audio transcoding command.
+func (m *Manager) BuildAudioTranscodeCommand(itemID, mediaSourceID string, config AudioTranscodeConfig) (*exec.Cmd, error) {
+	args := []string{
+		"-nostdin",
+		"-y",
+		"-i", fmt.Sprintf("/media/%s", itemID),
+		"-map_metadata", "-1",
+		"-map_chapters", "-1",
+		"-threads", "0",
+		"-ac", fmt.Sprintf("%d", config.Channels),
+		"-ar", fmt.Sprintf("%d", config.SampleRate),
 	}
 
-	t.mu.Lock()
-	t.activeJobs[jobID] = job
-	t.mu.Unlock()
+	if config.AudioCodec != "" {
+		args = append(args,
+			"-c:a", config.AudioCodec,
+			"-b:a", config.MaxAudioBitrate,
+		)
+	}
 
-	// Build ffmpeg command
-	cmd := t.buildFFmpegCommand(sourcePath, outputPath, profile)
+	if config.Container != "" {
+		args = append(args,
+			"-f", config.Container,
+		)
+	}
 
-	// Start ffmpeg
-	cmdCtx, cancel := context.WithCancel(ctx)
-	job.CancelFunc = cancel
+	args = append(args, "-")
 
-	cmd = exec.CommandContext(cmdCtx, t.ffmpegPath, cmd.Args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd := exec.Command("ffmpeg", args...)
+	return cmd, nil
+}
+
+// ExecuteAudioTranscode executes an audio transcoding command and returns the output.
+func (m *Manager) ExecuteAudioTranscode(cmd *exec.Cmd) (*os.File, error) {
+	output, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create stdout pipe: %w", err)
+	}
 
 	if err := cmd.Start(); err != nil {
-		t.mu.Lock()
-		job.Status = "failed"
-		t.mu.Unlock()
-		return nil, fmt.Errorf("start ffmpeg: %w", err)
+		return nil, fmt.Errorf("failed to start ffmpeg: %w", err)
 	}
 
-	t.mu.Lock()
-	job.Status = "running"
-	job.FFmpegPID = cmd.Process.Pid
-	t.mu.Unlock()
+	streamID := fmt.Sprintf("audio-stream-%d", time.Now().UnixNano())
+	m.mu.Lock()
+	m.activeStreams[streamID] = &ActiveStream{
+		ID:         streamID,
+		Process:    cmd.Process,
+		StartTime:  time.Now(),
+		AudioCodec: "aac",
+		Container:  "mp3",
+	}
+	m.mu.Unlock()
 
-	// Wait for completion in background
-	go func() {
-		err := cmd.Wait()
-		t.mu.Lock()
-		job.EndTime = time.Now()
-		if err != nil {
-			job.Status = "failed"
-			t.logger.Error("transcode failed", zap.String("jobId", jobID), zap.Error(err))
-		} else {
-			job.Status = "completed"
-			t.logger.Info("transcode completed", zap.String("jobId", jobID))
-		}
-		t.mu.Unlock()
-	}()
-
-	t.logger.Info("transcode started",
-		zap.String("jobId", jobID),
-		zap.String("source", sourcePath),
-		zap.String("output", outputPath),
-	)
-
-	return job, nil
+	return output, nil
 }
 
-// buildFFmpegCommand builds the ffmpeg command for transcoding.
-func (t *Transcoder) buildFFmpegCommand(source, output string, profile *TranscodeProfile) *exec.Cmd {
-	var args []string
-
-	// Input
-	args = append(args, "-i", source)
-
-	// Analyze duration
-	if profile.AnalyzeDuration > 0 {
-		args = append(args, "-analyzeduration", fmt.Sprintf("%d", profile.AnalyzeDuration*1000000))
-	}
-
-	// Probe size
-	if profile.ProbeSize != "" {
-		args = append(args, "-probesize", profile.ProbeSize)
-	}
-
-	// Video settings
-	if profile.VideoCodec != "" {
-		args = append(args, "-c:v", profile.VideoCodec)
-	}
-	if profile.VideoBitrate > 0 {
-		args = append(args, "-b:v", fmt.Sprintf("%dk", profile.VideoBitrate))
-	}
-	if profile.MaxVideoBitrate > 0 {
-		args = append(args, "-maxrate", fmt.Sprintf("%dk", profile.MaxVideoBitrate))
-	}
-	if profile.Width > 0 || profile.Height > 0 {
-		args = append(args, "-s", fmt.Sprintf("%dx%d", profile.Width, profile.Height))
-	}
-	if profile.MaxFrameRate > 0 {
-		args = append(args, "-r", fmt.Sprintf("%d", profile.MaxFrameRate))
-	}
-
-	// Audio settings
-	if profile.AudioCodec != "" {
-		args = append(args, "-c:a", profile.AudioCodec)
-	}
-	if profile.AudioBitrate > 0 {
-		args = append(args, "-b:a", fmt.Sprintf("%dk", profile.AudioBitrate))
-	}
-	if profile.MaxAudioBitrate > 0 {
-		args = append(args, "-maxrate:a", fmt.Sprintf("%dk", profile.MaxAudioBitrate))
-	}
-	if profile.MaxAudioChannels != "" {
-		args = append(args, "-ac", profile.MaxAudioChannels)
-	}
-
-	// Output
-	args = append(args, "-f", profile.Container, output)
-
-	return exec.Command(args[0], args[1:]...)
+// GetSubtitleStream returns subtitle stream data.
+func (m *Manager) GetSubtitleStream(itemID, subtitleIndex, format string) ([]byte, error) {
+	// For now, return placeholder subtitle data
+	return []byte("#VTT\n\n00:00:00.000 --> 00:00:05.000\nSubtitle text"), nil
 }
 
-// GetJob returns a transcode job by ID.
-func (t *Transcoder) GetJob(id string) (*TranscodeJob, bool) {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
-
-	job, exists := t.activeJobs[id]
-	return job, exists
+// GetActiveStreamCount returns the number of active streams.
+func (m *Manager) GetActiveStreamCount() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return len(m.activeStreams)
 }
 
-// GetActiveJobs returns all active transcode jobs.
-func (t *Transcoder) GetActiveJobs() []*TranscodeJob {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
+// StopStream stops an active stream.
+func (m *Manager) StopStream(streamID string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
-	jobs := make([]*TranscodeJob, 0, len(t.activeJobs))
-	for _, job := range t.activeJobs {
-		jobs = append(jobs, job)
-	}
-	return jobs
-}
-
-// CancelJob cancels a transcode job.
-func (t *Transcoder) CancelJob(id string) error {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
-	job, exists := t.activeJobs[id]
+	stream, exists := m.activeStreams[streamID]
 	if !exists {
-		return fmt.Errorf("job not found: %s", id)
+		return fmt.Errorf("stream not found: %s", streamID)
 	}
 
-	if job.CancelFunc != nil {
-		job.CancelFunc()
-		job.Status = "cancelled"
+	if stream.Process != nil {
+		stream.Process.Kill()
 	}
 
+	delete(m.activeStreams, streamID)
 	return nil
 }
 
-// RemoveJob removes a completed job.
-func (t *Transcoder) RemoveJob(id string) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
-	delete(t.activeJobs, id)
+// GetTranscodingProfiles returns the list of transcoding profiles.
+func (m *Manager) GetTranscodingProfiles() []TranscodingProfile {
+	return []TranscodingProfile{
+		{
+			Container:        "ts",
+			Type:             "Video",
+			AudioCodec:       "aac",
+			VideoCodec:       "h264",
+			MaxAudioChannels: "6",
+			Protocol:         "Hls",
+			MaxVideoBitrate:  12000000,
+			MaxAudioBitrate:  384000,
+			MaxWidth:         1920,
+			MaxHeight:        1080,
+			Profile:          "high",
+			Level:            "4.1",
+			AnalyzeDuration:  "5000000",
+			Probesize:        "1024*1024",
+		},
+		{
+			Container:        "mp4",
+			Type:             "Video",
+			AudioCodec:       "aac",
+			VideoCodec:       "h264",
+			MaxAudioChannels: "6",
+			Protocol:         "Static",
+			MaxVideoBitrate:  12000000,
+			MaxAudioBitrate:  384000,
+			MaxWidth:         1920,
+			MaxHeight:        1080,
+			Profile:          "high",
+			Level:            "4.1",
+		},
+		{
+			Container:        "mp3",
+			Type:             "Audio",
+			AudioCodec:       "mp3",
+			MaxAudioChannels: "2",
+			Protocol:         "Static",
+			MaxAudioBitrate:  320000,
+			SampleRate:       48000,
+		},
+		{
+			Container:        "aac",
+			Type:             "Audio",
+			AudioCodec:       "aac",
+			MaxAudioChannels: "2",
+			Protocol:         "Static",
+			MaxAudioBitrate:  128000,
+			SampleRate:       48000,
+		},
+	}
 }
 
-// GetActiveJobCount returns the number of active transcode jobs.
-func (t *Transcoder) GetActiveJobCount() int {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
-	return len(t.activeJobs)
+// TranscodingProfile represents a transcoding profile.
+type TranscodingProfile struct {
+	Container        string `json:"Container"`
+	Type             string `json:"Type"`
+	AudioCodec       string `json:"AudioCodec,omitempty"`
+	VideoCodec       string `json:"VideoCodec,omitempty"`
+	MaxAudioChannels string `json:"MaxAudioChannels,omitempty"`
+	Protocol         string `json:"Protocol"`
+	MaxVideoBitrate  int    `json:"MaxVideoBitrate,omitempty"`
+	MaxAudioBitrate  int    `json:"MaxAudioBitrate,omitempty"`
+	MaxWidth         int    `json:"MaxWidth,omitempty"`
+	MaxHeight        int    `json:"MaxHeight,omitempty"`
+	Profile          string `json:"Profile,omitempty"`
+	Level            string `json:"Level,omitempty"`
+	AnalyzeDuration  string `json:"AnalyzeDuration,omitempty"`
+	Probesize        string `json:"Probesize,omitempty"`
+	SampleRate       int    `json:"SampleRate,omitempty"`
 }

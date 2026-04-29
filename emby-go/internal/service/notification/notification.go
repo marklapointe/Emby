@@ -8,167 +8,153 @@ import (
 	"go.uber.org/zap"
 )
 
-// Notification represents a notification message.
+// Notification represents a server notification.
 type Notification struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	Content   string    `json:"content"`
-	Type      string    `json:"type"` // info, warning, error, success
-	UserID    string    `json:"userId,omitempty"`
-	CreatedAt time.Time `json:"createdAt"`
-	IsRead    bool      `json:"isRead"`
-	Data      map[string]interface{} `json:"data,omitempty"`
+	ID          string    `json:"Id"`
+	Name        string    `json:"Name"`
+	Text        string    `json:"Text"`
+	HTML        string    `json:"Html,omitempty"`
+	ImageURL    string    `json:"ImageUrl,omitempty"`
+	DateTime    time.Time `json:"DateTime"`
+	UserID      string    `json:"UserId,omitempty"`
+	IsRead      bool      `json:"IsRead"`
+	Severity     string    `json:"Severity"`
+	Type         string    `json:"Type"`
 }
 
 // Manager handles notification operations.
 type Manager struct {
-	mu         sync.RWMutex
-	notifications map[string][]*Notification
-	logger     *zap.Logger
+	mu          sync.RWMutex
+	notifications map[string]*Notification
+	logger      *zap.Logger
 }
 
 // NewManager creates a new notification manager.
 func NewManager(logger *zap.Logger) *Manager {
 	return &Manager{
-		notifications: make(map[string][]*Notification),
+		notifications: make(map[string]*Notification),
 		logger:        logger,
 	}
 }
 
 // SendNotification sends a notification to a user.
-func (m *Manager) SendNotification(userID, name, content, notificationType string, data map[string]interface{}) (*Notification, error) {
+func (m *Manager) SendNotification(name, text, html, imageURL, userID, severity, notificationType string) (*Notification, error) {
 	notification := &Notification{
-		ID:        fmt.Sprintf("notif-%d", time.Now().UnixNano()),
-		Name:      name,
-		Content:   content,
-		Type:      notificationType,
-		UserID:    userID,
-		CreatedAt: time.Now(),
-		IsRead:    false,
-		Data:      data,
+		ID:         fmt.Sprintf("notif-%d", time.Now().UnixNano()),
+		Name:       name,
+		Text:       text,
+		HTML:       html,
+		ImageURL:   imageURL,
+		DateTime:   time.Now(),
+		UserID:     userID,
+		IsRead:     false,
+		Severity:   severity,
+		Type:       notificationType,
 	}
 
 	m.mu.Lock()
-	m.notifications[userID] = append(m.notifications[userID], notification)
+	m.notifications[notification.ID] = notification
 	m.mu.Unlock()
 
-	m.logger.Info("notification sent",
-		zap.String("userId", userID),
-		zap.String("name", name),
-	)
+	if m.logger != nil {
+		m.logger.Info("notification sent", zap.String("id", notification.ID), zap.String("name", name))
+	}
 
 	return notification, nil
 }
 
-// GetNotifications returns notifications for a user.
-func (m *Manager) GetNotifications(userID string, limit, offset int) ([]*Notification, error) {
+// GetNotifications returns all notifications.
+func (m *Manager) GetNotifications(userID string) []*Notification {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	notifs := m.notifications[userID]
-	if notifs == nil {
-		return []*Notification{}, nil
+	var notifications []*Notification
+	for _, n := range m.notifications {
+		if userID == "" || n.UserID == userID {
+			notifications = append(notifications, n)
+		}
 	}
+	return notifications
+}
 
-	// Apply pagination
-	if offset >= len(notifs) {
-		return []*Notification{}, nil
+// GetUnreadNotifications returns unread notifications for a user.
+func (m *Manager) GetUnreadNotifications(userID string) []*Notification {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	var notifications []*Notification
+	for _, n := range m.notifications {
+		if (userID == "" || n.UserID == userID) && !n.IsRead {
+			notifications = append(notifications, n)
+		}
 	}
-
-	end := offset + limit
-	if end > len(notifs) {
-		end = len(notifs)
-	}
-
-	return notifs[offset:end], nil
+	return notifications
 }
 
 // MarkAsRead marks a notification as read.
-func (m *Manager) MarkAsRead(userID, notificationID string) error {
+func (m *Manager) MarkAsRead(notificationID string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	notifs := m.notifications[userID]
-	for i, n := range notifs {
-		if n.ID == notificationID {
-			notifs[i].IsRead = true
-			return nil
-		}
+	n, exists := m.notifications[notificationID]
+	if !exists {
+		return fmt.Errorf("notification not found: %s", notificationID)
 	}
 
-	return fmt.Errorf("notification not found: %s", notificationID)
+	n.IsRead = true
+	return nil
 }
 
-// MarkAllAsRead marks all notifications for a user as read.
+// MarkAllAsRead marks all notifications as read.
 func (m *Manager) MarkAllAsRead(userID string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	notifs := m.notifications[userID]
-	for i := range notifs {
-		notifs[i].IsRead = true
+	for _, n := range m.notifications {
+		if userID == "" || n.UserID == userID {
+			n.IsRead = true
+		}
 	}
-
 	return nil
 }
 
-// GetUnreadCount returns the number of unread notifications for a user.
-func (m *Manager) GetUnreadCount(userID string) int {
+// DeleteNotification deletes a notification.
+func (m *Manager) DeleteNotification(notificationID string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if _, exists := m.notifications[notificationID]; !exists {
+		return fmt.Errorf("notification not found: %s", notificationID)
+	}
+
+	delete(m.notifications, notificationID)
+	return nil
+}
+
+// GetNotificationCount returns the number of notifications.
+func (m *Manager) GetNotificationCount(userID string) int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	count := 0
-	for _, n := range m.notifications[userID] {
-		if !n.IsRead {
+	for _, n := range m.notifications {
+		if userID == "" || n.UserID == userID {
 			count++
 		}
 	}
 	return count
 }
 
-// BroadcastNotification sends a notification to all users.
-func (m *Manager) BroadcastNotification(name, content, notificationType string, data map[string]interface{}) {
+// GetUnreadNotificationCount returns the number of unread notifications.
+func (m *Manager) GetUnreadNotificationCount(userID string) int {
 	m.mu.RLock()
-	userIDs := make([]string, 0, len(m.notifications))
-	for userID := range m.notifications {
-		userIDs = append(userIDs, userID)
-	}
-	m.mu.RUnlock()
+	defer m.mu.RUnlock()
 
-	for _, userID := range userIDs {
-		m.SendNotification(userID, name, content, notificationType, data)
-	}
-}
-
-// DeleteNotification deletes a notification.
-func (m *Manager) DeleteNotification(userID, notificationID string) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	notifs := m.notifications[userID]
-	for i, n := range notifs {
-		if n.ID == notificationID {
-			m.notifications[userID] = append(notifs[:i], notifs[i+1:]...)
-			return nil
+	count := 0
+	for _, n := range m.notifications {
+		if (userID == "" || n.UserID == userID) && !n.IsRead {
+			count++
 		}
 	}
-
-	return fmt.Errorf("notification not found: %s", notificationID)
+	return count
 }
-
-// ClearNotifications clears all notifications for a user.
-func (m *Manager) ClearNotifications(userID string) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	delete(m.notifications, userID)
-	return nil
-}
-
-// NotificationType constants
-const (
-	NotificationTypeInformation = "info"
-	NotificationTypeWarning     = "warning"
-	NotificationTypeError       = "error"
-	NotificationTypeSuccess     = "success"
-)

@@ -1,7 +1,7 @@
 package scheduled
 
 import (
-	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -10,23 +10,32 @@ import (
 
 // Task represents a scheduled task.
 type Task struct {
-	ID          string
-	Name        string
-	Description string
-	Interval    time.Duration
-	LastRun     time.Time
-	NextRun     time.Time
-	IsRunning   bool
-	CancelFunc  context.CancelFunc
-	fn          func(context.Context) error
+	ID              string    `json:"Id"`
+	Name            string    `json:"Name"`
+	Description     string    `json:"Description"`
+	Category        string    `json:"Category"`
+	Icon            string    `json:"Icon,omitempty"`
+	CommandLine     string    `json:"CommandLine,omitempty"`
+	ExecutionTimeSpec string  `json:"ExecutionTimeSpec,omitempty"`
+	LastExecutionTime time.Time `json:"LastExecutionTime,omitempty"`
+	NextExecutionTime time.Time `json:"NextExecutionTime,omitempty"`
+	IsRunning       bool      `json:"IsRunning"`
+	ProgressPercent int       `json:"ProgressPercent"`
+	Options         TaskOptions `json:"Options,omitempty"`
 }
 
-// Manager manages scheduled tasks.
+// TaskOptions represents task execution options.
+type TaskOptions struct {
+	TriggerOnce      bool `json:"TriggerOnce"`
+	EnableOnStartup  bool `json:"EnableOnStartup"`
+	EnableWhenEmpty  bool `json:"EnableWhenEmpty"`
+}
+
+// Manager handles scheduled task operations.
 type Manager struct {
 	mu       sync.RWMutex
 	tasks    map[string]*Task
 	logger   *zap.Logger
-	running  bool
 }
 
 // NewManager creates a new scheduled task manager.
@@ -38,91 +47,32 @@ func NewManager(logger *zap.Logger) *Manager {
 }
 
 // RegisterTask registers a new scheduled task.
-func (m *Manager) RegisterTask(id, name, description string, interval time.Duration, fn func(context.Context) error) {
+func (m *Manager) RegisterTask(task *Task) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	task := &Task{
-		ID:          id,
-		Name:        name,
-		Description: description,
-		Interval:    interval,
-		LastRun:     time.Time{},
-		NextRun:     time.Now().Add(interval),
-		fn:          fn,
+	if _, exists := m.tasks[task.ID]; exists {
+		return fmt.Errorf("task already registered: %s", task.ID)
 	}
-	m.tasks[id] = task
-	m.logger.Info("registered scheduled task", zap.String("id", id), zap.Duration("interval", interval))
-}
 
-// Start begins executing all registered tasks.
-func (m *Manager) Start() {
-	m.running = true
-	m.logger.Info("starting scheduled task manager")
-
-	go m.runLoop()
-}
-
-// Stop stops all scheduled tasks.
-func (m *Manager) Stop() {
-	m.mu.Lock()
-	m.running = false
-	for _, task := range m.tasks {
-		if task.CancelFunc != nil {
-			task.CancelFunc()
-		}
+	m.tasks[task.ID] = task
+	if m.logger != nil {
+		m.logger.Info("task registered", zap.String("id", task.ID), zap.String("name", task.Name))
 	}
-	m.mu.Unlock()
-	m.logger.Info("stopped scheduled task manager")
+	return nil
 }
 
-// runLoop executes the task scheduling loop.
-func (m *Manager) runLoop() {
-	ticker := time.NewTicker(1 * time.Minute)
-	defer ticker.Stop()
+// GetTask returns a task by ID.
+func (m *Manager) GetTask(id string) (*Task, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 
-	for m.running {
-		select {
-		case <-ticker.C:
-			m.mu.RLock()
-			for _, task := range m.tasks {
-				if time.Now().After(task.NextRun) && !task.IsRunning {
-					go m.executeTask(task)
-				}
-			}
-			m.mu.RUnlock()
-		}
-	}
+	task, exists := m.tasks[id]
+	return task, exists
 }
 
-// executeTask runs a single task.
-func (m *Manager) executeTask(task *Task) {
-	m.mu.Lock()
-	task.IsRunning = true
-	m.mu.Unlock()
-
-	m.logger.Info("executing scheduled task", zap.String("id", task.ID))
-
-	ctx, cancel := context.WithCancel(context.Background())
-	task.CancelFunc = cancel
-
-	err := task.fn(ctx)
-
-	m.mu.Lock()
-	task.LastRun = time.Now()
-	task.NextRun = time.Now().Add(task.Interval)
-	task.IsRunning = false
-	m.mu.Unlock()
-
-	if err != nil {
-		m.logger.Error("scheduled task failed", zap.String("id", task.ID), zap.Error(err))
-	} else {
-		m.logger.Info("scheduled task completed", zap.String("id", task.ID))
-	}
-}
-
-// GetTasks returns all registered tasks.
-func (m *Manager) GetTasks() []*Task {
+// GetAllTasks returns all registered tasks.
+func (m *Manager) GetAllTasks() []*Task {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -133,11 +83,144 @@ func (m *Manager) GetTasks() []*Task {
 	return tasks
 }
 
-// GetTask returns a task by ID.
-func (m *Manager) GetTask(id string) (*Task, bool) {
+// GetRunningTasks returns all running tasks.
+func (m *Manager) GetRunningTasks() []*Task {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
+	var tasks []*Task
+	for _, task := range m.tasks {
+		if task.IsRunning {
+			tasks = append(tasks, task)
+		}
+	}
+	return tasks
+}
+
+// GetTasksByCategory returns tasks filtered by category.
+func (m *Manager) GetTasksByCategory(category string) []*Task {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	var tasks []*Task
+	for _, task := range m.tasks {
+		if category == "" || task.Category == category {
+			tasks = append(tasks, task)
+		}
+	}
+	return tasks
+}
+
+// ExecuteTask executes a task immediately.
+func (m *Manager) ExecuteTask(id string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	task, exists := m.tasks[id]
-	return task, exists
+	if !exists {
+		return fmt.Errorf("task not found: %s", id)
+	}
+
+	if task.IsRunning {
+		return fmt.Errorf("task already running: %s", id)
+	}
+
+	task.IsRunning = true
+	task.LastExecutionTime = time.Now()
+	task.ProgressPercent = 0
+
+	if m.logger != nil {
+		m.logger.Info("task executed", zap.String("id", id), zap.String("name", task.Name))
+	}
+
+	return nil
+}
+
+// CancelTask cancels a running task.
+func (m *Manager) CancelTask(id string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	task, exists := m.tasks[id]
+	if !exists {
+		return fmt.Errorf("task not found: %s", id)
+	}
+
+	task.IsRunning = false
+	task.ProgressPercent = 0
+
+	if m.logger != nil {
+		m.logger.Info("task cancelled", zap.String("id", id), zap.String("name", task.Name))
+	}
+
+	return nil
+}
+
+// UpdateTaskProgress updates a task's progress.
+func (m *Manager) UpdateTaskProgress(id string, progress int) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	task, exists := m.tasks[id]
+	if !exists {
+		return fmt.Errorf("task not found: %s", id)
+	}
+
+	task.ProgressPercent = progress
+	return nil
+}
+
+// CompleteTask marks a task as completed.
+func (m *Manager) CompleteTask(id string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	task, exists := m.tasks[id]
+	if !exists {
+		return fmt.Errorf("task not found: %s", id)
+	}
+
+	task.IsRunning = false
+	task.ProgressPercent = 100
+
+	if m.logger != nil {
+		m.logger.Info("task completed", zap.String("id", id), zap.String("name", task.Name))
+	}
+
+	return nil
+}
+
+// GetTaskCount returns the total number of tasks.
+func (m *Manager) GetTaskCount() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return len(m.tasks)
+}
+
+// GetRunningTaskCount returns the number of running tasks.
+func (m *Manager) GetRunningTaskCount() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	count := 0
+	for _, task := range m.tasks {
+		if task.IsRunning {
+			count++
+		}
+	}
+	return count
+}
+
+// GetTasksByStatus returns tasks filtered by running status.
+func (m *Manager) GetTasksByStatus(running bool) []*Task {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	var tasks []*Task
+	for _, task := range m.tasks {
+		if task.IsRunning == running {
+			tasks = append(tasks, task)
+		}
+	}
+	return tasks
 }
