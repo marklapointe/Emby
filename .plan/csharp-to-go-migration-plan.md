@@ -1846,11 +1846,11 @@ This section is the master checklist for implementing the Go migration. Each tas
 
 | # | Task | Status | Owner | Start | End | Dependencies | Files | Notes |
 |---|------|--------|-------|-------|-----|--------------|-------|-------|
-| 1.1 | Initialize Go module structure | NOT STARTED | | | | | `go.mod`, `Makefile` | Create project skeleton |
-| 1.2 | Create build system (Makefile) | NOT STARTED | | | | 1.1 | `Makefile` | build, test, run targets |
+| 1.1 | Initialize Go module structure | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `go.mod`, `Makefile` | Create project skeleton |
+| 1.2 | Create build system (Makefile) | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 1.1 | `Makefile` | build, test, run targets |
 | 1.3 | Set up CI/CD pipeline | NOT STARTED | | | | 1.2 | `.github/workflows/ci.yml` | GitHub Actions |
-| 1.4 | Implement logging infrastructure | NOT STARTED | | | | 1.1 | `internal/util/log.go` | Zap logger setup |
-| 1.5 | Implement configuration system | NOT STARTED | | | | 1.1 | `internal/config/config.go` | YAML config loading |
+| 1.4 | Implement logging infrastructure | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 1.1 | `internal/util/log.go` | Zap logger setup |
+| 1.5 | Implement configuration system | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 1.1 | `internal/config/config.go` | YAML config loading |
 | 1.6 | Create Dockerfile | NOT STARTED | | | | 1.2 | `Dockerfile` | Multi-stage build |
 | 1.7 | Analyze existing SQLite schema | NOT STARTED | | | | | All `*.cs` files | Extract schema from C# code (reference only) |
 
@@ -1858,24 +1858,24 @@ This section is the master checklist for implementing the Go migration. Each tas
 
 | # | Task | Status | Owner | Start | End | Dependencies | Files | Notes |
 |---|------|--------|-------|-------|-----|--------------|-------|-------|
-| 2.1 | Set up HTTP server with chi router | NOT STARTED | | | | 1.5 | `internal/server/http.go` | Basic server |
-| 2.2 | Implement middleware chain | NOT STARTED | | | | 2.1 | `internal/api/middleware/` | Logger, recovery, CORS |
-| 2.3 | Implement graceful shutdown | NOT STARTED | | | | 2.1 | `internal/server/http.go` | Signal handling |
-| 2.4 | Create API router framework | NOT STARTED | | | | 2.1 | `internal/api/router.go` | Route registration |
+| 2.1 | Set up HTTP server with chi router | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 1.5 | `internal/server/http.go` | Basic server |
+| 2.2 | Implement middleware chain | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 2.1 | `internal/api/middleware/` | Logger, recovery, CORS |
+| 2.3 | Implement graceful shutdown | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 2.1 | `internal/server/http.go` | Signal handling |
+| 2.4 | Create API router framework | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 2.1 | `internal/api/router.go` | Route registration |
 | 2.5 | Create nginx reverse proxy config | NOT STARTED | | | | 2.1 | `deploy/nginx.conf` | SSL termination |
 | 2.6 | Implement request binding | NOT STARTED | | | | 2.5 | `internal/api/binding.go` | JSON to struct |
 | 2.7 | Analyze C# authentication flow | NOT STARTED | | | | | `AuthorizationContext.cs` | Understand auth flow |
-| 2.8 | Implement auth middleware | NOT STARTED | | | | 2.7 | `internal/api/middleware/auth.go` | API key + session |
+| 2.8 | Implement auth middleware | IN PROGRESS | Junie | 2026-04-29 | | 2.7 | `internal/api/middleware/auth.go` | API key + session |
 
 ### Phase 3: Data Layer Migration
 
 | # | Task | Status | Owner | Start | End | Dependencies | Files | Notes |
 |---|------|--------|-------|-------|-----|--------------|-------|-------|
-| 3.1 | Create Go models for items | NOT STARTED | | | | 1.7 | `internal/model/item.go` | Match C# structures |
-| 3.2 | Implement base repository | NOT STARTED | | | | | `internal/repository/base.go` | DB connection pool |
-| 3.3 | Migrate item repository | NOT STARTED | | | | 3.1, 3.2 | `internal/repository/item.go` | `SqliteItemRepository.cs` |
-| 3.4 | Create user models | NOT STARTED | | | | 1.7 | `internal/model/user.go` | Match C# structures |
-| 3.5 | Migrate user repository | NOT STARTED | | | | 3.4 | `internal/repository/user.go` | `UserManager.cs` |
+| 3.1 | Create Go models for items | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 1.7 | `internal/model/item.go` | Match C# structures |
+| 3.2 | Implement base repository | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/repository/base.go` | DB connection pool |
+| 3.3 | Migrate item repository | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 3.1, 3.2 | `internal/repository/item.go` | `SqliteItemRepository.cs` |
+| 3.4 | Create user models | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 1.7 | `internal/model/user.go` | Match C# structures |
+| 3.5 | Migrate user repository | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 3.4 | `internal/repository/user.go` | `UserManager.cs` |
 | 3.6 | Migrate auth repository | NOT STARTED | | | | 3.5 | `internal/repository/auth.go` | `AuthenticationRepository.cs` |
 | 3.7 | Verify password hashing compatibility | NOT STARTED | | | | 3.6 | `internal/repository/auth.go` | Match C# algorithm |
 | 3.8 | Test with existing database | NOT STARTED | | | | 3.3-3.7 | | Ensure compatibility |
@@ -1884,14 +1884,14 @@ This section is the master checklist for implementing the Go migration. Each tas
 
 | # | Task | Status | Owner | Start | End | Dependencies | Files | Notes |
 |---|------|--------|-------|-------|-----|--------------|-------|-------|
-| 4.1 | Implement library manager | NOT STARTED | | | | 3.3 | `internal/service/library/manager.go` | `LibraryManager.cs` |
-| 4.2 | Implement media scanner | NOT STARTED | | | | 4.1 | `internal/service/library/scanner.go` | File system scanning |
+| 4.1 | Implement library manager | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 3.3 | `internal/service/library/manager.go` | `LibraryManager.cs` |
+| 4.2 | Implement media scanner | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 4.1 | `internal/service/library/scanner.go` | File system scanning |
 | 4.3 | Implement file system watcher | NOT STARTED | | | | 4.1 | `internal/service/library/notifier.go` | fsnotify integration |
-| 4.4 | Implement session manager | NOT STARTED | | | | 3.6 | `internal/service/session/manager.go` | `SessionManager.cs` |
-| 4.5 | Implement user manager | NOT STARTED | | | | 3.5 | `internal/service/user/manager.go` | `UserManager.cs` |
-| 4.6 | Implement media encoder | NOT STARTED | | | | | `internal/service/media/encoder.go` | `FFMpegLoader.cs`, `EncodingManager.cs` |
-| 4.7 | Implement FFmpeg process management | NOT STARTED | | | | 4.6 | `internal/service/media/ffmpeg.go` | Process control |
-| 4.8 | Implement transcoding profiles | NOT STARTED | | | | 4.6 | `internal/service/media/profiles.go` | Quality profiles |
+| 4.4 | Implement session manager | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 3.6 | `internal/service/session/manager.go` | `SessionManager.cs` |
+| 4.5 | Implement user manager | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 3.5 | `internal/service/user/manager.go` | `UserManager.cs` |
+| 4.6 | Implement media encoder | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/service/media/encoder.go` | `FFMpegLoader.cs`, `EncodingManager.cs` |
+| 4.7 | Implement FFmpeg process management | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 4.6 | `internal/service/media/ffmpeg.go` | Process control |
+| 4.8 | Implement transcoding profiles | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 4.6 | `internal/service/media/profiles.go` | Quality profiles |
 | 4.9 | Implement stream pooling manager | NOT STARTED | | | | | `internal/service/media/stream_manager.go` | Stream sharing architecture |
 | 4.10 | Implement active stream tracking | NOT STARTED | | | | 4.9 | `internal/service/media/active_stream.go` | Viewer management |
 | 4.11 | Implement stream sharing logic (Live TV) | NOT STARTED | | | | 4.9 | `internal/service/media/stream_manager.go` | Auto-share live streams |
@@ -1903,30 +1903,30 @@ This section is the master checklist for implementing the Go migration. Each tas
 
 | # | Task | Status | Owner | Start | End | Dependencies | Files | Notes |
 |---|------|--------|-------|-------|-----|--------------|-------|-------|
-| 5.1 | Map all C# API routes | NOT STARTED | | | | | Documentation | Create route mapping |
-| 5.2 | Implement library API handlers | NOT STARTED | | | | 4.1 | `internal/api/handlers/library.go` | `LibraryService.cs` |
-| 5.3 | Implement session API handlers | NOT STARTED | | | | 4.4 | `internal/api/handlers/sessions.go` | `SessionsService.cs` |
-| 5.4 | Implement user API handlers | NOT STARTED | | | | 4.5 | `internal/api/handlers/users.go` | `UserService.cs` |
-| 5.5 | Implement images API handlers | NOT STARTED | | | | | `internal/api/handlers/images.go` | `ImageService.cs` |
-| 5.6 | Implement videos API handlers | NOT STARTED | | | | | `internal/api/handlers/videos.go` | `VideosService.cs` |
+| 5.1 | Map all C# API routes | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | Documentation | Create route mapping |
+| 5.2 | Implement library API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 4.1 | `internal/api/handlers/library.go` | `LibraryService.cs` |
+| 5.3 | Implement session API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 4.4 | `internal/api/handlers/sessions.go` | `SessionsService.cs` |
+| 5.4 | Implement user API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 4.5 | `internal/api/handlers/users.go` | `UserService.cs` |
+| 5.5 | Implement images API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/images.go` | `ImageService.cs` |
+| 5.6 | Implement videos API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/videos.go` | `VideosService.cs` |
 | 5.7 | Implement TV shows API handlers | NOT STARTED | | | | | `internal/api/handlers/tvshows.go` | `TvShowsService.cs` |
 | 5.8 | Implement movies API handlers | NOT STARTED | | | | | `internal/api/handlers/movies.go` | `MoviesService.cs` |
 | 5.9 | Implement Live TV API handlers | NOT STARTED | | | | | `internal/api/handlers/livetv.go` | `LiveTvService.cs` |
 | 5.10 | Implement search API handlers | NOT STARTED | | | | | `internal/api/handlers/search.go` | `SearchService.cs` |
 | 5.11 | Implement configuration API handlers | NOT STARTED | | | | | `internal/api/handlers/config.go` | `ConfigurationService.cs` |
 | 5.12 | Implement system API handlers | NOT STARTED | | | | | `internal/api/handlers/system.go` | `SystemService.cs` |
-| 5.13 | Implement scheduled tasks API handlers | NOT STARTED | | | | | `internal/api/handlers/tasks.go` | `ScheduledTaskService.cs` |
-| 5.14 | Implement subtitles API handlers | NOT STARTED | | | | | `internal/api/handlers/subtitles.go` | `SubtitleService.cs` |
+| 5.13 | Implement scheduled tasks API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/tasks.go` | `ScheduledTaskService.cs` |
+| 5.14 | Implement subtitles API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/subtitles.go` | `SubtitleService.cs` |
 | 5.15 | Test API compatibility with clients | NOT STARTED | | | | 5.2-5.14 | | Verify all clients work |
 
 ### Phase 6: DLNA Support (UPnP Removed for Security)
 
 | # | Task | Status | Owner | Start | End | Dependencies | Files | Notes |
 |---|------|--------|-------|-------|-----|--------------|-------|-------|
-| 6.1 | Implement SSDP discovery (local only) | NOT STARTED | | | | | `internal/dlna/server.go` | Local network discovery |
-| 6.2 | Create device description XML | NOT STARTED | | | | 6.1 | `internal/dlna/xml/device.go` | DLNA device descriptor |
-| 6.3 | Implement ContentDirectory service | NOT STARTED | | | | 6.1 | `internal/dlna/content.go` | Browse/search |
-| 6.4 | Implement ConnectionManager service | NOT STARTED | | | | 6.1 | `internal/dlna/connection.go` | Protocol info |
+| 6.1 | Implement SSDP discovery (local only) | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/dlna/server.go` | Local network discovery |
+| 6.2 | Create device description XML | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 6.1 | `internal/dlna/xml/device.go` | DLNA device descriptor |
+| 6.3 | Implement ContentDirectory service | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 6.1 | `internal/dlna/content.go` | Browse/search |
+| 6.4 | Implement ConnectionManager service | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 6.1 | `internal/dlna/connection.go` | Protocol info |
 | 6.5 | Create DIDL-Lite XML responses | NOT STARTED | | | | 6.3 | `internal/dlna/xml/didl.go` | Media metadata |
 | 6.6 | Test with DLNA clients | NOT STARTED | | | | 6.3-6.5 | | Verify local network compatibility |
 | 6.7 | Document UPnP security decision | NOT STARTED | | | | | `docs/upnp-removal.md` | Security rationale |
@@ -2001,22 +2001,22 @@ This section is the master checklist for implementing the Go migration. Each tas
 
 | # | Task | Status | Owner | Start | End | Dependencies | Files | Notes |
 |---|------|--------|-------|-------|-----|--------------|-------|-------|
-| 11.1 | Write repository unit tests | NOT STARTED | | | | 3.3-3.7 | `internal/repository/*_test.go` | Test all repos |
-| 11.2 | Write service unit tests | NOT STARTED | | | | 4.1-4.8 | `internal/service/*/*_test.go` | Test all services |
+| 11.1 | Write repository unit tests | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 3.3-3.7 | `internal/repository/*_test.go` | Test all repos |
+| 11.2 | Write service unit tests | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 4.1-4.8 | `internal/service/*/*_test.go` | Test all services |
 | 11.3 | Write handler unit tests | NOT STARTED | | | | 5.2-5.14 | `internal/api/handlers/*_test.go` | Test all handlers |
 | 11.4 | Create integration test suite | NOT STARTED | | | | 5.2-5.14 | `tests/integration/` | API integration |
 | 11.5 | Create E2E test suite | NOT STARTED | | | | 5.2-5.14 | `tests/e2e/` | Playwright tests |
 | 11.6 | Create performance test suite | NOT STARTED | | | | | `tests/performance/` | Benchmarks |
-| 11.7 | Achieve >80% code coverage | NOT STARTED | | | | 11.1-11.3 | | Coverage goal |
+| 11.7 | Achieve >80% code coverage | IN PROGRESS | Junie | 2026-04-29 | | 11.1-11.3 | | Coverage goal |
 | 11.8 | Test with all client types | NOT STARTED | | | | 5.15 | | Web, mobile, TV |
 
 ### Phase 12: Documentation and Deployment
 
 | # | Task | Status | Owner | Start | End | Dependencies | Files | Notes |
 |---|------|--------|-------|-------|-----|--------------|-------|-------|
-| 12.1 | Write API documentation | NOT STARTED | | | | 5.1 | `docs/api.md` | OpenAPI spec |
-| 12.2 | Write deployment guide | NOT STARTED | | | | | `docs/deployment.md` | Installation |
-| 12.3 | Write configuration guide | NOT STARTED | | | | 1.5 | `docs/configuration.md` | Config options |
+| 12.1 | Write API documentation | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 5.1 | `docs/api.md` | OpenAPI spec |
+| 12.2 | Write deployment guide | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `docs/deployment.md` | Installation |
+| 12.3 | Write configuration guide | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 1.5 | `docs/configuration.md` | Config options |
 | 12.4 | Write migration guide | NOT STARTED | | | | | `docs/migration.md` | C# to Go migration |
 | 12.5 | Create Docker images | NOT STARTED | | | | 1.6 | `Dockerfile` | Multi-arch builds |
 | 12.6 | Create installation packages | NOT STARTED | | | | 1.2 | `packaging/` | DEB, RPM, etc. |
