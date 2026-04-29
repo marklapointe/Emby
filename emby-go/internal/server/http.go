@@ -7,77 +7,81 @@ import (
 	"time"
 
 	"github.com/emby/emby-go/internal/config"
+	"github.com/emby/emby-go/internal/api/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
 )
 
-// HTTPServer wraps the HTTP server with chi router.
+// HTTPServer represents the main HTTP server.
 type HTTPServer struct {
 	config *config.Config
+	logger *zap.Logger
 	router *chi.Mux
 	server *http.Server
-	logger *zap.Logger
 }
 
-// NewHTTPServer creates a new HTTP server instance.
+// NewHTTPServer creates a new HTTP server.
 func NewHTTPServer(cfg *config.Config, logger *zap.Logger) *HTTPServer {
-	router := chi.NewRouter()
-
-	// Core middleware
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.Timeout(60 * time.Second))
-	router.Use(loggerMiddleware(logger))
-
 	return &HTTPServer{
 		config: cfg,
-		router: router,
 		logger: logger,
 	}
 }
 
-// loggerMiddleware logs HTTP requests.
-func loggerMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			start := time.Now()
-			next.ServeHTTP(w, r)
-			logger.Info("request completed",
-				zap.String("method", r.Method),
-				zap.String("path", r.URL.Path),
-				zap.Duration("duration", time.Since(start)),
-			)
-		})
-	}
-}
-
-// Start begins listening for HTTP requests.
+// Start starts the HTTP server.
 func (s *HTTPServer) Start() error {
+	// Create router
+	s.router = chi.NewRouter()
+
+	// Add middleware
+	s.router.Use(middleware.RequestID)
+	s.router.Use(middleware.RealIP)
+	s.router.Use(middleware.Recoverer)
+	s.router.Use(middleware.Timeout(60 * time.Second))
+	s.router.Use(middleware.Logger)
+	s.router.Use(middleware.AllowContentType("application/json"))
+
+	// Add custom middleware
+	s.router.Use(middleware.CORSMiddleware())
+	s.router.Use(middleware.RequestLogger(s.logger))
+
+	// Create HTTP server
+	addr := fmt.Sprintf("%s:%d", s.config.Server.Host, s.config.Server.Port)
 	s.server = &http.Server{
-		Addr:         fmt.Sprintf("%s:%d", s.config.Server.Host, s.config.Server.Port),
+		Addr:         addr,
 		Handler:      s.router,
-		MaxHeaderBytes: s.config.Server.MaxHeaderBytes,
 		ReadTimeout:  time.Duration(s.config.Server.ReadTimeout) * time.Second,
 		WriteTimeout: time.Duration(s.config.Server.WriteTimeout) * time.Second,
+		IdleTimeout:  120 * time.Second,
 	}
 
-	s.logger.Info("starting HTTP server",
-		zap.String("host", s.config.Server.Host),
-		zap.Int("port", s.config.Server.Port),
-	)
+	s.logger.Info("HTTP server starting", zap.String("addr", addr))
 
-	return s.server.ListenAndServe()
+	if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		return fmt.Errorf("HTTP server failed: %w", err)
+	}
+
+	return nil
 }
 
 // Shutdown gracefully shuts down the HTTP server.
 func (s *HTTPServer) Shutdown(ctx context.Context) error {
-	s.logger.Info("shutting down HTTP server")
+	s.logger.Info("HTTP server shutting down")
 	return s.server.Shutdown(ctx)
 }
 
-// Router returns the chi router for route registration.
+// Router returns the Chi router.
 func (s *HTTPServer) Router() *chi.Mux {
 	return s.router
+}
+
+// GetConfig returns the server configuration.
+func (s *HTTPServer) GetConfig() *config.Config {
+	return s.config
+}
+
+// GetLogger returns the server logger.
+func (s *HTTPServer) GetLogger() *zap.Logger {
+	return s.logger
 }
