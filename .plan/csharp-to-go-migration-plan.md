@@ -1923,11 +1923,11 @@ This section is the master checklist for implementing the Go migration. Each tas
 | 5.15 | Test API compatibility with clients | NOT STARTED | | | | 5.2-5.14 | | Verify all clients work |
 | 5.16 | Implement playlist API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/playlist.go` | `PlaylistService.cs` |
 | 5.17 | Implement display preferences API | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/displayprefs.go` | `DisplayPreferencesService.cs` |
-| 5.18 | Implement channel API handlers | NOT STARTED | | | | | `internal/api/handlers/channel.go` | `ChannelService.cs` |
-| 5.19 | Implement branding API | NOT STARTED | | | | | `internal/api/handlers/branding.go` | `BrandingService.cs` |
-| 5.20 | Implement filter API handlers | NOT STARTED | | | | | `internal/api/handlers/filter.go` | `FilterService.cs` |
-| 5.21 | Implement games API handlers | NOT STARTED | | | | | `internal/api/handlers/games.go` | `GamesService.cs` |
-| 5.22 | Implement startup wizard API | NOT STARTED | | | | | `internal/api/handlers/startup.go` | `StartupWizardService.cs` |
+| 5.18 | Implement channel API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/channel.go` | `ChannelService.cs` |
+| 5.19 | Implement branding API | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/branding.go` | `BrandingService.cs` |
+| 5.20 | Implement filter API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/filter.go` | `FilterService.cs` |
+| 5.21 | Implement games API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/games.go` | `GamesService.cs` |
+| 5.22 | Implement startup wizard API | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/startup.go` | `StartupWizardService.cs` |
 | 5.23 | Implement environment API | NOT STARTED | | | | | `internal/api/handlers/environment.go` | `EnvironmentService.cs` |
 | 5.24 | Implement localization API | NOT STARTED | | | | | `internal/api/handlers/localization.go` | `LocalizationService.cs` |
 | 5.25 | Implement package API | NOT STARTED | | | | | `internal/api/handlers/package.go` | `PackageService.cs` |

@@ -410,3 +410,68 @@ func (r *ItemRepository) GetDisplayPreferencesByItem(itemId, userId string) (map
 func (r *ItemRepository) GetViewSettings(userId string) (map[string]interface{}, error) {
 	return map[string]interface{}{}, nil
 }
+
+// GetChannel returns a single channel.
+func (r *ItemRepository) GetChannel(id string) (map[string]interface{}, error) {
+	return map[string]interface{}{}, nil
+}
+
+// GetChannelFolders returns folders for a channel.
+func (r *ItemRepository) GetChannelFolders(channelId string) ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}
+
+// GetChannelItems returns items for a channel.
+func (r *ItemRepository) GetChannelItems(channelId, userId string) ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}
+
+// GetGenres returns available genres.
+func (r *ItemRepository) GetGenres() ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}
+
+// GetStudios returns available studios.
+func (r *ItemRepository) GetStudios() ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}
+
+// GetYears returns available years.
+func (r *ItemRepository) GetYears() ([]int, error) {
+	return []int{}, nil
+}
+
+// GetNetworks returns available networks.
+func (r *ItemRepository) GetNetworks() ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}
+
+// GetTags returns available tags.
+func (r *ItemRepository) GetTags() ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}
+
+// GetGames returns games.
+func (r *ItemRepository) GetGames(userId string) ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}
+
+// GetGame returns a single game.
+func (r *ItemRepository) GetGame(id string) (map[string]interface{}, error) {
+	return map[string]interface{}{}, nil
+}
+
+// GetGameGenres returns game genres.
+func (r *ItemRepository) GetGameGenres() ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}
+
+// GetGameStudios returns game studios.
+func (r *ItemRepository) GetGameStudios() ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}
+
+// GetGameCompanies returns game companies.
+func (r *ItemRepository) GetGameCompanies() ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}
