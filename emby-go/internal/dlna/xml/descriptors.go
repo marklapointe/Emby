@@ -89,3 +89,23 @@ func ContentDirectoryAction(action string, body string) string {
 </s:Envelope>`
 	}
 }
+
+// ConnectionManagerEvent returns a ConnectionManager event notification XML.
+func ConnectionManagerEvent() string {
+	return `<?xml version="1.0"?>
+<e:propertyset xmlns:e="urn:schemas-upnp-org:event-1-0">
+  <e:property>
+    <A_ARG_TYPE_InstanceID>0</A_ARG_TYPE_InstanceID>
+  </e:property>
+</e:propertyset>`
+}
+
+// ContentDirectoryEvent returns a ContentDirectory event notification XML.
+func ContentDirectoryEvent() string {
+	return `<?xml version="1.0"?>
+<e:propertyset xmlns:e="urn:schemas-upnp-org:event-1-0">
+  <e:property>
+    <ContainerUpdateIDs>0</ContainerUpdateIDs>
+  </e:property>
+</e:propertyset>`
+}

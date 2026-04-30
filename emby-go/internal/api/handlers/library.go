@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/emby/emby-go/internal/service/library"
 	"github.com/gorilla/mux"
@@ -47,8 +48,8 @@ func (h *LibraryHandler) GetItems(w http.ResponseWriter, r *http.Request) {
 	userId := r.URL.Query().Get("UserId")
 	sortBy := r.URL.Query().Get("SortBy")
 	sortOrder := r.URL.Query().Get("SortOrder")
-	startIndex := r.URL.Query().GetInt("StartIndex")
-	limit := r.URL.Query().GetInt("Limit")
+	startIndex, _ := strconv.Atoi(r.URL.Query().Get("StartIndex"))
+	limit, _ := strconv.Atoi(r.URL.Query().Get("Limit"))
 	isFavorite := r.URL.Query().Get("IsFavorite")
 	isUnaired := r.URL.Query().Get("IsUnaired")
 	isNextUp := r.URL.Query().Get("IsNextUp")
@@ -244,8 +245,8 @@ func (h *LibraryHandler) GetFolderItems(w http.ResponseWriter, r *http.Request) 
 	userId := r.URL.Query().Get("UserId")
 	sortBy := r.URL.Query().Get("SortBy")
 	sortOrder := r.URL.Query().Get("SortOrder")
-	startIndex := r.URL.Query().GetInt("StartIndex")
-	limit := r.URL.Query().GetInt("Limit")
+	startIndex, _ := strconv.Atoi(r.URL.Query().Get("StartIndex"))
+	limit, _ := strconv.Atoi(r.URL.Query().Get("Limit"))
 	isFavorite := r.URL.Query().Get("IsFavorite")
 	enableTotalCount := r.URL.Query().Get("EnableTotalItemCount")
 	enableImages := r.URL.Query().Get("EnableImages")
@@ -264,6 +265,7 @@ func (h *LibraryHandler) GetFolderItems(w http.ResponseWriter, r *http.Request) 
 	_ = enableTotalCount
 	_ = enableImages
 	_ = enableUserData
+	_ = id
 	_ = fields
 	_ = recursive
 	_ = mediaTypes

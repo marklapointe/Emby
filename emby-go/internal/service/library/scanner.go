@@ -187,21 +187,16 @@ func (s *Scanner) StartScheduledScans(scheduledMgr *scheduled.Manager) {
 		return
 	}
 
-	interval := time.Duration(s.config.Library.ScanIntervalMinutes) * time.Minute
 	s.scheduledMgr = scheduledMgr
 
-	s.scheduledMgr.RegisterTask(
-		"library-scan",
-		"Library Scan",
-		"Scan media library for new and updated content",
-		interval,
-		func(ctx context.Context) error {
-			_, err := s.ScanLibrary(ctx)
-			return err
-		},
-	)
+	task := &scheduled.Task{
+		ID:        "library-scan",
+		Name:      "Library Scan",
+		Description: "Scan media library for new and updated content",
+		Category:  "Library",
+	}
 
-	s.scheduledMgr.Start()
+	s.scheduledMgr.RegisterTask(task)
 }
 
 // isMediaFile checks if a file is a recognized media type.

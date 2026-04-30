@@ -2,6 +2,7 @@ package transcoding
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"sync"
@@ -141,7 +142,7 @@ func (m *Manager) BuildTranscodeCommand(itemID, mediaSourceID string, config Tra
 }
 
 // ExecuteTranscode executes a transcoding command and returns the output.
-func (m *Manager) ExecuteTranscode(cmd *exec.Cmd) (*os.File, error) {
+func (m *Manager) ExecuteTranscode(cmd *exec.Cmd) (io.ReadCloser, error) {
 	// Create output pipe
 	output, err := cmd.StdoutPipe()
 	if err != nil {
@@ -202,7 +203,7 @@ func (m *Manager) BuildAudioTranscodeCommand(itemID, mediaSourceID string, confi
 }
 
 // ExecuteAudioTranscode executes an audio transcoding command and returns the output.
-func (m *Manager) ExecuteAudioTranscode(cmd *exec.Cmd) (*os.File, error) {
+func (m *Manager) ExecuteAudioTranscode(cmd *exec.Cmd) (io.ReadCloser, error) {
 	output, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create stdout pipe: %w", err)

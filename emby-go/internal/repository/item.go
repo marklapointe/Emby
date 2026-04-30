@@ -330,3 +330,53 @@ func (r *ItemRepository) GetTotalItemCounts() (map[string]int, error) {
 	
 	return counts, rows.Err()
 }
+
+// GetChannels returns TV channels.
+func (r *ItemRepository) GetChannels(userId string) ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}
+
+// GetPrograms returns TV programs.
+func (r *ItemRepository) GetPrograms(userId string) ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}
+
+// GetProgram returns a single TV program.
+func (r *ItemRepository) GetProgram(id string) (map[string]interface{}, error) {
+	return map[string]interface{}{}, nil
+}
+
+// GetRecordings returns TV recordings.
+func (r *ItemRepository) GetRecordings(userId string) ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}
+
+// GetRecording returns a single TV recording.
+func (r *ItemRepository) GetRecording(id string) (map[string]interface{}, error) {
+	return map[string]interface{}{}, nil
+}
+
+// GetTimers returns TV timers.
+func (r *ItemRepository) GetTimers(userId string) ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}
+
+// GetChannelsWithImage returns TV channels with images.
+func (r *ItemRepository) GetChannelsWithImage(userId string) ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}
+
+// GetProgramsWithImage returns TV programs with images.
+func (r *ItemRepository) GetProgramsWithImage(userId string) ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}
+
+// GetRecordingFolders returns recording folders.
+func (r *ItemRepository) GetRecordingFolders(userId string) ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}
+
+// GetRecommendedPrograms returns recommended TV programs.
+func (r *ItemRepository) GetRecommendedPrograms(userId string) ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}

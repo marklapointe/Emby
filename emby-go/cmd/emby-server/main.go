@@ -76,7 +76,7 @@ func main() {
 	_ = metadata.NewManager(logger)
 	_ = notification.NewManager(logger)
 	scheduledSvc := scheduled.NewManager(logger)
-	_ = transcoding.NewTranscoder(logger)
+	_ = transcoding.NewManager(cfg, logger)
 	_ = media.NewStreamManager(cfg.Stream.MaxConcurrentStreams, logger)
 
 	// Initialize library scanner
@@ -87,7 +87,7 @@ func main() {
 	httpServer := server.NewHTTPServer(cfg, logger)
 
 	// Initialize API router
-	apiRouter := api.NewRouter(httpServer, cfg, logger, dbManager)
+	apiRouter := api.NewRouter(cfg, logger, dbManager)
 	apiRouter.RegisterAll()
 
 	// Register handlers
@@ -101,13 +101,14 @@ func main() {
 	r.Get("/Library/Root", libHandler.GetLibraryRoot)
 	r.Get("/Library/Items", libHandler.GetItems)
 	r.Post("/Library/Root/Scan", libHandler.ScanLibrary)
-	r.Get("/Items/{id}/MediaStreams", mediaHandler.GetMediaInfo)
-	r.Get("/Items/{id}/PlaybackInfo", mediaHandler.GetPlaybackInfo)
+	r.Get("/Items/{id}", mediaHandler.GetItem)
+	r.Get("/Items/{id}/Subtitles", mediaHandler.GetSubtitles)
 	r.Get("/Sessions", sessionHandler.GetSessions)
-	r.Post("/Sessions/{id}/Playing/{command}", sessionHandler.SendCommand)
+	r.Get("/Sessions/{id}", sessionHandler.GetSession)
+	r.Post("/Sessions/{id}/SendKey", sessionHandler.SendKey)
 	r.Get("/Users", userHandler.GetUsers)
 	r.Get("/Users/{id}", userHandler.GetUser)
-	r.Post("/Users/Public/Login", userHandler.PostUser)
+	r.Post("/Users/Login", userHandler.Login)
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/emby/emby-go/internal/service/transcoding"
@@ -76,7 +77,7 @@ func (h *PlaybackHandler) GetStream(w http.ResponseWriter, r *http.Request) {
 	// Stream output to client
 	w.Header().Set("Content-Type", "video/mp2t")
 	w.Header().Set("Transfer-Encoding", "chunked")
-	output.WriteTo(w)
+	io.Copy(w, output)
 }
 
 // GetSubtitleStream handles GET /Videos/{id}/Subtitles/{subtitleIndex}/Stream
@@ -132,7 +133,7 @@ func (h *PlaybackHandler) GetAudioStream(w http.ResponseWriter, r *http.Request)
 	// Stream output to client
 	w.Header().Set("Content-Type", "audio/mpeg")
 	w.Header().Set("Transfer-Encoding", "chunked")
-	output.WriteTo(w)
+	io.Copy(w, output)
 }
 
 // PostPlaybackProgress handles POST /Sessions/{id}/Playing/Progress

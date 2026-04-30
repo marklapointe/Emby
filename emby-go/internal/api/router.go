@@ -15,7 +15,6 @@ import (
 	"github.com/emby/emby-go/internal/service/session"
 	"github.com/emby/emby-go/internal/service/transcoding"
 	"github.com/emby/emby-go/internal/service/user"
-	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
 

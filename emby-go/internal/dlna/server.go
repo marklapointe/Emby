@@ -2,10 +2,10 @@ package dlna
 
 import (
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/emby/emby-go/internal/dlna/xml"
 	"go.uber.org/zap"
@@ -100,13 +100,15 @@ func (s *Server) handleDeviceDescriptor(w http.ResponseWriter, r *http.Request) 
 // handleConnectionManager handles ConnectionManager SOAP actions.
 func (s *Server) handleConnectionManager(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/xml")
-	w.Write([]byte(xml.ContentDirectoryAction("ConnectionManager", r.Body)))
+	body, _ := io.ReadAll(r.Body)
+	w.Write([]byte(xml.ContentDirectoryAction("ConnectionManager", string(body))))
 }
 
 // handleContentDirectory handles ContentDirectory SOAP actions.
 func (s *Server) handleContentDirectory(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/xml")
-	w.Write([]byte(xml.ContentDirectoryAction("ContentDirectory", r.Body)))
+	body, _ := io.ReadAll(r.Body)
+	w.Write([]byte(xml.ContentDirectoryAction("ContentDirectory", string(body))))
 }
 
 // handleConnectionManagerEvent handles ConnectionManager event notifications.

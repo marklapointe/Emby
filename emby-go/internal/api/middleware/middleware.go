@@ -92,8 +92,8 @@ func LoggingMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 	}
 }
 
-// AuthMiddleware returns authentication middleware.
-func AuthMiddleware() func(http.Handler) http.Handler {
+// AuthenticationMiddleware returns authentication middleware.
+func AuthenticationMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Check for API key in header or query parameter

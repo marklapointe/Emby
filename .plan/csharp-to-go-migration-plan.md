@@ -31,6 +31,7 @@ This document outlines a comprehensive, phased approach to migrating the Emby Se
   - [Phase 5: API Endpoints Migration](#phase-5-api-endpoints-migration)
   - [Phase 6: DLNA Server (Local Only)](#phase-6-dlna-server-local-only)
   - [Phase 6B: Emby Premiere Licensing](#phase-6b-emby-premiere-licensing)
+  - [Phase 6C: Additional Services (Missing from Original Plan)](#phase-6c-additional-services-missing-from-original-plan)
   - [Phase 7: Image Processing](#phase-7-image-processing)
   - [Phase 8: Metadata Providers](#phase-8-metadata-providers)
   - [Phase 9: WebSocket and Real-time Communication](#phase-9-websocket-and-real-time-communication)
@@ -1833,6 +1834,8 @@ go test -bench=. ./tests/performance/...
 
 ## 12. TODO — Step-by-Step Implementation Tracker
 
+**Important:** This section was updated to include components discovered during C# codebase analysis that were missing from the original plan.
+
 This section is the master checklist for implementing the Go migration. Each task includes:
 - **Status:** `NOT STARTED` | `IN PROGRESS` | `COMPLETED`
 - **Owner:** Who is working on it
@@ -1846,11 +1849,11 @@ This section is the master checklist for implementing the Go migration. Each tas
 
 | # | Task | Status | Owner | Start | End | Dependencies | Files | Notes |
 |---|------|--------|-------|-------|-----|--------------|-------|-------|
-| 1.1 | Initialize Go module structure | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `go.mod`, `Makefile` | Create project skeleton |
-| 1.2 | Create build system (Makefile) | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 1.1 | `Makefile` | build, test, run targets |
+| 1.1 | Initialize Go module structure | COMPLETED | — | 2026-04-29 | 2026-04-29 | | `go.mod`, `Makefile` | Create project skeleton |
+| 1.2 | Create build system (Makefile) | COMPLETED | — | 2026-04-29 | 2026-04-29 | 1.1 | `Makefile` | build, test, run targets |
 | 1.3 | Set up CI/CD pipeline | NOT STARTED | | | | 1.2 | `.github/workflows/ci.yml` | GitHub Actions |
-| 1.4 | Implement logging infrastructure | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 1.1 | `internal/util/log.go` | Zap logger setup |
-| 1.5 | Implement configuration system | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 1.1 | `internal/config/config.go` | YAML config loading |
+| 1.4 | Implement logging infrastructure | COMPLETED | — | 2026-04-29 | 2026-04-29 | 1.1 | `internal/util/log.go` | Zap logger setup |
+| 1.5 | Implement configuration system | COMPLETED | — | 2026-04-29 | 2026-04-29 | 1.1 | `internal/config/config.go` | YAML config loading |
 | 1.6 | Create Dockerfile | NOT STARTED | | | | 1.2 | `Dockerfile` | Multi-stage build |
 | 1.7 | Analyze existing SQLite schema | NOT STARTED | | | | | All `*.cs` files | Extract schema from C# code (reference only) |
 
@@ -1858,24 +1861,24 @@ This section is the master checklist for implementing the Go migration. Each tas
 
 | # | Task | Status | Owner | Start | End | Dependencies | Files | Notes |
 |---|------|--------|-------|-------|-----|--------------|-------|-------|
-| 2.1 | Set up HTTP server with chi router | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 1.5 | `internal/server/http.go` | Basic server |
-| 2.2 | Implement middleware chain | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 2.1 | `internal/api/middleware/` | Logger, recovery, CORS |
-| 2.3 | Implement graceful shutdown | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 2.1 | `internal/server/http.go` | Signal handling |
-| 2.4 | Create API router framework | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 2.1 | `internal/api/router.go` | Route registration |
+| 2.1 | Set up HTTP server with chi router | COMPLETED | — | 2026-04-29 | 2026-04-29 | 1.5 | `internal/server/http.go` | Basic server |
+| 2.2 | Implement middleware chain | COMPLETED | — | 2026-04-29 | 2026-04-29 | 2.1 | `internal/api/middleware/` | Logger, recovery, CORS |
+| 2.3 | Implement graceful shutdown | COMPLETED | — | 2026-04-29 | 2026-04-29 | 2.1 | `internal/server/http.go` | Signal handling |
+| 2.4 | Create API router framework | COMPLETED | — | 2026-04-29 | 2026-04-29 | 2.1 | `internal/api/router.go` | Route registration |
 | 2.5 | Create nginx reverse proxy config | NOT STARTED | | | | 2.1 | `deploy/nginx.conf` | SSL termination |
 | 2.6 | Implement request binding | NOT STARTED | | | | 2.5 | `internal/api/binding.go` | JSON to struct |
 | 2.7 | Analyze C# authentication flow | NOT STARTED | | | | | `AuthorizationContext.cs` | Understand auth flow |
-| 2.8 | Implement auth middleware | IN PROGRESS | Junie | 2026-04-29 | | 2.7 | `internal/api/middleware/auth.go` | API key + session |
+| 2.8 | Implement auth middleware | IN PROGRESS | — | 2026-04-29 | | 2.7 | `internal/api/middleware/auth.go` | API key + session |
 
 ### Phase 3: Data Layer Migration
 
 | # | Task | Status | Owner | Start | End | Dependencies | Files | Notes |
 |---|------|--------|-------|-------|-----|--------------|-------|-------|
-| 3.1 | Create Go models for items | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 1.7 | `internal/model/item.go` | Match C# structures |
-| 3.2 | Implement base repository | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/repository/base.go` | DB connection pool |
-| 3.3 | Migrate item repository | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 3.1, 3.2 | `internal/repository/item.go` | `SqliteItemRepository.cs` |
-| 3.4 | Create user models | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 1.7 | `internal/model/user.go` | Match C# structures |
-| 3.5 | Migrate user repository | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 3.4 | `internal/repository/user.go` | `UserManager.cs` |
+| 3.1 | Create Go models for items | COMPLETED | — | 2026-04-29 | 2026-04-29 | 1.7 | `internal/model/item.go` | Match C# structures |
+| 3.2 | Implement base repository | COMPLETED | — | 2026-04-29 | 2026-04-29 | | `internal/repository/base.go` | DB connection pool |
+| 3.3 | Migrate item repository | COMPLETED | — | 2026-04-29 | 2026-04-29 | 3.1, 3.2 | `internal/repository/item.go` | `SqliteItemRepository.cs` |
+| 3.4 | Create user models | COMPLETED | — | 2026-04-29 | 2026-04-29 | 1.7 | `internal/model/user.go` | Match C# structures |
+| 3.5 | Migrate user repository | COMPLETED | — | 2026-04-29 | 2026-04-29 | 3.4 | `internal/repository/user.go` | `UserManager.cs` |
 | 3.6 | Migrate auth repository | NOT STARTED | | | | 3.5 | `internal/repository/auth.go` | `AuthenticationRepository.cs` |
 | 3.7 | Verify password hashing compatibility | NOT STARTED | | | | 3.6 | `internal/repository/auth.go` | Match C# algorithm |
 | 3.8 | Test with existing database | NOT STARTED | | | | 3.3-3.7 | | Ensure compatibility |
@@ -1884,14 +1887,14 @@ This section is the master checklist for implementing the Go migration. Each tas
 
 | # | Task | Status | Owner | Start | End | Dependencies | Files | Notes |
 |---|------|--------|-------|-------|-----|--------------|-------|-------|
-| 4.1 | Implement library manager | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 3.3 | `internal/service/library/manager.go` | `LibraryManager.cs` |
-| 4.2 | Implement media scanner | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 4.1 | `internal/service/library/scanner.go` | File system scanning |
-| 4.3 | Implement file system watcher | NOT STARTED | | | | 4.1 | `internal/service/library/notifier.go` | fsnotify integration |
-| 4.4 | Implement session manager | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 3.6 | `internal/service/session/manager.go` | `SessionManager.cs` |
-| 4.5 | Implement user manager | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 3.5 | `internal/service/user/manager.go` | `UserManager.cs` |
-| 4.6 | Implement media encoder | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/service/media/encoder.go` | `FFMpegLoader.cs`, `EncodingManager.cs` |
-| 4.7 | Implement FFmpeg process management | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 4.6 | `internal/service/media/ffmpeg.go` | Process control |
-| 4.8 | Implement transcoding profiles | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 4.6 | `internal/service/media/profiles.go` | Quality profiles |
+| 4.1 | Implement library manager | COMPLETED | — | 2026-04-29 | 2026-04-29 | 3.3 | `internal/service/library/manager.go` | `LibraryManager.cs` |
+| 4.2 | Implement media scanner | COMPLETED | — | 2026-04-29 | 2026-04-29 | 4.1 | `internal/service/library/scanner.go` | File system scanning |
+| 4.3 | Implement file system watcher | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 4.1 | `internal/service/library/notifier.go` | fsnotify integration |
+| 4.4 | Implement session manager | COMPLETED | — | 2026-04-29 | 2026-04-29 | 3.6 | `internal/service/session/manager.go` | `SessionManager.cs` |
+| 4.5 | Implement user manager | COMPLETED | — | 2026-04-29 | 2026-04-29 | 3.5 | `internal/service/user/manager.go` | `UserManager.cs` |
+| 4.6 | Implement media encoder | COMPLETED | — | 2026-04-29 | 2026-04-29 | | `internal/service/media/encoder.go` | `FFMpegLoader.cs`, `EncodingManager.cs` |
+| 4.7 | Implement FFmpeg process management | COMPLETED | — | 2026-04-29 | 2026-04-29 | 4.6 | `internal/service/media/ffmpeg.go` | Process control |
+| 4.8 | Implement transcoding profiles | COMPLETED | — | 2026-04-29 | 2026-04-29 | 4.6 | `internal/service/media/profiles.go` | Quality profiles |
 | 4.9 | Implement stream pooling manager | NOT STARTED | | | | | `internal/service/media/stream_manager.go` | Stream sharing architecture |
 | 4.10 | Implement active stream tracking | NOT STARTED | | | | 4.9 | `internal/service/media/active_stream.go` | Viewer management |
 | 4.11 | Implement stream sharing logic (Live TV) | NOT STARTED | | | | 4.9 | `internal/service/media/stream_manager.go` | Auto-share live streams |
@@ -1903,30 +1906,41 @@ This section is the master checklist for implementing the Go migration. Each tas
 
 | # | Task | Status | Owner | Start | End | Dependencies | Files | Notes |
 |---|------|--------|-------|-------|-----|--------------|-------|-------|
-| 5.1 | Map all C# API routes | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | Documentation | Create route mapping |
-| 5.2 | Implement library API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 4.1 | `internal/api/handlers/library.go` | `LibraryService.cs` |
-| 5.3 | Implement session API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 4.4 | `internal/api/handlers/sessions.go` | `SessionsService.cs` |
-| 5.4 | Implement user API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 4.5 | `internal/api/handlers/users.go` | `UserService.cs` |
-| 5.5 | Implement images API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/images.go` | `ImageService.cs` |
-| 5.6 | Implement videos API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/videos.go` | `VideosService.cs` |
-| 5.7 | Implement TV shows API handlers | NOT STARTED | | | | | `internal/api/handlers/tvshows.go` | `TvShowsService.cs` |
-| 5.8 | Implement movies API handlers | NOT STARTED | | | | | `internal/api/handlers/movies.go` | `MoviesService.cs` |
-| 5.9 | Implement Live TV API handlers | NOT STARTED | | | | | `internal/api/handlers/livetv.go` | `LiveTvService.cs` |
-| 5.10 | Implement search API handlers | NOT STARTED | | | | | `internal/api/handlers/search.go` | `SearchService.cs` |
-| 5.11 | Implement configuration API handlers | NOT STARTED | | | | | `internal/api/handlers/config.go` | `ConfigurationService.cs` |
-| 5.12 | Implement system API handlers | NOT STARTED | | | | | `internal/api/handlers/system.go` | `SystemService.cs` |
-| 5.13 | Implement scheduled tasks API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/tasks.go` | `ScheduledTaskService.cs` |
-| 5.14 | Implement subtitles API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/subtitles.go` | `SubtitleService.cs` |
+| 5.1 | Map all C# API routes | COMPLETED | — | 2026-04-29 | 2026-04-29 | | Documentation | Create route mapping |
+| 5.2 | Implement library API handlers | COMPLETED | — | 2026-04-29 | 2026-04-29 | 4.1 | `internal/api/handlers/library.go` | `LibraryService.cs` |
+| 5.3 | Implement session API handlers | COMPLETED | — | 2026-04-29 | 2026-04-29 | 4.4 | `internal/api/handlers/sessions.go` | `SessionsService.cs` |
+| 5.4 | Implement user API handlers | COMPLETED | — | 2026-04-29 | 2026-04-29 | 4.5 | `internal/api/handlers/users.go` | `UserService.cs` |
+| 5.5 | Implement images API handlers | COMPLETED | — | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/images.go` | `ImageService.cs` |
+| 5.6 | Implement videos API handlers | COMPLETED | — | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/videos.go` | `VideosService.cs` |
+| 5.7 | Implement TV shows API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/tvshows.go` | `TvShowsService.cs` |
+| 5.8 | Implement movies API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/movies.go` | `MoviesService.cs` |
+| 5.9 | Implement Live TV API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/livetv.go` | `LiveTvService.cs` |
+| 5.10 | Implement search API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/search.go` | `SearchService.cs` |
+| 5.11 | Implement configuration API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/config.go` | `ConfigurationService.cs` |
+| 5.12 | Implement system API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/system.go` | `SystemService.cs` |
+| 5.13 | Implement scheduled tasks API handlers | COMPLETED | — | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/tasks.go` | `ScheduledTaskService.cs` |
+| 5.14 | Implement subtitles API handlers | COMPLETED | — | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/subtitles.go` | `SubtitleService.cs` |
 | 5.15 | Test API compatibility with clients | NOT STARTED | | | | 5.2-5.14 | | Verify all clients work |
+| 5.16 | Implement playlist API handlers | NOT STARTED | | | | | `internal/api/handlers/playlist.go` | `PlaylistService.cs` |
+| 5.17 | Implement display preferences API | NOT STARTED | | | | | `internal/api/handlers/displayprefs.go` | `DisplayPreferencesService.cs` |
+| 5.18 | Implement channel API handlers | NOT STARTED | | | | | `internal/api/handlers/channel.go` | `ChannelService.cs` |
+| 5.19 | Implement branding API | NOT STARTED | | | | | `internal/api/handlers/branding.go` | `BrandingService.cs` |
+| 5.20 | Implement filter API handlers | NOT STARTED | | | | | `internal/api/handlers/filter.go` | `FilterService.cs` |
+| 5.21 | Implement games API handlers | NOT STARTED | | | | | `internal/api/handlers/games.go` | `GamesService.cs` |
+| 5.22 | Implement startup wizard API | NOT STARTED | | | | | `internal/api/handlers/startup.go` | `StartupWizardService.cs` |
+| 5.23 | Implement environment API | NOT STARTED | | | | | `internal/api/handlers/environment.go` | `EnvironmentService.cs` |
+| 5.24 | Implement localization API | NOT STARTED | | | | | `internal/api/handlers/localization.go` | `LocalizationService.cs` |
+| 5.25 | Implement package API | NOT STARTED | | | | | `internal/api/handlers/package.go` | `PackageService.cs` |
+| 5.26 | Implement activity API | NOT STARTED | | | | | `internal/api/handlers/activity.go` | Activity endpoints |
 
 ### Phase 6: DLNA Support (UPnP Removed for Security)
 
 | # | Task | Status | Owner | Start | End | Dependencies | Files | Notes |
 |---|------|--------|-------|-------|-----|--------------|-------|-------|
-| 6.1 | Implement SSDP discovery (local only) | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/dlna/server.go` | Local network discovery |
-| 6.2 | Create device description XML | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 6.1 | `internal/dlna/xml/device.go` | DLNA device descriptor |
-| 6.3 | Implement ContentDirectory service | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 6.1 | `internal/dlna/content.go` | Browse/search |
-| 6.4 | Implement ConnectionManager service | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 6.1 | `internal/dlna/connection.go` | Protocol info |
+| 6.1 | Implement SSDP discovery (local only) | COMPLETED | — | 2026-04-29 | 2026-04-29 | | `internal/dlna/server.go` | Local network discovery |
+| 6.2 | Create device description XML | COMPLETED | — | 2026-04-29 | 2026-04-29 | 6.1 | `internal/dlna/xml/device.go` | DLNA device descriptor |
+| 6.3 | Implement ContentDirectory service | COMPLETED | — | 2026-04-29 | 2026-04-29 | 6.1 | `internal/dlna/content.go` | Browse/search |
+| 6.4 | Implement ConnectionManager service | COMPLETED | — | 2026-04-29 | 2026-04-29 | 6.1 | `internal/dlna/connection.go` | Protocol info |
 | 6.5 | Create DIDL-Lite XML responses | NOT STARTED | | | | 6.3 | `internal/dlna/xml/didl.go` | Media metadata |
 | 6.6 | Test with DLNA clients | NOT STARTED | | | | 6.3-6.5 | | Verify local network compatibility |
 | 6.7 | Document UPnP security decision | NOT STARTED | | | | | `docs/upnp-removal.md` | Security rationale |
@@ -1947,6 +1961,291 @@ This section is the master checklist for implementing the Go migration. Each tas
 | 6B.10 | Gate Live TV / DVR | NOT STARTED | | | | 6B.8 | `internal/service/livetv/manager.go` | Premiere feature |
 | 6B.11 | Preserve API endpoints | NOT STARTED | | | | 6B.2 | `internal/api/handlers/licensing.go` | /Plugins/SecurityInfo |
 | 6B.12 | Test license migration | NOT STARTED | | | | 6B.2-6B.11 | | Existing licenses work |
+
+### Phase 6C: Additional Services (Missing from Original Plan)
+
+**Duration:** 8-10 weeks
+
+**Goal:** Implement additional services discovered during C# codebase analysis that were missing from the original migration plan.
+
+#### 6C.1 Activity Logging
+
+**Tasks:**
+1. Analyze ActivityLogEntryPoint.cs and ActivityRepository.cs
+2. Implement activity log storage
+3. Create activity logging service
+4. Implement API endpoints for activity retrieval
+
+**Files:**
+```go
+// internal/service/activity/manager.go
+type ActivityManager struct {
+    logger *zap.Logger
+}
+
+func (m *ActivityManager) LogEntry(ctx context.Context, entry *ActivityEntry) error
+func (m *ActivityManager) GetEntries(userID string, limit int) ([]*ActivityEntry, error)
+```
+
+**API Endpoints:**
+- `GET /System/Activity` - Get activity log entries
+- `POST /System/Activity` - Log new activity
+
+**Deliverables:**
+- Activity logging works
+- API compatible with existing clients
+
+#### 6C.2 Channel Service
+
+**Tasks:**
+1. Analyze ChannelManager.cs and related files
+2. Implement channel browsing
+3. Implement channel media sources
+4. Create channel refresh tasks
+
+**Files:**
+```go
+// internal/service/channel/manager.go
+type ChannelManager struct {
+    config *config.Config
+    logger *zap.Logger
+}
+```
+
+**API Endpoints:**
+- `GET /Channels` - List channels
+- `GET /Channels/{id}` - Get channel details
+- `GET /Channels/{id}/MediaSources` - Get channel sources
+
+**Deliverables:**
+- Channel browsing works
+- Channel streaming works
+
+#### 6C.3 LiveTV / DVR (EmbyTV)
+
+**Tasks:**
+1. Analyze LiveTvManager.cs and EmbyTV/*.cs
+2. Implement TV tuner management
+3. Implement DVR recording
+4. Create program guide integration
+5. Implement timer management
+
+**Files:**
+```go
+// internal/service/livetv/manager.go
+type LiveTvManager struct {
+    config *config.Config
+    logger *zap.Logger
+    tuner  *TunerManager
+    guide  *GuideManager
+    recorder *RecorderManager
+}
+
+// internal/service/livetv/tuner/manager.go
+type TunerManager struct {
+    hosts map[string]*TunerHost
+}
+```
+
+**API Endpoints:**
+- `GET /LiveTv/Channels` - Get TV channels
+- `GET /LiveTv/Channels/{id}` - Get channel details
+- `GET /LiveTv/Programs` - Get program guide
+- `POST /LiveTv/Recording/Start` - Start recording
+- `POST /LiveTv/Recording/Stop` - Stop recording
+- `GET /LiveTv/Recordings` - List recordings
+- `GET /LiveTv/Recordings/{id}` - Get recording
+
+**Deliverables:**
+- Live TV streaming works
+- DVR recording works
+- Program guide displays correctly
+
+#### 6C.4 HttpClientManager (HTTP Client with Retry/Caching)
+
+**Tasks:**
+1. Analyze HttpClientManager.cs
+2. Implement HTTP client with retry logic
+3. Implement response caching
+4. Create timeout handling
+
+**Files:**
+```go
+// internal/httpclient/manager.go
+type HttpClientManager struct {
+    client  *http.Client
+    cache   *cache.Cache
+    retry   int
+    timeout time.Duration
+}
+
+func (m *HttpClientManager) Get(ctx context.Context, url string) (*http.Response, error)
+func (m *HttpClientManager) GetWithRetry(ctx context.Context, url string) (*http.Response, error)
+```
+
+**Deliverables:**
+- HTTP requests with retry logic
+- Response caching for metadata providers
+
+#### 6C.5 File System Monitoring (LibraryMonitor)
+
+**Tasks:**
+1. Analyze LibraryMonitor.cs
+2. Implement file system watcher
+3. Integrate with library scanner
+4. Handle file add/change/delete events
+
+**Files:**
+```go
+// internal/service/library/monitor.go
+type LibraryMonitor struct {
+    watcher *fsnotify.Watcher
+    scanner *Scanner
+}
+
+func (m *LibraryMonitor) Start(paths []string) error
+func (m *LibraryMonitor) OnFileChange(event fsnotify.Event)
+```
+
+**Deliverables:**
+- Real-time library updates when files change
+- Automatic rescanning of affected items
+
+#### 6C.6 Playlists
+
+**Tasks:**
+1. Analyze playlist data structures
+2. Create playlist models
+3. Implement playlist repository
+4. Create playlist service
+
+**Files:**
+```go
+// internal/service/playlist/manager.go
+type PlaylistManager struct {
+    repo *repository.PlaylistRepository
+}
+
+func (m *PlaylistManager) CreatePlaylist(userID, name string, items []string) (*Playlist, error)
+func (m *PlaylistManager) AddToPlaylist(playlistID, itemID string) error
+func (m *PlaylistManager) GetPlaylistItems(playlistID string) ([]*model.Item, error)
+```
+
+**API Endpoints:**
+- `GET /Playlists` - List playlists
+- `POST /Playlists` - Create playlist
+- `GET /Playlists/{id}` - Get playlist
+- `POST /Playlists/{id}/Items` - Add items
+- `DELETE /Playlists/{id}` - Delete playlist
+
+**Deliverables:**
+- Playlist CRUD operations
+- Playlist item ordering
+
+#### 6C.7 Display Preferences
+
+**Tasks:**
+1. Analyze display preferences storage
+2. Implement user display preferences
+3. Create API for preference management
+
+**Files:**
+```go
+// internal/service/user/display_preferences.go
+type DisplayPreferencesManager struct {
+    repo *repository.DisplayPreferencesRepository
+}
+
+func (m *DisplayPreferencesManager) GetUserPreferences(userID string) (*DisplayPreferences, error)
+func (m *DisplayPreferencesManager) UpdatePreferences(userID string, prefs *DisplayPreferences) error
+```
+
+**API Endpoints:**
+- `GET /Users/{id}/DisplayPreferences` - Get display preferences
+- `POST /Users/{id}/DisplayPreferences` - Update display preferences
+
+**Deliverables:**
+- Display preferences persist across sessions
+- UI settings preserved
+
+#### 6C.8 ISO & Disc Image Handling
+
+**Tasks:**
+1. Analyze IsoManager.cs
+2. Implement ISO mounting
+3. Support Blu-ray and DVD structure parsing
+
+**Files:**
+```go
+// internal/service/media/isomanager.go
+type IsoManager struct {
+    logger *zap.Logger
+}
+
+func (m *IsoManager) MountIso(path string) (string, error)
+func (m *IsoManager) UnmountIso(path string) error
+func (m *IsoManager *BDInfo(path string) (*BDInfo, error)
+```
+
+**Deliverables:**
+- ISO file mounting
+- Blu-ray disc metadata extraction
+
+#### 6C.9 Notifications (Full System)
+
+**Tasks:**
+1. Analyze Emby.Notifications/
+2. Implement notification storage
+3. Implement notification delivery
+4. Create notification API
+
+**Files:**
+```go
+// internal/service/notification/manager.go
+type NotificationManager struct {
+    store *NotificationStore
+    logger *zap.Logger
+}
+
+func (m *NotificationManager) SendNotification(userID, title, body string) error
+func (m *NotificationManager) GetUserNotifications(userID string) ([]*Notification, error)
+```
+
+**API Endpoints:**
+- `GET /Notifications` - Get notifications
+- `POST /Notifications` - Send notification
+- `POST /Notifications/{id}/MarkRead` - Mark as read
+
+**Deliverables:**
+- Full notification system
+- User notification preferences
+
+---
+
+### Phase 6C: Additional Services (Missing from Original Plan)
+
+| # | Task | Status | Owner | Start | End | Dependencies | Files | Notes |
+|---|------|--------|-------|-------|-----|--------------|-------|-------|
+| 6C.1 | Analyze activity logging system | NOT STARTED | | | | | `Emby.Server.Implementations/Activity/` | ActivityLogEntryPoint.cs |
+| 6C.2 | Implement activity repository | NOT STARTED | | | | 6C.1 | `internal/service/activity/repository.go` | Activity storage |
+| 6C.3 | Implement activity API | NOT STARTED | | | | 6C.2 | `internal/api/handlers/activity.go` | /System/Activity |
+| 6C.4 | Analyze channel system | NOT STARTED | | | | | `Emby.Server.Implementations/Channels/` | ChannelManager.cs |
+| 6C.5 | Implement channel manager | NOT STARTED | | | | 6C.4 | `internal/service/channel/manager.go` | Channel browsing |
+| 6C.6 | Analyze LiveTV/EmbyTV system | NOT STARTED | | | | | `Emby.Server.Implementations/LiveTv/` | LiveTvManager.cs, EmbyTV/ |
+| 6C.7 | Implement tuner management | NOT STARTED | | | | 6C.6 | `internal/service/livetv/tuner.go` | TV tuner hosts |
+| 6C.8 | Implement program guide | NOT STARTED | | | | 6C.6 | `internal/service/livetv/guide.go` | EPG data |
+| 6C.9 | Implement DVR recording | NOT STARTED | | | | 6C.6 | `internal/service/livetv/recorder.go` | Recording management |
+| 6C.10 | Analyze HttpClientManager | NOT STARTED | | | | | `Emby.Server.Implementations/HttpClientManager/` | HttpClientManager.cs |
+| 6C.11 | Implement HTTP client with retry | NOT STARTED | | | | 6C.10 | `internal/httpclient/manager.go` | Retry logic |
+| 6C.12 | Implement file system monitor | NOT STARTED | | | | 4.1 | `internal/service/library/monitor.go` | LibraryMonitor.cs |
+| 6C.13 | Analyze playlist service | NOT STARTED | | | | | `MediaBrowser.Api/PlaylistService.cs` | Playlist CRUD |
+| 6C.14 | Implement playlist service | NOT STARTED | | | | 6C.13 | `internal/service/playlist/manager.go` | Playlist management |
+| 6C.15 | Analyze display preferences | NOT STARTED | | | | | `MediaBrowser.Api/DisplayPreferencesService.cs` | User UI settings |
+| 6C.16 | Implement display preferences | NOT STARTED | | | | 6C.15 | `internal/service/user/display_prefs.go` | Persist UI settings |
+| 6C.17 | Analyze ISO/disc handling | NOT STARTED | | | | | `Emby.Server.Implementations/IO/IsoManager.cs` | BDInfo, DVD parsing |
+| 6C.18 | Implement ISO manager | NOT STARTED | | | | 6C.17 | `internal/service/media/isomanager.go` | ISO mounting |
+| 6C.19 | Analyze notification system | NOT STARTED | | | | | `Emby.Notifications/` | Full notification system |
+| 6C.20 | Implement notification service | NOT STARTED | | | | 6C.19 | `internal/service/notification/manager.go` | User notifications |
 
 ### Phase 7: WebSocket and Real-time Features
 
@@ -2001,24 +2300,24 @@ This section is the master checklist for implementing the Go migration. Each tas
 
 | # | Task | Status | Owner | Start | End | Dependencies | Files | Notes |
 |---|------|--------|-------|-------|-----|--------------|-------|-------|
-| 11.1 | Write repository unit tests | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 3.3-3.7 | `internal/repository/*_test.go` | Test all repos |
-| 11.2 | Write service unit tests | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 4.1-4.8 | `internal/service/*/*_test.go` | Test all services |
-| 11.3 | Write handler unit tests | NOT STARTED | | | | 5.2-5.14 | `internal/api/handlers/*_test.go` | Test all handlers |
-| 11.4 | Create integration test suite | NOT STARTED | | | | 5.2-5.14 | `tests/integration/` | API integration |
+| 11.1 | Write repository unit tests | COMPLETED | — | 2026-04-29 | 2026-04-29 | 3.3-3.7 | `internal/repository/*_test.go` | Test all repos |
+| 11.2 | Write service unit tests | COMPLETED | — | 2026-04-29 | 2026-04-29 | 4.1-4.8 | `internal/service/*/*_test.go` | Test all services |
+| 11.3 | Write handler unit tests | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 5.2-5.14 | `internal/api/handlers/*_test.go` | Test all handlers |
+| 11.4 | Create integration test suite | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 5.2-5.14 | `tests/integration/` | API integration |
 | 11.5 | Create E2E test suite | NOT STARTED | | | | 5.2-5.14 | `tests/e2e/` | Playwright tests |
 | 11.6 | Create performance test suite | NOT STARTED | | | | | `tests/performance/` | Benchmarks |
-| 11.7 | Achieve >80% code coverage | IN PROGRESS | Junie | 2026-04-29 | | 11.1-11.3 | | Coverage goal |
+| 11.7 | Achieve >80% code coverage | IN PROGRESS | — | 2026-04-29 | | 11.1-11.3 | | Coverage goal |
 | 11.8 | Test with all client types | NOT STARTED | | | | 5.15 | | Web, mobile, TV |
 
 ### Phase 12: Documentation and Deployment
 
 | # | Task | Status | Owner | Start | End | Dependencies | Files | Notes |
 |---|------|--------|-------|-------|-----|--------------|-------|-------|
-| 12.1 | Write API documentation | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 5.1 | `docs/api.md` | OpenAPI spec |
-| 12.2 | Write deployment guide | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `docs/deployment.md` | Installation |
-| 12.3 | Write configuration guide | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 1.5 | `docs/configuration.md` | Config options |
+| 12.1 | Write API documentation | COMPLETED | — | 2026-04-29 | 2026-04-29 | 5.1 | `docs/api.md` | OpenAPI spec |
+| 12.2 | Write deployment guide | COMPLETED | — | 2026-04-29 | 2026-04-29 | | `docs/deployment.md` | Installation |
+| 12.3 | Write configuration guide | COMPLETED | — | 2026-04-29 | 2026-04-29 | 1.5 | `docs/configuration.md` | Config options |
 | 12.4 | Write migration guide | NOT STARTED | | | | | `docs/migration.md` | C# to Go migration |
-| 12.5 | Create Docker images | NOT STARTED | | | | 1.6 | `Dockerfile` | Multi-arch builds |
+| 12.5 | Create Docker images | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 1.6 | `Dockerfile` | Multi-arch builds |
 | 12.6 | Create installation packages | NOT STARTED | | | | 1.2 | `packaging/` | DEB, RPM, etc. |
 | 12.7 | Test on multiple platforms | NOT STARTED | | | | 12.6 | | Linux, FreeBSD, macOS, Windows |
 | 12.8 | Create upgrade scripts | NOT STARTED | | | | 12.6 | `scripts/upgrade.sh` | Migration scripts |
@@ -2066,7 +2365,8 @@ This plan provides a roadmap for a successful migration while minimizing risks a
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** 2026-04-27  
-**Author:** Junie (JetBrains AI Assistant)  
+**Document Version:** 1.1
+**Last Updated:** 2026-04-30
+**Author:** Mark LaPointe <mark@cloudbsd.org>
 **Based on:** FreeBSD PPPoE multithreaded plan format
+**Changelog:** Added Phase 6C (Additional Services) with missing components discovered during C# codebase analysis. Added missing API services to Phase 5 (5.16-5.26).
