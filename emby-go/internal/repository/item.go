@@ -380,3 +380,33 @@ func (r *ItemRepository) GetRecordingFolders(userId string) ([]map[string]interf
 func (r *ItemRepository) GetRecommendedPrograms(userId string) ([]map[string]interface{}, error) {
 	return []map[string]interface{}{}, nil
 }
+
+// GetPlaylists returns playlists.
+func (r *ItemRepository) GetPlaylists(userId string) ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}
+
+// GetPlaylist returns a single playlist.
+func (r *ItemRepository) GetPlaylist(id string) (map[string]interface{}, error) {
+	return map[string]interface{}{}, nil
+}
+
+// GetPlaylistItems returns items in a playlist.
+func (r *ItemRepository) GetPlaylistItems(playlistId string) ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}
+
+// GetDisplayPreferences returns display preferences.
+func (r *ItemRepository) GetDisplayPreferences(userId string) (map[string]interface{}, error) {
+	return map[string]interface{}{}, nil
+}
+
+// GetDisplayPreferencesByItem returns display preferences for an item.
+func (r *ItemRepository) GetDisplayPreferencesByItem(itemId, userId string) (map[string]interface{}, error) {
+	return map[string]interface{}{}, nil
+}
+
+// GetViewSettings returns view settings.
+func (r *ItemRepository) GetViewSettings(userId string) (map[string]interface{}, error) {
+	return map[string]interface{}{}, nil
+}

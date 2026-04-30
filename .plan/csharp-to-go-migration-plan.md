@@ -1921,8 +1921,8 @@ This section is the master checklist for implementing the Go migration. Each tas
 | 5.13 | Implement scheduled tasks API handlers | COMPLETED | — | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/tasks.go` | `ScheduledTaskService.cs` |
 | 5.14 | Implement subtitles API handlers | COMPLETED | — | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/subtitles.go` | `SubtitleService.cs` |
 | 5.15 | Test API compatibility with clients | NOT STARTED | | | | 5.2-5.14 | | Verify all clients work |
-| 5.16 | Implement playlist API handlers | NOT STARTED | | | | | `internal/api/handlers/playlist.go` | `PlaylistService.cs` |
-| 5.17 | Implement display preferences API | NOT STARTED | | | | | `internal/api/handlers/displayprefs.go` | `DisplayPreferencesService.cs` |
+| 5.16 | Implement playlist API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/playlist.go` | `PlaylistService.cs` |
+| 5.17 | Implement display preferences API | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/displayprefs.go` | `DisplayPreferencesService.cs` |
 | 5.18 | Implement channel API handlers | NOT STARTED | | | | | `internal/api/handlers/channel.go` | `ChannelService.cs` |
 | 5.19 | Implement branding API | NOT STARTED | | | | | `internal/api/handlers/branding.go` | `BrandingService.cs` |
 | 5.20 | Implement filter API handlers | NOT STARTED | | | | | `internal/api/handlers/filter.go` | `FilterService.cs` |
@@ -2304,8 +2304,8 @@ func (m *NotificationManager) GetUserNotifications(userID string) ([]*Notificati
 | 11.2 | Write service unit tests | COMPLETED | — | 2026-04-29 | 2026-04-29 | 4.1-4.8 | `internal/service/*/*_test.go` | Test all services |
 | 11.3 | Write handler unit tests | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 5.2-5.14 | `internal/api/handlers/*_test.go` | Test all handlers |
 | 11.4 | Create integration test suite | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 5.2-5.14 | `tests/integration/` | API integration |
-| 11.5 | Create E2E test suite | NOT STARTED | | | | 5.2-5.14 | `tests/e2e/` | Playwright tests |
-| 11.6 | Create performance test suite | NOT STARTED | | | | | `tests/performance/` | Benchmarks |
+| 11.5 | Create E2E test suite | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 5.2-5.14 | `tests/e2e/` | Playwright tests |
+| 11.6 | Create performance test suite | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `tests/performance/` | Benchmarks |
 | 11.7 | Achieve >80% code coverage | IN PROGRESS | — | 2026-04-29 | | 11.1-11.3 | | Coverage goal |
 | 11.8 | Test with all client types | NOT STARTED | | | | 5.15 | | Web, mobile, TV |
 
@@ -2316,9 +2316,9 @@ func (m *NotificationManager) GetUserNotifications(userID string) ([]*Notificati
 | 12.1 | Write API documentation | COMPLETED | — | 2026-04-29 | 2026-04-29 | 5.1 | `docs/api.md` | OpenAPI spec |
 | 12.2 | Write deployment guide | COMPLETED | — | 2026-04-29 | 2026-04-29 | | `docs/deployment.md` | Installation |
 | 12.3 | Write configuration guide | COMPLETED | — | 2026-04-29 | 2026-04-29 | 1.5 | `docs/configuration.md` | Config options |
-| 12.4 | Write migration guide | NOT STARTED | | | | | `docs/migration.md` | C# to Go migration |
+| 12.4 | Write migration guide | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `docs/migration.md` | C# to Go migration |
 | 12.5 | Create Docker images | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 1.6 | `Dockerfile` | Multi-arch builds |
-| 12.6 | Create installation packages | NOT STARTED | | | | 1.2 | `packaging/` | DEB, RPM, etc. |
+| 12.6 | Create installation packages | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 1.2 | `packaging/` | DEB, RPM, etc. |
 | 12.7 | Test on multiple platforms | NOT STARTED | | | | 12.6 | | Linux, FreeBSD, macOS, Windows |
 | 12.8 | Create upgrade scripts | NOT STARTED | | | | 12.6 | `scripts/upgrade.sh` | Migration scripts |
 
