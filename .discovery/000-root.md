@@ -173,6 +173,57 @@ graph LR
 - Emby Website: `http://www.emby.media/`
 - API Docs: `https://github.com/MediaBrowser/MediaBrowser/wiki`
 
+## Decomposition
+
+### MediaBrowser.sln (Solution File)
+
+#### Files Referenced
+| Project | DLL | Purpose |
+|---------|-----|---------|
+| `BDInfo` | BDInfo.dll | Blu-ray disc info |
+| `DvdLib` | DvdLib.dll | DVD IFO parsing |
+| `Emby.Dlna` | Emby.Dlna.dll | DLNA/UPnP server |
+| `Emby.Drawing` | Emby.Drawing.dll | Drawing abstractions |
+| `Emby.Drawing.Skia` | Emby.Drawing.Skia.dll | SkiaSharp backend |
+| `Emby.Drawing.ImageMagick` | Emby.Drawing.ImageMagick.dll | ImageMagick backend |
+| `Emby.Drawing.Net` | Emby.Drawing.Net.dll | .NET drawing backend |
+| `Emby.Notifications` | Emby.Notifications.dll | Notifications |
+| `Emby.Photos` | Emby.Photos.dll | Photo handling |
+| `Emby.Server.Implementations` | Emby.Server.Implementations.dll | Core server |
+| `MediaBrowser.Api` | MediaBrowser.Api.dll | REST API |
+| `MediaBrowser.LocalMetadata` | MediaBrowser.LocalMetadata.dll | Local metadata |
+| `MediaBrowser.Providers` | MediaBrowser.Providers.dll | External providers |
+| `MediaBrowser.Server.Mono` | MediaBrowser.Server.Mono.exe | Mono server |
+| `MediaBrowser.ServerApplication` | MediaBrowser.ServerApplication.exe | Windows server |
+| `MediaBrowser.WebDashboard` | (static files) | Web UI |
+| `MediaBrowser.XbmcMetadata` | MediaBrowser.XbmcMetadata.dll | Kodi compatibility |
+
+### Entry Points
+
+| Entry Point | Language | Framework |
+|-------------|----------|-----------|
+| `MediaBrowser.ServerApplication/Program.cs` | C# | .NET Framework |
+| `MediaBrowser.Server.Mono/Program.cs` | C# | Mono |
+| `emby-go/cmd/emby-server/main.go` | Go | Go stdlib |
+
+### Key Dependencies
+
+```mermaid
+graph TD
+    A[MediaBrowser.ServerApplication] --> B[Emby.Server.Implementations]
+    B --> C[MediaBrowser.Api]
+    B --> D[MediaBrowser.Providers]
+    B --> E[Emby.Drawing]
+    E --> F[Emby.Drawing.Skia]
+    E --> G[Emby.Drawing.ImageMagick]
+    E --> H[Emby.Drawing.Net]
+    B --> I[Emby.Dlna]
+    I --> J[RSSDP]
+    B --> K[SocketHttpListener]
+    D --> L[BDInfo]
+    D --> M[DvdLib]
+```
+
 ## Project Artifacts
 
 - \`.gitignore\` — Git ignore rules → .discovery/950-project-artifacts.md

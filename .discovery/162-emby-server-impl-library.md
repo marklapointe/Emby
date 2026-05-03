@@ -73,3 +73,92 @@ Library management components including media library core, item resolvers, vali
 - `DynamicImageProvider.cs` — Emby.Server.Implementations/UserViews/DynamicImageProvider.cs
 - `FolderImageProvider.cs` — Emby.Server.Implementations/UserViews/FolderImageProvider.cs
 
+## Decomposition
+
+### LibraryManager.cs (Core Library Management)
+
+#### Imports
+```csharp
+using MediaBrowser.Controller.Channels;
+using MediaBrowser.Controller.Collections;
+using MediaBrowser.Controller.Configuration;
+using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.IO;
+using MediaBrowser.Controller.Library;
+using MediaBrowser.Model.Entities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+```
+
+#### Classes
+`LibraryManager` (public class : ILibraryManager)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `RootFolder` | `Folder` | Library root folder |
+| `ItemById` | `ConcurrentDictionary<Guid, BaseItem>` | Items by ID |
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `GetItemInfo(BaseItem)` | `BaseItemInfo` | Get item metadata |
+| `ValidateMediaLibrary()` | `Task` | Validate library |
+| `GetMediaFolders()` | `IEnumerable<Folder>` | Get media folders |
+| `AddVirtualFolder(string, bool)` | `Task` | Add library |
+| `RemoveVirtualFolder(string, bool)` | `Task` | Remove library |
+
+### UserManager.cs (User Management)
+
+#### Classes
+`UserManager` (public class : IUserManager)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `Users` | `IEnumerable<User>` | All users |
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `GetUser(Guid)` | `User` | Get user by ID |
+| `GetUserByName(string)` | `User` | Get user by name |
+| `CreateUser(string)` | `Task<User>` | Create new user |
+| `DeleteUser(User)` | `Task` | Delete user |
+
+### ItemResolver.cs (Base Item Resolver)
+
+#### Classes
+`ItemResolver` (public abstract class)
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `ResolvePath(LibraryOptions, Folder, string)` | `ResolveResult<Item>` | Resolve item |
+
+### CollectionManager.cs (Collection Management)
+
+#### Classes
+`CollectionManager` (public class : ICollectionManager)
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `CreateCollection(CollectionCreationOptions)` | `Task<BoxSet>` | Create collection |
+| `AddToCollection(Guid, IEnumerable<Guid>)` | `Task` | Add items |
+| `RemoveFromCollection(Guid, IEnumerable<Guid>)` | `Task` | Remove items |
+
+### PlaylistManager.cs (Playlist Management)
+
+#### Classes
+`PlaylistManager` (public class)
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `GetPlaylists(Guid?)` | `IEnumerable<Playlist>` | Get playlists |
+| `CreatePlaylist(PlaylistCreationOptions)` | `Task<Playlist>` | Create playlist |
+| `AddToPlaylist(Guid, IEnumerable<Guid>)` | `Task` | Add items |
+

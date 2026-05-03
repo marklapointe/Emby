@@ -42,3 +42,87 @@ HTTP server implementation, services, and entry points.
 - `UsageReporter.cs` — Emby.Server.Implementations/EntryPoints/UsageReporter.cs
 - `UserDataChangeNotifier.cs` — Emby.Server.Implementations/EntryPoints/UserDataChangeNotifier.cs
 
+## Decomposition
+
+### HttpListenerHost.cs (HTTP Server Host)
+
+#### Imports
+```csharp
+using MediaBrowser.Model.Net;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+```
+
+#### Classes
+`HttpListenerHost` (public class : IHttpListener)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `TotalRequests` | `long` | Request counter |
+| `ActiveConnections` | `int` | Current connections |
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `Start()` | `Task` | Start HTTP listener |
+| `Stop()` | `void` | Stop listener |
+| `OnRequestReceived(Request)` | `Task` | Handle request |
+
+### HttpResultFactory.cs (HTTP Response Factory)
+
+#### Classes
+`HttpResultFactory` (public class : IHttpResultFactory)
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `GetResult(Request)` | `HttpResult` | Create HTTP result |
+| `GetStaticResult(Request, string)` | `Task<HttpResult>` | Static file response |
+
+### WebSocketConnection.cs (WebSocket Handler)
+
+#### Classes
+`WebSocketConnection` (public class : IWebSocketConnection)
+
+#### Key Events
+| Event | Description |
+|-------|-------------|
+| `Receive` | Message received |
+| `Send` | Message sent |
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `SendAsync(byte[])` | `Task` | Send binary message |
+| `SendAsync(string)` | `Task` | Send text message |
+| `Close()` | `Task` | Close connection |
+
+### AuthService.cs (Authentication Service)
+
+#### Classes
+`AuthService` (public class : IService)
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `GetAuthenticatingUri(Request)` | `Task<string>` | Get auth URL |
+| `Authenticate(Request)` | `Task<AuthResult>` | Authenticate request |
+
+### ExternalPortForwarding.cs (UPnP Port Forwarding)
+
+#### Classes
+`ExternalPortForwarding` (public class)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `IsMapped` | `bool` | Port forwarded |
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `MapPorts()` | `Task` | Create port mapping |
+| `UnmapPorts()` | `Task` | Remove port mapping |
+
