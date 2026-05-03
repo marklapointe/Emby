@@ -172,3 +172,10 @@ graph LR
 - CloudBSD Application Guidelines: `https://github.com/cloudbsdorg/application_guidelines`
 - Emby Website: `http://www.emby.media/`
 - API Docs: `https://github.com/MediaBrowser/MediaBrowser/wiki`
+
+## Project Artifacts
+
+- \`.gitignore\` — Git ignore rules → .discovery/950-project-artifacts.md
+- \`.vs/\` — Visual Studio settings → .discovery/950-project-artifacts.md
+- \`.plan/\` — Migration planning → .discovery/950-project-artifacts.md
+- \`.plan.d/\` — Detailed planning docs → .discovery/950-project-artifacts.md

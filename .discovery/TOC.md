@@ -104,6 +104,8 @@ Emby/
 | [370-thirdparty.md](./370-thirdparty.md) | ThirdParty | Module | Native libraries |
 | [400-packages.md](./400-packages.md) | packages/ | Dependencies | NuGet package cache |
 | [940-license.md](./940-license.md) | LICENSE.md | Legal | License file |
+| [950-project-artifacts.md](./950-project-artifacts.md) | Project Artifacts | Config | Git, VS, planning docs |
+| [950-project-artifacts.md](./950-project-artifacts.md) | Project Artifacts | Config | Git, VS, planning docs |
 
 ## Dependency Graph
 
