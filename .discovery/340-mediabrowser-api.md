@@ -5,6 +5,80 @@
 **Language:** C#
 **Maps to:** \`.discovery/340-mediabrowser-api.md\`
 
+## Decomposition
+
+### BaseApiService.cs (Base Class)
+
+#### Imports
+```csharp
+using MediaBrowser.Controller.Dto;
+using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Library;
+using MediaBrowser.Controller.Net;
+using MediaBrowser.Controller.Session;
+using MediaBrowser.Model.Entities;
+using MediaBrowser.Model.Logging;
+using MediaBrowser.Model.Services;
+using MediaBrowser.Model.Extensions;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+```
+
+#### Classes
+\`BaseApiService\` (public class : IService, IRequiresRequest)
+
+#### Properties
+```csharp
+public ILogger Logger
+public IHttpResultFactory ResultFactory
+public IRequest Request { get; set; }
+```
+
+#### Static Methods
+```csharp
+public static string[] SplitValue(string value, char delim)
+public static Guid[] GetGuids(string value)
+```
+
+### ApiEntryPoint.cs (Service Locator)
+
+#### Classes
+\`ApiEntryPoint\` (sealed class)
+
+#### Static Properties
+```csharp
+public static ApiEntryPoint Instance
+public ILogger Logger
+public IHttpResultFactory ResultFactory
+```
+
+### UserService.cs (User Management)
+
+#### Methods
+```csharp
+public Task<object> Get(UserDto request)
+public Task<object> DeleteUser(UserDto request)
+public Task<object> UpdateUser(UserDto request)
+```
+
+### ItemUpdateService.cs (Item Updates)
+
+#### Methods
+```csharp
+public Task<object> Post(UpdateUserItem request)
+public Task<object> DeleteUserItem(DeleteUserItem request)
+```
+
+### ChannelService.cs (Channel Management)
+
+#### Methods
+```csharp
+public Task<object> Get(ChannelFeatures request)
+public Task<object> GetChannels(Channel request)
+```
+
 ## Description
 
 MediaBrowser.Api implements the REST API endpoints for Emby Server. It uses ServiceStack to expose HTTP endpoints for library, user, playback, and system management. Contains 63 C# files.
