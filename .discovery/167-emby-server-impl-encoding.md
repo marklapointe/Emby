@@ -177,3 +177,73 @@ Text encoding detection, localization, and internationalization support includin
 - `UniversalDetector.cs` — Emby.Server.Implementations/TextEncoding/UniversalDetector/Core/UniversalDetector.cs
 - `UTF8Prober.cs` — Emby.Server.Implementations/TextEncoding/UniversalDetector/Core/UTF8Prober.cs
 
+## Decomposition
+
+### LocalizationManager.cs (Localization Manager)
+
+#### Imports
+```csharp
+using MediaBrowser.Model.Globalization;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+```
+
+#### Classes
+`LocalizationManager` (public class : ILocalizationManager)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `CurrentCulture` | `CultureInfo` | Current culture |
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `GetLocalizedString(string)` | `string` | Get localized string |
+| `GetCultures()` | `IEnumerable<CultureDto>` | Get available cultures |
+
+### TextEncodingDetect.cs (Encoding Detection)
+
+#### Classes
+`TextEncodingDetect` (public static class)
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `DetectEncoding(byte[])` | `Encoding` | Detect encoding from bytes |
+| `DetectEncoding(string)` | `Encoding` | Detect encoding from string |
+
+### UniversalDetector.cs (Charset Detection - Mozilla)
+
+#### Classes
+`UniversalDetector` (public class)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `DetectedCharset` | `string` | Detected charset name |
+| `DetectedLanguage` | `string` | Detected language |
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `DoIt(byte[], int, bool)` | `void` | Process data |
+| `Done()` | `void` | Finish detection |
+
+### LanguageDetector.cs (Language Detection - NLangDetect)
+
+#### Classes
+`LanguageDetector` (public class)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `Probability` | `double` | Detection confidence |
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `Detect(string)` | `string` | Detect language |
+| `DetectLangs(string)` | `IEnumerable<Language>` | Get language probabilities |
+
