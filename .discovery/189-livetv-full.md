@@ -5,6 +5,85 @@
 **Language:** C#
 **Maps to:** `.discovery/189-livetv-full.md`
 
+## Decomposition
+
+### LiveTvManager.cs (API & DTO)
+
+#### Imports
+```csharp
+using MediaBrowser.Controller.LiveTV;
+using MediaBrowser.Model.LiveTV;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+```
+
+#### Classes
+\`LiveTvManager\` (public class : ILiveTvManager)
+
+#### Key Methods
+```csharp
+Task<IEnumerable<ChannelInfo>> GetChannels(CancellationToken cancellationToken)
+Task<IEnumerable<ProgramInfo>> GetPrograms(string channelId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken)
+Task<RecordingInfo> GetRecording(string id, CancellationToken cancellationToken)
+```
+
+### EmbyTV.cs (Main Coordinator)
+
+#### Classes
+\`EmbyTV\` (public class : IServerEntryPoint)
+
+#### Key Methods
+```csharp
+void Start()
+void Stop()
+Task<LiveStream> GetLiveStream(string streamId, CancellationToken cancellationToken)
+```
+
+### SchedulesDirect.cs (EPG Provider)
+
+#### Imports
+```csharp
+using MediaBrowser.Model.LiveTV;
+using System;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Threading.Tasks;
+```
+
+#### Classes
+\`SchedulesDirect\` (public class)
+
+#### Key Methods
+```csharp
+Task<Channel> GetChannel(string channelId)
+Task<List<Program>> GetPrograms(string channelId, DateTime start, DateTime end)
+```
+
+### HdHomerunHost.cs (HDHomeRun Tuner)
+
+#### Classes
+\`HdHomerunHost\` (public class : BaseTunerHost)
+
+#### Key Methods
+```csharp
+Task<IEnumerable<ChannelInfo>> ScanForChannels(CancellationToken cancellationToken)
+Task<MediaSourceInfo> GetMediaSource(string streamId, CancellationToken cancellationToken)
+```
+
+### TimerManager.cs (Recording Schedules)
+
+#### Classes
+\`TimerManager\` (public class)
+
+#### Key Methods
+```csharp
+Task<TimerInfo> CreateTimer(TimerInfo timer, CancellationToken cancellationToken)
+Task CancelTimer(string timerId, CancellationToken cancellationToken)
+IEnumerable<TimerInfo> GetTimers()
+```
+
 ## Description
 
 Live TV functionality including tuner management, EPG data, and recording capabilities.
