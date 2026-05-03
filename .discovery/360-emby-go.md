@@ -5,6 +5,110 @@
 **Language:** Go
 **Maps to:** \`.discovery/360-emby-go.md\`
 
+## Decomposition
+
+### main.go (Entry Point)
+
+#### Package
+\`package main\`
+
+#### Imports
+```go
+import (
+    "context"
+    "log"
+    "os"
+    "os/signal"
+    "syscall"
+)
+```
+
+#### Key Functions
+```go
+func main()
+func run(ctx context.Context) error
+```
+
+### internal/server/server.go (HTTP Server)
+
+#### Package
+\`package server\`
+
+#### Imports
+```go
+import (
+    "context"
+    "net/http"
+    "github.com/MediaBrowser/emby-go/internal/api"
+    "github.com/MediaBrowser/emby-go/internal/config"
+)
+```
+
+#### Key Functions
+```go
+func NewServer(cfg *config.Config) *Server
+func (s *Server) Start(ctx context.Context) error
+func (s *Server) Shutdown(ctx context.Context) error
+```
+
+### internal/api/api.go (API Router)
+
+#### Package
+\`package api\`
+
+#### Key Types
+```go
+type Router struct {
+    mux *http.ServeMux
+    handlers map[string]http.Handler
+}
+```
+
+#### Key Functions
+```go
+func NewRouter() *Router
+func (r *Router) Handle(pattern string, handler http.Handler)
+func (r *Router) ServeHTTP(w http.ResponseWriter, r *http.Request)
+```
+
+### internal/service/library/library.go (Library Service)
+
+#### Package
+\`package library\`
+
+#### Key Types
+```go
+type LibraryService struct {
+    repo Repository
+}
+```
+
+#### Key Functions
+```go
+func NewLibraryService(repo Repository) *LibraryService
+func (s *LibraryService) GetItems(ctx context.Context, query *Query) (*Result, error)
+func (s *LibraryService) GetItem(ctx context.Context, id string) (*Item, error)
+```
+
+### internal/model/*.go (Data Models)
+
+#### Key Types
+```go
+type Item struct {
+    ID          string
+    Name        string
+    Type        string
+    Path        string
+    MediaSources []MediaSource
+}
+
+type MediaSource struct {
+    ID       string
+    Path     string
+    Duration int
+}
+```
+
 ## Description
 
 emby-go contains Go language bindings and utilities for Emby Server. It provides Go packages for interacting with the Emby API and server functionality. Contains 95 Go files.
