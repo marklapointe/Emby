@@ -13,6 +13,81 @@
 - `TSStreamClip` → `.discovery/100-07-tsstreamclip.md` — Stream clip
 - `TSVideoStream`, `TSAudioStream`, `TSTextStream`, `TSGraphicsStream` — Stream subclasses
 
+## Decomposition
+
+#### Imports
+```csharp
+#define DEBUG
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using MediaBrowser.Model.IO;
+using MediaBrowser.Model.Text;
+```
+
+#### Namespace
+```csharp
+namespace BDInfo
+```
+
+#### Classes
+`TSPlaylistFile` (public class)
+
+#### Fields
+```csharp
+private readonly IFileSystem _fileSystem
+private readonly ITextEncoding _textEncoding
+private FileSystemMetadata FileInfo
+public string FileType
+public bool IsInitialized
+public string Name
+public BDROM BDROM
+public bool HasHiddenTracks
+public bool HasLoops
+public bool IsCustom
+public List<double> Chapters
+public Dictionary<ushort, TSStream> Streams
+public Dictionary<ushort, TSStream> PlaylistStreams
+public List<TSStreamClip> StreamClips
+public List<Dictionary<ushort, TSStream>> AngleStreams
+public List<Dictionary<double, TSStreamClip>> AngleClips
+public int AngleCount
+public List<TSStream> SortedStreams
+public List<TSVideoStream> VideoStreams
+public List<TSAudioStream> AudioStreams
+public List<TSTextStream> TextStreams
+public List<TSGraphicsStream> GraphicsStreams
+```
+
+#### Properties
+```csharp
+public ulong InterleavedFileSize
+public ulong FileSize
+public double TotalLength
+public double TotalAngleLength
+public ulong TotalSize
+public ulong TotalAngleSize
+public ulong TotalBitRate
+public ulong TotalAngleBitRate
+public bool IsValid
+```
+
+#### Constructors
+```csharp
+TSPlaylistFile(BDROM bdrom, FileSystemMetadata fileInfo, IFileSystem fileSystem, ITextEncoding textEncoding)
+TSPlaylistFile(BDROM bdrom, string name, List<TSStreamClip> clips, IFileSystem fileSystem, ITextEncoding textEncoding)
+```
+
+#### Methods
+```csharp
+public void Scan(Dictionary<string, TSStreamFile> streamFiles, Dictionary<string, TSStreamClipFile> streamClipFiles)
+public void Initialize()
+protected TSStream CreatePlaylistStream(byte[] data, ref int pos)
+private void LoadStreamClips()
+public void ClearBitrates()
+```
+
 ## Structure
 
 ```
