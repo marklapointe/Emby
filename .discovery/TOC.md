@@ -5,7 +5,7 @@
 **Root:** MediaBrowser.sln
 **Total files:** 4507
 **Mapped files:** 4507 (100% - COMPLETE)
-**Coverage:** ✅ COMPLETE - All modules documented with decomposition
+**Coverage:** ✅ COMPLETE - All 29 top-level modules documented with decomposition (179 documents total)
 
 ---
 
@@ -69,7 +69,7 @@
 | C# Source Files | 1019 | 1019 | 1019 |
 | Go Files | 72 | 72 | 72 |
 | JS/TS Files | 349 | 349 | 349 |
-| Discovery Docs | 132 | 132 | 132 |
+| Discovery Docs | 179 | 179 | 179 |
 
 ### Modules With Decomposition (Updated 2026-05-03)
 
@@ -97,6 +97,53 @@
 | Emby.Server.Implementations/Sorting | ✅ Decomposition | [201-emby-server-impl-sorting.md](./201-emby-server-impl-sorting.md) |
 | Emby.Server.Implementations/TextEncoding | ✅ Decomposition | [202-emby-server-impl-textencoding.md](./202-emby-server-impl-textencoding.md) |
 | Emby.Server.Implementations/Other | ✅ Decomposition | [203-emby-server-impl-other.md](./203-emby-server-impl-other.md) |
+| Emby.Server.Implementations/Collections | ✅ Decomposition | [200-emby-server-impl-collections.md](./200-emby-server-impl-collections.md) |
+| Emby.Server.Implementations/Configuration | ✅ Decomposition | [201-emby-server-impl-configuration.md](./201-emby-server-impl-configuration.md) |
+| Emby.Server.Implementations/Cryptography | ✅ Decomposition | [202-emby-server-impl-cryptography.md](./202-emby-server-impl-cryptography.md) |
+| Emby.Server.Implementations/Diagnostics | ✅ Decomposition | [203-emby-server-impl-diagnostics.md](./203-emby-server-impl-diagnostics.md) |
+| Emby.Server.Implementations/EnvironmentInfo | ✅ Decomposition | [204-emby-server-impl-environmentinfo.md](./204-emby-server-impl-environmentinfo.md) |
+| Emby.Server.Implementations/HttpClientManager | ✅ Decomposition | [205-emby-server-impl-httpclientmanager.md](./205-emby-server-impl-httpclientmanager.md) |
+| Emby.Server.Implementations/Images | ✅ Decomposition | [206-emby-server-impl-images.md](./206-emby-server-impl-images.md) |
+| Emby.Server.Implementations/IO | ✅ Decomposition | [207-emby-server-impl-io.md](./207-emby-server-impl-io.md) |
+| Emby.Server.Implementations/Logging | ✅ Decomposition | [208-emby-server-impl-logging.md](./208-emby-server-impl-logging.md) |
+| Emby.Server.Implementations/MediaEncoder | ✅ Decomposition | [209-emby-server-impl-mediaencoder.md](./209-emby-server-impl-mediaencoder.md) |
+| Emby.Server.Implementations/Net | ✅ Decomposition | [210-emby-server-impl-net.md](./210-emby-server-impl-net.md) |
+| Emby.Server.Implementations/News | ✅ Decomposition | [211-emby-server-impl-news.md](./211-emby-server-impl-news.md) |
+| Emby.Server.Implementations/Playlists | ✅ Decomposition | [212-emby-server-impl-playlists.md](./212-emby-server-impl-playlists.md) |
+| Emby.Server.Implementations/Reflection | ✅ Decomposition | [213-emby-server-impl-reflection.md](./213-emby-server-impl-reflection.md) |
+| Emby.Server.Implementations/Serialization | ✅ Decomposition | [214-emby-server-impl-serialization.md](./214-emby-server-impl-serialization.md) |
+| Emby.Server.Implementations/Services | ✅ Decomposition | [215-emby-server-impl-services.md](./215-emby-server-impl-services.md) |
+| Emby.Server.Implementations/Sorting | ✅ Decomposition | [216-emby-server-impl-sorting.md](./216-emby-server-impl-sorting.md) |
+| Emby.Server.Implementations/TextEncoding | ✅ Decomposition | [217-emby-server-impl-textencoding.md](./217-emby-server-impl-textencoding.md) |
+| Emby.Server.Implementations/Threading | ✅ Decomposition | [218-emby-server-impl-threading.md](./218-emby-server-impl-threading.md) |
+| Emby.Server.Implementations/Updates | ✅ Decomposition | [219-emby-server-impl-updates.md](./219-emby-server-impl-updates.md) |
+| Emby.Server.Implementations/Xml | ✅ Decomposition | [220-emby-server-impl-xml.md](./220-emby-server-impl-xml.md) |
+| MediaBrowser.Providers/BoxSets | ✅ Decomposition | [330-mediabrowser-providers-boxsets.md](./330-mediabrowser-providers-boxsets.md) |
+| MediaBrowser.Providers/Channels | ✅ Decomposition | [331-mediabrowser-providers-channels.md](./331-mediabrowser-providers-channels.md) |
+| MediaBrowser.Providers/Chapters | ✅ Decomposition | [332-mediabrowser-providers-chapters.md](./332-mediabrowser-providers-chapters.md) |
+| MediaBrowser.Providers/Folders | ✅ Decomposition | [333-mediabrowser-providers-folders.md](./333-mediabrowser-providers-folders.md) |
+| MediaBrowser.Providers/GameGenres | ✅ Decomposition | [334-mediabrowser-providers-gamegenres.md](./334-mediabrowser-providers-gamegenres.md) |
+| MediaBrowser.Providers/Games | ✅ Decomposition | [335-mediabrowser-providers-games.md](./335-mediabrowser-providers-games.md) |
+| MediaBrowser.Providers/Genres | ✅ Decomposition | [336-mediabrowser-providers-genres.md](./336-mediabrowser-providers-genres.md) |
+| MediaBrowser.Providers/LiveTv | ✅ Decomposition | [337-mediabrowser-providers-livetv.md](./337-mediabrowser-providers-livetv.md) |
+| MediaBrowser.Providers/Manager | ✅ Decomposition | [338-mediabrowser-providers-manager.md](./338-mediabrowser-providers-manager.md) |
+| MediaBrowser.Providers/MediaInfo | ✅ Decomposition | [339-mediabrowser-providers-mediainfo.md](./339-mediabrowser-providers-mediainfo.md) |
+| MediaBrowser.Providers/MusicGenres | ✅ Decomposition | [340-mediabrowser-providers-musicgenres.md](./340-mediabrowser-providers-musicgenres.md) |
+| MediaBrowser.Providers/Omdb | ✅ Decomposition | [341-mediabrowser-providers-omdb.md](./341-mediabrowser-providers-omdb.md) |
+| MediaBrowser.Providers/Photos | ✅ Decomposition | [342-mediabrowser-providers-photos.md](./342-mediabrowser-providers-photos.md) |
+| MediaBrowser.Providers/Playlists | ✅ Decomposition | [343-mediabrowser-providers-playlists.md](./343-mediabrowser-providers-playlists.md) |
+| MediaBrowser.Providers/Studios | ✅ Decomposition | [344-mediabrowser-providers-studios.md](./344-mediabrowser-providers-studios.md) |
+| MediaBrowser.Api/Devices | ✅ Decomposition | [345-mediabrowser-api-devices.md](./345-mediabrowser-api-devices.md) |
+| MediaBrowser.Api/Images | ✅ Decomposition | [346-mediabrowser-api-images.md](./346-mediabrowser-api-images.md) |
+| MediaBrowser.Api/Library | ✅ Decomposition | [347-mediabrowser-api-library.md](./347-mediabrowser-api-library.md) |
+| MediaBrowser.Api/LiveTv | ✅ Decomposition | [348-mediabrowser-api-livetv.md](./348-mediabrowser-api-livetv.md) |
+| MediaBrowser.Api/Movies | ✅ Decomposition | [349-mediabrowser-api-movies.md](./349-mediabrowser-api-movies.md) |
+| MediaBrowser.Api/Music | ✅ Decomposition | [350-mediabrowser-api-music.md](./350-mediabrowser-api-music.md) |
+| MediaBrowser.Api/Session | ✅ Decomposition | [351-mediabrowser-api-session.md](./351-mediabrowser-api-session.md) |
+| MediaBrowser.Api/System | ✅ Decomposition | [352-mediabrowser-api-system.md](./352-mediabrowser-api-system.md) |
+| MediaBrowser.Api/UserLibrary | ✅ Decomposition | [353-mediabrowser-api-userlibrary.md](./353-mediabrowser-api-userlibrary.md) |
+| MediaBrowser.Api/ScheduledTasks | ✅ Decomposition | [354-mediabrowser-api-scheduledtasks.md](./354-mediabrowser-api-scheduledtasks.md) |
+| MediaBrowser.Api/Subtitles | ✅ Decomposition | [355-mediabrowser-api-subtitles.md](./355-mediabrowser-api-subtitles.md) |
 | MediaBrowser.Api/Controllers | ✅ Decomposition | [344-mediabrowser-api-controllers.md](./344-mediabrowser-api-controllers.md) |
 | MediaBrowser.Providers/Subdirs | ✅ Decomposition | [329-mediabrowser-providers-subdirs.md](./329-mediabrowser-providers-subdirs.md) |
 | Emby.Dlna/Profiles | ✅ Decomposition | [334-emby-dlna-profiles.md](./334-emby-dlna-profiles.md) |
