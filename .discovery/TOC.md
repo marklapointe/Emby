@@ -66,12 +66,12 @@ Emby/
 | [000-root.md](./000-root.md) | Project root | Entry point | Master project overview |
 | [100-bdinfo.md](./100-bdinfo.md) | BDInfo | Module | Blu-ray disc analysis |
 | [110-dvdlib.md](./110-dvdlib.md) | DvdLib | Module | DVD structure parsing |
-| [120-emby-drawing.md](./120-emby-drawing.md) | Emby.Drawing | Module | Image processing |
+| [120-emby-drawing.md](./130-emby-drawing.md) | Emby.Drawing | Module | Image processing |
 | [121-emby-drawing-imagemagick.md](./121-emby-drawing-imagemagick.md) | Emby.Drawing.ImageMagick | Module | ImageMagick backend |
 | [122-emby-drawing-net.md](./122-emby-drawing-net.md) | Emby.Drawing.Net | Module | .NET drawing backend |
 | [123-emby-drawing-skia.md](./123-emby-drawing-skia.md) | Emby.Drawing.Skia | Module | SkiaSharp backend |
-| [130-emby-notifications.md](./130-emby-notifications.md) | Emby.Notifications | Module | Notification system |
-| [140-emby-photos.md](./140-emby-photos.md) | Emby.Photos | Module | Photo management |
+| [130-emby-notifications.md](./140-emby-notifications.md) | Emby.Notifications | Module | Notification system |
+| [140-emby-photos.md](./150-emby-photos.md) | Emby.Photos | Module | Photo management |
 | [160-emby-server-impl.md](./160-emby-server-impl.md) | Emby.Server.Implementations | Module | Core server implementation |
 | [161-emby-server-impl-core.md](./161-emby-server-impl-core.md) | Core Infrastructure | Sub-module | AppBase, Config, Crypto, etc. |
 | [162-emby-server-impl-library.md](./162-emby-server-impl-library.md) | Library Management | Sub-module | Library, Collections, Playlists |
@@ -82,7 +82,7 @@ Emby/
 | [167-emby-server-impl-encoding.md](./167-emby-server-impl-encoding.md) | Text Encoding | Sub-module | Localization, UniversalDetector |
 | [168-emby-server-impl-security.md](./168-emby-server-impl-security.md) | Security | Sub-module | Security, Session, Devices |
 | [169-emby-server-impl-sharpcifs.md](./169-emby-server-impl-sharpcifs.md) | SharpCifs | Sub-module | Embedded SMB/CIFS client |
-| [200-mediabrowser-localmetadata.md](./200-mediabrowser-localmetadata.md) | MediaBrowser.LocalMetadata | Module | Local metadata providers |
+| [200-mediabrowser-localmetadata.md](./210-mediabrowser-localmetadata.md) | MediaBrowser.LocalMetadata | Module | Local metadata providers |
 | [210-mediabrowser-server-mono.md](./210-mediabrowser-server-mono.md) | MediaBrowser.Server.Mono | Module | Mono runtime support |
 | [220-mediabrowser-serverapplication.md](./220-mediabrowser-serverapplication.md) | MediaBrowser.ServerApplication | Module | Windows server app |
 | [230-mediabrowser-tests.md](./230-mediabrowser-tests.md) | MediaBrowser.Tests | Module | Unit tests |
