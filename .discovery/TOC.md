@@ -73,10 +73,14 @@
 | Module | Status | Discovery Doc |
 |--------|--------|--------------|
 | BDInfo | ✅ Decomposition | [100-01-bdrom.md](./100-01-bdrom.md) |
+| DvdLib | ✅ Decomposition | [111-dvdliv-internals.md](./111-dvdliv-internals.md) |
 | Emby.Server.Implementations | ✅ Decomposition | [161-emby-server-impl-core.md](./161-emby-server-impl-core.md) |
+| Emby.Server.Implementations/LiveTV | ✅ Decomposition | [189-livetv-full.md](./189-livetv-full.md) |
 | Emby.Dlna | ✅ Decomposition | [330-emby-dlna.md](./330-emby-dlna.md) |
 | MediaBrowser.Api | ✅ Decomposition | [340-mediabrowser-api.md](./340-mediabrowser-api.md) |
 | MediaBrowser.Providers | ✅ Decomposition | [320-mediabrowser-providers.md](./320-mediabrowser-providers.md) |
+| MediaBrowser.WebDashboard | ✅ Decomposition | [260-mediabrowser-webdashboard.md](./260-mediabrowser-webdashboard.md) |
+| emby-go | ✅ Decomposition | [360-emby-go.md](./360-emby-go.md) |
 
 ---
 
