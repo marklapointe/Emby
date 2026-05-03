@@ -32,6 +32,32 @@ Emby.Notifications/
 - `MediaBrowser.Controller` — Notification interfaces
 - `MediaBrowser.Model` — Notification types
 
+## Decomposition
+
+### Core/NotificationManager.cs (Notification Management)
+
+#### Imports
+```csharp
+using MediaBrowser.Common.Implementations;
+using MediaBrowser.Controller.Notifications;
+using MediaBrowser.Model.Logging;
+using MediaBrowser.Model.Notifications;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+```
+
+#### Classes
+`NotificationManager` (public class : INotificationManager)
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `QueueNotification(NotificationRequest)` | `Task` | Queue a notification for delivery |
+| `GetNotificationTypes()` | `IEnumerable<NotificationTypeDescription>` | Get available notification types |
+| `GetNotificationServices()` | `IEnumerable<NotificationServiceInfo>` | Get registered services |
+
 ## Side Effects
 
 - Sends emails

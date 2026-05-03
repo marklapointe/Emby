@@ -62,3 +62,82 @@ graph TD
     E --> G[CreatePortMap]
     F --> G
 ```
+
+## Decomposition
+
+### NatUtility.cs (Entry Point)
+
+#### Imports
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Threading.Tasks;
+```
+
+#### Classes
+`NatUtility` (public static class)
+
+#### Key Events
+| Event | Description |
+|-------|-------------|
+| `DeviceFound` | NAT device discovered |
+| `DeviceLost` | NAT device unavailable |
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `DiscoverDevicesAsync()` | `Task<IEnumerable<INatDevice>>` | Find NAT devices |
+| `AddProtocol(Protocol)` | `void` | Add search protocol |
+| `RemoveProtocol(Protocol)` | `void` | Remove search protocol |
+
+### Mapping.cs (Port Mapping)
+
+#### Classes
+`Mapping` (public class)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `Protocol` | `NatProtocol` | UPnP or PMP |
+| `PrivatePort` | `int` | Internal port |
+| `PublicPort` | `int` | External port |
+| `Description` | `string` | Mapping description |
+| `Lifetime` | `int` | Lease duration |
+
+### UpnpNatDevice.cs (UPnP Device)
+
+#### Classes
+`UpnpNatDevice` (public class : AbstractNatDevice)
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `CreatePortMap(Mapping)` | `Task` | Create port mapping |
+| `DeletePortMap(Mapping)` | `Task` | Remove port mapping |
+| `GetExternalIP()` | `Task<IPAddress>` | Get WAN IP |
+
+### PmpNatDevice.cs (PMP Device)
+
+#### Classes
+`PmpNatDevice` (public class : AbstractNatDevice)
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `CreatePortMap(Mapping)` | `Task` | Create port mapping |
+| `DeletePortMap(Mapping)` | `Task` | Remove port mapping |
+
+## Usage Example
+
+```csharp
+// Discover NAT devices
+var devices = await NatUtility.DiscoverDevicesAsync();
+
+// Create port mapping
+var mapping = new Mapping(NatProtocol.Udp, 8080, 8080)
+{
+    Description = "Emby Server"
+};
+await device.CreatePortMap(mapping);
+```

@@ -1,3 +1,57 @@
+## Decomposition
+
+### BDROM.cs (Main Entry Point)
+
+#### Imports
+```csharp
+using MediaBrowser.MediaEncoding.BdInfo;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+```
+
+#### Classes
+`BDROM` (public class)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `Titles` | `List<BdTitleInfo>` | All titles on disc |
+| `PlaylistFiles` | `Dictionary<string, TSPlaylistFile>` | Parsed playlists |
+| `StreamFiles` | `Dictionary<string, TSStreamFile>` | Stream files |
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `Scan(string, bool)` | `void` | Scan BD-ROM directory |
+| `Close()` | `void` | Release resources |
+
+### TSPlaylistFile.cs (Playlist Parser)
+
+#### Classes
+`TSPlaylistFile` (public class)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `Name` | `string` | Playlist filename |
+| `Chapters` | `List<ChapterInfo>` | Chapter marks |
+| `StreamClips` | `List<TSStreamClip>` | Associated clips |
+
+### TSCodec*.cs (Codec Decoders)
+
+| File | Codec | Description |
+|------|-------|-------------|
+| `TSCodecAVC.cs` | AVC/H.264 | Common Blu-ray codec |
+| `TSCodecVC1.cs` | VC-1 | Windows Media codec |
+| `TSCodecMPEG2.cs` | MPEG-2 | Legacy format |
+| `TSCodecMVC.cs` | MVC | 3D multi-view coding |
+| `TSCodecAC3.cs` | AC3 | Dolby Digital audio |
+| `TSCodecDTS.cs` | DTS | DTS audio |
+| `TSCodecDTSHD.cs` | DTS-HD | DTS-HD audio |
+| `TSCodecTrueHD.cs` | TrueHD | Dolby TrueHD audio |
+| `TSCodecLPCM.cs` | LPCM | Linear PCM audio |
 
 ## Sub-Documents
 

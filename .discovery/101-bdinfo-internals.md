@@ -65,6 +65,97 @@ graph TD
     D --> H[TSInterleavedFile]
 ```
 
+## Decomposition
+
+### BDROM.cs (Main Entry Point)
+
+#### Imports
+```csharp
+using MediaBrowser.MediaEncoding.BdInfo;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+```
+
+#### Classes
+`BDROM` (public class)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `Titles` | `List<BdTitleInfo>` | All titles on disc |
+| `PlaylistFiles` | `Dictionary<string, TSPlaylistFile>` | Parsed playlists |
+| `StreamFiles` | `Dictionary<string, TSStreamFile>` | Stream files |
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `Scan(string, bool)` | `void` | Scan BD-ROM directory |
+| `Close()` | `void` | Release resources |
+
+### TSPlaylistFile.cs (Playlist Parser)
+
+#### Imports
+```csharp
+using MediaBrowser.MediaEncoding.BdInfo;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+```
+
+#### Classes
+`TSPlaylistFile` (public class)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `Name` | `string` | Playlist filename |
+| `Chapters` | `List<ChapterInfo>` | Chapter marks |
+| `StreamClips` | `List<TSStreamClip>` | Associated clips |
+
+### TSStreamFile.cs (Transport Stream Reader)
+
+#### Imports
+```csharp
+using MediaBrowser.MediaEncoding.BdInfo;
+using System;
+using System.Collections.Generic;
+using System.IO;
+```
+
+#### Classes
+`TSStreamFile` (public class : IDisposable)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `Streams` | `Dictionary<int, TSStream>` | Stream ID to stream map |
+| `Codecs` | `List<string>` | Detected codec names |
+
+### TSCodecAVC.cs (AVC/H.264 Decoder)
+
+#### Classes
+`TSCodecAVC` (public class : TSStreamCodec)
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `ParseHeader(byte[])` | `void` | Parse AVC sequence header |
+| `GetProfile()` | `string` | Returns "AVC" or "MVC" |
+
+### TSCodecDTS.cs (DTS Audio Decoder)
+
+#### Classes
+`TSCodecDTS` (public class : TSStreamCodec)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `CoreBitRate` | `int` | Core DTS bitrate |
+| `ExtensionBitRate` | `int` | Extension layer bitrate |
+
 ## Key Classes
 
 | Class | Responsibility |

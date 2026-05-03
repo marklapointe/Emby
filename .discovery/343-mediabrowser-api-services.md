@@ -121,6 +121,116 @@ graph TD
 | Images | Image, RemoteImage, ImageByName |
 | LiveTV | LiveTvService |
 
+## Decomposition
+
+### BaseApiService.cs (Base Service Class)
+
+#### Imports
+```csharp
+using MediaBrowser.Controller.Net;
+using MediaBrowser.Model.Services;
+using MediaBrowser.Model.Session;
+using System.Threading.Tasks;
+```
+
+#### Classes
+`BaseApiService` (public abstract class : IRequiresRequest)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `Request` | `IRequest` | Current HTTP request |
+| `IRequest.Context` | `IDictionary` | Request context |
+| `User` | `UserDto` | Authenticated user |
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `ToJsonSerializer` | `IJsonSerializer` | JSON serialization |
+| `GetAuthorization` | `Authorization` | Parse auth header |
+| `AssertUserViewAccess(Guid)` | `Task` | Verify user access |
+
+### ApiEntryPoint.cs (API Entry Point)
+
+#### Imports
+```csharp
+using MediaBrowser.Controller.Net;
+using MediaBrowser.Model.Services;
+```
+
+#### Classes
+`ApiEntryPoint` (public class : IRegisterOnContainer)
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `Register(IAdapterRegistry, IContainer)` | `void` | Register API services |
+
+### UserService.cs (User Management)
+
+#### Imports
+```csharp
+using MediaBrowser.Controller.Configuration;
+using MediaBrowser.Controller.Session;
+using MediaBrowser.Controller.Authentication;
+using MediaBrowser.Model.Users;
+using MediaBrowser.Model.Connect;
+```
+
+#### Request DTOs
+| Request | Route | Purpose |
+|---------|-------|---------|
+| `GetUsers` | `GET /Users` | List all users |
+| `GetPublicUsers` | `GET /Users/Public` | List public users |
+| `GetUser` | `GET /Users/{Id}` | Get user by ID |
+| `DeleteUser` | `DELETE /Users/{Id}` | Delete user |
+| `AuthenticateUser` | `POST /Users/{Id}/Authenticate` | Authenticate by ID |
+| `AuthenticateUserByName` | `POST /Users/AuthenticateByName` | Authenticate by name |
+
+### TvShowsService.cs (TV Shows API)
+
+#### Imports
+```csharp
+using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Library;
+using MediaBrowser.Controller.Net;
+```
+
+#### Request DTOs
+| Request | Route | Purpose |
+|---------|-------|---------|
+| `GetSeasons` | `GET /Shows/{Id}/Seasons` | Get show seasons |
+| `GetEpisodes` | `GET /Shows/{Id}/Episodes` | Get show episodes |
+| `GetNextUp` | `GET /Shows/NextUp` | Get next up episodes |
+
+### ImageService.cs (Image Service)
+
+#### Imports
+```csharp
+using MediaBrowser.Controller.Drawing;
+using MediaBrowser.Model.Drawing;
+```
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `GetImage` | `Task` | Get processed image |
+| `GetNamedImage` | `Task` | Get named image (logo, etc.) |
+
+### SessionsService.cs (Session Management)
+
+#### Imports
+```csharp
+using MediaBrowser.Controller.Session;
+using MediaBrowser.Model.Session;
+```
+
+#### Request DTOs
+| Request | Route | Purpose |
+|---------|-------|---------|
+| `GetSessions` | `GET /Sessions` | List sessions |
+| `GetSession` | `GET /Sessions/{Id}` | Get session by ID |
+
 ## Dependencies
 
 - `MediaBrowser.Controller` — Service interfaces

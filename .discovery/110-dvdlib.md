@@ -108,6 +108,80 @@ graph TD
 | `AudioAttributes` | `Ifo/AudioAttributes.cs` | Audio stream metadata |
 | `VideoAttributes` | `Ifo/VideoAttributes.cs` | Video stream metadata |
 
+## Decomposition
+
+### BigEndianBinaryReader.cs (Binary Reader)
+
+#### Imports
+```csharp
+using System;
+using System.IO;
+using System.Text;
+```
+
+#### Classes
+`BigEndianBinaryReader` (public class : BinaryReader)
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `ReadInt16()` | `Int16` | Read big-endian Int16 |
+| `ReadInt32()` | `Int32` | Read big-endian Int32 |
+| `ReadUInt16()` | `UInt16` | Read big-endian UInt16 |
+| `ReadUInt32()` | `UInt32` | Read big-endian UInt32 |
+| `ReadSingle()` | `Single` | Read big-endian float |
+| `ReadString(int)` | `string` | Read fixed-length string |
+
+### Ifo/Dvd.cs (Main Parser)
+
+#### Imports
+```csharp
+using MediaBrowser.Model.IO;
+using System;
+using System.Collections.Generic;
+using System.IO;
+```
+
+#### Classes
+`Dvd` (public class)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `Titles` | `IEnumerable<DvdTitle>` | All parsed titles |
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `Open(string, IFileSystem)` | `DvdInfo` | Parse DVD directory |
+
+### Ifo/Title.cs (Title Parser)
+
+#### Classes
+`DvdTitle` (public class)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `TitleNumber` | `int` | Title index |
+| `Duration` | `TimeSpan` | Total playback time |
+| `Chapters` | `List<DvdChapter>` | Chapter list |
+| `VideoStream` | `DvdVideoStream` | Video track info |
+| `AudioStreams` | `List<DvdAudioStream>` | Audio tracks |
+
+### Ifo/ProgramChain.cs (Playback Sequence)
+
+#### Classes
+`DvdProgramChain` (public class)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `Cells` | `List<DvdCell>` | Playback cells |
+| `Programs` | `List<DvdProgram>` | Program entries |
+| `IsStill` | `bool` | Still frame flag |
+| `StillTime` | `int` | Still duration |
+
 ## Side Effects
 
 - Reads IFO/BUP files via IFileSystem

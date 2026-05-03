@@ -73,6 +73,82 @@ graph LR
 - M-SEARCH for discovery
 - NOTIFY for advertisement
 
+## Decomposition
+
+### SsdpDeviceLocator.cs (Device Discovery)
+
+#### Imports
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Threading.Tasks;
+```
+
+#### Classes
+`SsdpDeviceLocator` (public class : ISsdpDeviceLocator, IDisposable)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `CommunicationsServer` | `ISsdpCommunicationsServer` | Network server |
+| `SearchEnabled` | `bool` | Active search flag |
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `Search()` | `Task<IEnumerable<DiscoveredSsdpDevice>>` | Search for devices |
+| `Search(string)` | `Task<IEnumerable<DiscoveredSsdpDevice>>` | Search by type |
+| `BeginBegin() / BeginSearch()` | `void` | Start search |
+| `StopSearch()` | `void` | Stop search |
+
+### SsdpDevicePublisher.cs (Device Advertisement)
+
+#### Classes
+`SsdpDevicePublisher` (public class : ISsdpDevicePublisher, IDisposable)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `RootDevice` | `SsdpRootDevice` | Device to advertise |
+| `AliveInterval` | `TimeSpan` | Advertisement interval |
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `BeginAdvertise()` | `void` | Start advertising |
+| `EndAdvertise()` | `void` | Stop advertising |
+
+### SsdpCommunicationsServer.cs (Network Layer)
+
+#### Classes
+`SsdpCommunicationsServer` (public class : ISsdpCommunicationsServer, IDisposable)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `EndPoint` | `IPEndPoint` | Multicast endpoint |
+| `Port` | `int` | UDP port 1900 |
+
+#### Key Events
+| Event | Description |
+|-------|-------------|
+| `ResponseReceived` | SSDP response received |
+| `RequestReceived` | SSDP request received |
+
+### DiscoveredSsdpDevice.cs (Device Representation)
+
+#### Classes
+`DiscoveredSsdpDevice` (public class)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `DescriptionLocation` | `Uri` | Device XML URL |
+| `DeviceType` | `string` | UPnP device type |
+| `Headers` | `HttpResponseHeaders` | SSDP headers |
+| `Location` | `Uri` | Description location |
+
 ## Dependencies
 
 - Standard .NET libraries

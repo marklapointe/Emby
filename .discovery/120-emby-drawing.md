@@ -103,6 +103,80 @@ graph TD
 | `IImageEncoder` | `ImageMagickEncoder`, `SkiaEncoder`, `NetEncoder`, `NullImageEncoder` | Backend encoding |
 | `IImageEnhancer` | Various plugins | Image enhancement (covers, etc.) |
 
+## Decomposition
+
+### ImageProcessor.cs (Main Image Processing Engine)
+
+#### Imports
+```csharp
+using MediaBrowser.Controller.Drawing;
+using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.IO;
+using MediaBrowser.Controller.Library;
+using MediaBrowser.Controller.MediaEncoding;
+using MediaBrowser.Model.Drawing;
+using MediaBrowser.Model.IO;
+using MediaBrowser.Model.Logging;
+using MediaBrowser.Model.Serialization;
+using System;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+```
+
+#### Classes
+`ImageProcessor` (public class : IImageProcessor, IDisposable)
+
+#### Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `ImageEncoder` | `IImageEncoder` | Active image encoder backend |
+| `SupportedInputFormats` | `string[]` | Formats supported by encoder |
+| `SupportsImageCollageCreation` | `bool` | Whether encoder supports collages |
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `ProcessImage(ImageProcessingOptions, Stream)` | `Task` | Process image to output stream |
+| `ProcessImage(ImageProcessingOptions)` | `Task<Tuple<string,string,DateTime>>` | Process and cache image |
+| `GetSupportedImageOutputFormats()` | `ImageFormat[]` | Returns PNG, JPEG, WebP, GIF, BMP |
+| `SupportsTransparency(string)` | `bool` | Check if format supports transparency |
+| `GetImageSize(BaseItem, ItemImageInfo)` | `ImageSize` | Get dimensions from item |
+| `GetImageCacheTag(BaseItem, ItemImageInfo)` | `string` | Generate cache invalidation tag |
+
+### Common/ImageHeader.cs (Image Header Parser)
+
+#### Imports
+```csharp
+using MediaBrowser.Model.Drawing;
+using MediaBrowser.Model.Logging;
+using MediaBrowser.Model.IO;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+```
+
+#### Classes
+`ImageHeader` (public static class)
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `GetDimensions(string, ILogger, IFileSystem)` | `ImageSize` | Get dimensions from path |
+| `DecodeBitmap(BinaryReader)` | `ImageSize` | Parse BMP header |
+| `DecodeGif(BinaryReader)` | `ImageSize` | Parse GIF header |
+| `DecodePng(BinaryReader)` | `ImageSize` | Parse PNG header |
+| `DecodeJfif(BinaryReader)` | `ImageSize` | Parse JPEG header |
+
+### NullImageEncoder.cs (Fallback Encoder)
+
+#### Classes
+`NullImageEncoder` (public class : IImageEncoder)
+
+#### Description
+No-op implementation used when no image backend is available.
+
 ## Side Effects
 
 - Reads original image files via IFileSystem

@@ -23,6 +23,73 @@ Emby.Server.Implementations is the core server module containing the bulk of Emb
 | Security & Users | [168-emby-server-impl-security.md](./168-emby-server-impl-security.md) | Security, Session, Devices, DTOs, Activity, Browser, Branding |
 | SharpCifs (Embedded) | [169-emby-server-impl-sharpcifs.md](./169-emby-server-impl-sharpcifs.md) | Embedded SMB/CIFS client library |
 
+## Decomposition
+
+### ApplicationHost.cs (Main Entry Point)
+
+#### Imports
+```csharp
+using MediaBrowser.Controller;
+using MediaBrowser.Controller.Channels;
+using MediaBrowser.Controller.Dlna;
+using MediaBrowser.Controller.Drawing;
+using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Library;
+using MediaBrowser.Controller.LiveTv;
+using MediaBrowser.Controller.Net;
+using MediaBrowser.Controller.Notifications;
+using MediaBrowser.Controller.Plugins;
+using MediaBrowser.Controller.Providers;
+using MediaBrowser.Controller.Session;
+using MediaBrowser.Controller.TV;
+using MediaBrowser.Model.Services;
+using System;
+using System.Collections.Generic;
+using System.Reflection;
+```
+
+#### Classes
+`ApplicationHost` (public abstract class : IServerApplicationHost)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `Instance` | `ApplicationHost` | Singleton instance |
+| `ExecutingAssembly` | `Assembly` | Current assembly |
+| `ApplicationVersion` | `Version` | Server version |
+| `ServerName` | `string` | Server display name |
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `Init()` | `Task` | Initialize the application |
+| `GetExports<T>()` | `IEnumerable<T>` | Get service exports |
+| `RegisterServices()` | `void` | Register DI services |
+| `StartServer()` | `Task` | Start the server |
+
+### ResourceFileManager.cs (Embedded Resources)
+
+#### Classes
+`ResourceFileManager` (public class)
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `GetResourcePath(string, Assembly)` | `string` | Get resource file path |
+| `GetHashtable(string, Assembly)` | `Hashtable` | Load resource hashtable |
+
+### ServerApplicationPaths.cs (Path Configuration)
+
+#### Classes
+`ServerApplicationPaths` (public class : BaseApplicationPaths)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `ProgramDataPath` | `string` | %AppData% path |
+| `CachePath` | `string` | Image cache directory |
+| `LogPath` | `string` | Log files directory |
+
 ## Root Files
 
 - `ApplicationHost.cs` — Emby.Server.Implementations/ApplicationHost.cs
