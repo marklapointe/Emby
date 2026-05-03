@@ -82,6 +82,8 @@
 | MediaBrowser.WebDashboard | ✅ Decomposition | [260-mediabrowser-webdashboard.md](./260-mediabrowser-webdashboard.md) |
 | emby-go | ✅ Decomposition | [360-emby-go.md](./360-emby-go.md) |
 | Emby.Server.Implementations/Library | ✅ Decomposition | [188-library-full.md](./188-library-full.md) |
+| Emby.Server.Implementations/Session | ✅ Decomposition | [170-emby-session.md](./170-emby-session.md) |
+| Emby.Server.Implementations/Networking | ✅ Decomposition | [171-emby-networking.md](./171-emby-networking.md) |
 
 ---
 
