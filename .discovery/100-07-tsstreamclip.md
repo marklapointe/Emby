@@ -11,6 +11,57 @@
 - `TSStream` → `.discovery/100-06-tsstream.md`
 - `BDInfoSettings` → `.discovery/100-09-bdinfosettings.md`
 
+## Decomposition
+
+#### Imports
+```csharp
+// Minimal imports (assumed from context)
+```
+
+#### Namespace
+```csharp
+namespace BDInfo
+```
+
+#### Classes
+`TSStreamClip` (public class)
+
+#### Fields
+```csharp
+public int AngleIndex
+public string Name
+public double TimeIn
+public double TimeOut
+public double RelativeTimeIn
+public double RelativeTimeOut
+public double Length
+public ulong FileSize
+public ulong InterleavedFileSize
+public ulong PayloadBytes
+public ulong PacketCount
+public double PacketSeconds
+public List<double> Chapters
+public TSStreamFile StreamFile
+public TSStreamClipFile StreamClipFile
+```
+
+#### Properties
+```csharp
+public string DisplayName
+public ulong PacketSize
+public ulong PacketBitRate
+```
+
+#### Constructor
+```csharp
+public TSStreamClip(TSStreamFile streamFile, TSStreamClipFile streamClipFile)
+```
+
+#### Methods
+```csharp
+public bool IsCompatible(TSStreamClip clip)
+```
+
 ## Structure
 
 ```

@@ -8,6 +8,35 @@
 **Dependencies:**
 - `MediaBrowser.Model.IO` (external) — FileSystemMetadata
 
+## Decomposition
+
+#### Imports
+```csharp
+using System;
+using System.Collections.Generic;
+using System.IO;
+using MediaBrowser.Model.IO;
+```
+
+#### Namespace
+```csharp
+namespace BDInfo
+```
+
+#### Classes
+`TSInterleavedFile` (public class)
+
+#### Fields
+```csharp
+public FileSystemMetadata FileInfo
+public string Name
+```
+
+#### Constructor
+```csharp
+public TSInterleavedFile(FileSystemMetadata fileInfo)
+```
+
 ## Structure
 
 ```

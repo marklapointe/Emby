@@ -6,6 +6,39 @@
 **Maps to:** `.discovery/100-05-languagecodes.md`
 **Parent:** `.discovery/100-bdinfo.md`
 
+## Decomposition
+
+#### Imports
+```csharp
+// No external imports
+```
+
+#### Namespace
+```csharp
+namespace BDInfo
+```
+
+#### Classes
+`LanguageCodes` (public static class)
+
+#### Fields
+```csharp
+private static readonly Dictionary<string, string> _lookup
+```
+
+#### Static Constructor
+```csharp
+static LanguageCodes()
+    // Populates _lookup with 400+ ISO 639-2/B language codes
+```
+
+#### Methods
+```csharp
+public static string GetName(string code)
+    // Returns English name for ISO 639-2/B code
+    // Returns code itself if not found
+```
+
 ## Structure
 
 ```
