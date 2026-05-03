@@ -5,6 +5,102 @@
 **Language:** C#
 **Maps to:** \`.discovery/161-emby-server-impl-core.md\`
 
+## Decomposition
+
+### ApplicationHost.cs (Main Entry Point)
+
+#### Imports (100+ namespaces)
+```csharp
+using Emby.Drawing;
+using Emby.Dlna;
+using Emby.Server.Implementations.Activity;
+using Emby.Server.Implementations.Configuration;
+using Emby.Server.Implementations.Data;
+using Emby.Server.Implementations.Library;
+using Emby.Server.Implementations.LiveTv;
+using Emby.Server.Implementations.Session;
+using MediaBrowser.Api;
+using MediaBrowser.Common.Configuration;
+using MediaBrowser.Controller;
+using MediaBrowser.Model;
+```
+
+#### Classes
+\`ApplicationHost\` (public abstract class : IServerApplicationHost, IDisposable)
+
+#### Key Methods
+```csharp
+Task Initialize()
+Task StartAsync()
+void Dispose()
+```
+
+### SqliteItemRepository.cs (Data Persistence)
+
+#### Imports
+```csharp
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+using MediaBrowser.Controller.Persistence;
+using MediaBrowser.Model.IO;
+using MediaBrowser.Model.Querying;
+```
+
+#### Classes
+\`SqliteItemRepository\` (public class : IItemRepository)
+
+#### Key Methods
+```csharp
+void SaveItem(BaseItem item)
+BaseItem GetItem(Guid id)
+QueryResult<BaseItem> GetItems(InternalItemsQuery query)
+void DeleteItem(Guid id)
+```
+
+### TaskManager.cs (Scheduled Tasks)
+
+#### Imports
+```csharp
+using System;
+using System.Collections.Generic;
+using MediaBrowser.Model.Tasks;
+```
+
+#### Classes
+\`TaskManager\` (public class)
+
+#### Key Methods
+```csharp
+void AddTask(IScheduledTask task)
+void RemoveTask(string key)
+IEnumerable<IScheduledTask> GetTasks()
+Task ExecuteAsync(string key, CancellationToken cancellationToken)
+```
+
+### SessionManager.cs (Session Management)
+
+#### Imports
+```csharp
+using System;
+using System.Collections.Generic;
+using MediaBrowser.Controller.Session;
+using MediaBrowser.Model.Session;
+```
+
+#### Classes
+\`SessionManager\` (public class)
+
+#### Key Methods
+```csharp
+SessionInfo CreateSession(string clientName, string clientVersion)
+void RemoveSession(string sessionId)
+SessionInfo GetSession(string sessionId)
+IEnumerable<SessionInfo> GetSessions()
+```
+
 ## Description
 
 Core infrastructure components of Emby.Server.Implementations covering application base, configuration, cryptography, data persistence, environment, diagnostics, logging, networking, reflection, serialization, security, threading, and XML handling.

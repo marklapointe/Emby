@@ -6,6 +6,32 @@
 **Maps to:** `.discovery/100-09-bdinfosettings.md`
 **Parent:** `.discovery/100-bdinfo.md`
 
+## Decomposition
+
+#### Imports
+```csharp
+// No external imports
+```
+
+#### Namespace
+```csharp
+namespace BDInfo
+```
+
+#### Classes
+`BDInfoSettings` (internal static class)
+
+#### Properties
+```csharp
+public static bool GenerateStreamDiagnostics { get { return true; } }
+public static bool EnableSSIF { get { return true; } }
+public static bool AutosaveReport { get { return false; } }
+public static bool GenerateFrameDataFile { get { return false; } }
+public static bool FilterLoopingPlaylists { get { return true; } }
+public static bool FilterShortPlaylists { get { return false; } }
+// ... more settings
+```
+
 ## Structure
 
 ```
