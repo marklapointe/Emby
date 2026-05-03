@@ -48,6 +48,66 @@ graph TD
 | `ImageEncoderHelper` | Image encoder setup |
 | `PowerManagement` | System power control |
 
+## Decomposition
+
+### Program.cs (Entry Point)
+
+#### Imports
+```csharp
+using MediaBrowser.Server.Implementations;
+using System;
+using System.Threading.Tasks;
+```
+
+#### Classes
+`Program` (internal static class)
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `Main(string[])` | `int` | Application entry point |
+
+### MonoAppHost.cs (Mono Application Host)
+
+#### Classes
+`MonoAppHost` (public class : ApplicationHost)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `IsLinux` | `bool` | Running on Linux |
+| `IsMac` | `bool` | Running on macOS |
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `ConfigureUdpPorts()` | `void` | Configure UDP listeners |
+| `GetImageEncoder()` | `IImageEncoder` | Get image encoder |
+
+### ApplicationPathHelper.cs (Path Resolution)
+
+#### Classes
+`ApplicationPathHelper` (public static class)
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `GetBasePath()` | `string` | Get base path |
+| `GetDataPath()` | `string` | Get data directory |
+| `GetLogPath()` | `string` | Get log directory |
+
+### ImageEncoderHelper.cs (Encoder Setup)
+
+#### Classes
+`ImageEncoderHelper` (public static class)
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `GetEncoder()` | `IImageEncoder` | Get configured encoder |
+| `IsSkiaAvailable()` | `bool` | Check Skia availability |
+| `IsImageMagickAvailable()` | `bool` | Check ImageMagick availability |
+
 ## Dependencies
 
 - Emby.Server.Implementations
