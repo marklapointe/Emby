@@ -17,7 +17,7 @@ Emby/
 ├── BDInfo/                          # Blu-ray disc info library → .discovery/100-bdinfo.md
 ├── DvdLib/                          # DVD library (IFO parsing) → .discovery/110-dvdlib.md
 ├── Emby.Dlna/                       # DLNA server implementation → .discovery/120-emby-dlna.md
-├── Emby.Drawing/                    # Drawing abstractions → .discovery/130-emby-drawing.md
+├── Emby.Drawing/                    # Drawing abstractions → .discovery/120-emby-drawing.md
 ├── Emby.Drawing.ImageMagick/          # ImageMagick drawing backend → .discovery/131-emby-drawing-imagemagick.md
 ├── Emby.Drawing.Net/                # .NET drawing backend → .discovery/132-emby-drawing-net.md
 ├── Emby.Drawing.Skia/               # Skia drawing backend → .discovery/133-emby-drawing-skia.md
@@ -152,7 +152,7 @@ graph LR
 | [100-bdinfo.md](./100-bdinfo.md) | BDInfo | Library | Blu-ray disc info |
 | [110-dvdlib.md](./110-dvdlib.md) | DvdLib | Library | DVD IFO parsing |
 | [120-emby-dlna.md](./120-emby-dlna.md) | Emby.Dlna | Module | DLNA server |
-| [130-emby-drawing.md](./130-emby-drawing.md) | Emby.Drawing | Module | Drawing abstractions |
+| [120-emby-drawing.md](./120-emby-drawing.md) | Emby.Drawing | Module | Drawing abstractions |
 | [160-emby-server-impl.md](./160-emby-server-impl.md) | Emby.Server.Implementations | Module | Core server logic |
 | [200-mediabrowser-api.md](./200-mediabrowser-api.md) | MediaBrowser.Api | Module | REST API |
 | [220-mediabrowser-providers.md](./220-mediabrowser-providers.md) | MediaBrowser.Providers | Module | Metadata providers |

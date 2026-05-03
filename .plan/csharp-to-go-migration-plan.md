@@ -1928,10 +1928,10 @@ This section is the master checklist for implementing the Go migration. Each tas
 | 5.20 | Implement filter API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/filter.go` | `FilterService.cs` |
 | 5.21 | Implement games API handlers | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/games.go` | `GamesService.cs` |
 | 5.22 | Implement startup wizard API | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/startup.go` | `StartupWizardService.cs` |
-| 5.23 | Implement environment API | NOT STARTED | | | | | `internal/api/handlers/environment.go` | `EnvironmentService.cs` |
-| 5.24 | Implement localization API | NOT STARTED | | | | | `internal/api/handlers/localization.go` | `LocalizationService.cs` |
-| 5.25 | Implement package API | NOT STARTED | | | | | `internal/api/handlers/package.go` | `PackageService.cs` |
-| 5.26 | Implement activity API | NOT STARTED | | | | | `internal/api/handlers/activity.go` | Activity endpoints |
+| 5.23 | Implement environment API | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/environment.go` | `EnvironmentService.cs` |
+| 5.24 | Implement localization API | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/localization.go` | `LocalizationService.cs` |
+| 5.25 | Implement package API | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/package.go` | `PackageService.cs` |
+| 5.26 | Implement activity API | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/api/handlers/activity.go` | Activity endpoints |
 
 ### Phase 6: DLNA Support (UPnP Removed for Security)
 
@@ -2251,37 +2251,37 @@ func (m *NotificationManager) GetUserNotifications(userID string) ([]*Notificati
 
 | # | Task | Status | Owner | Start | End | Dependencies | Files | Notes |
 |---|------|--------|-------|-------|-----|--------------|-------|-------|
-| 7.1 | Set up WebSocket server | NOT STARTED | | | | 2.1 | `internal/server/websocket.go` | Gorilla WebSocket |
-| 7.2 | Implement connection management | NOT STARTED | | | | 7.1 | `internal/server/websocket.go` | Client tracking |
-| 7.3 | Analyze C# WebSocket messages | NOT STARTED | | | | | `IWebSocket.cs` | Message types |
-| 7.4 | Implement message types | NOT STARTED | | | | 7.3 | `internal/server/messages.go` | All message types |
-| 7.5 | Implement WebSocket authentication | NOT STARTED | | | | 7.1 | `internal/server/websocket.go` | Token validation |
-| 7.6 | Implement broadcast system | NOT STARTED | | | | 7.2 | `internal/server/websocket.go` | Send to all clients |
+| 7.1 | Set up WebSocket server | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 2.1 | `internal/server/ws/websocket.go` | Gorilla WebSocket |
+| 7.2 | Implement connection management | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 7.1 | `internal/server/ws/websocket.go` | Client tracking |
+| 7.3 | Analyze C# WebSocket messages | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | | Message types |
+| 7.4 | Implement message types | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 7.3 | `internal/server/ws/websocket.go` | All message types |
+| 7.5 | Implement WebSocket authentication | IN PROGRESS | Junie | 2026-04-29 | | 7.1 | `internal/server/ws/websocket.go` | Token validation |
+| 7.6 | Implement broadcast system | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 7.2 | `internal/server/ws/websocket.go` | Send to all clients |
 | 7.7 | Test with existing clients | NOT STARTED | | | | 7.4-7.6 | | Verify real-time updates |
 
 ### Phase 8: Image Processing
 
 | # | Task | Status | Owner | Start | End | Dependencies | Files | Notes |
 |---|------|--------|-------|-------|-----|--------------|-------|-------|
-| 8.1 | Integrate govips library | NOT STARTED | | | | | `internal/provider/images/processor.go` | libvips bindings |
-| 8.2 | Implement image resizing | NOT STARTED | | | | 8.1 | `internal/provider/images/processor.go` | Resize operations |
-| 8.3 | Implement format conversion | NOT STARTED | | | | 8.1 | `internal/provider/images/processor.go` | JPEG, PNG, WebP |
-| 8.4 | Implement image caching | NOT STARTED | | | | 8.2 | `internal/provider/images/cache.go` | Memory + disk cache |
-| 8.5 | Implement image API endpoints | NOT STARTED | | | | 8.2 | `internal/api/handlers/images.go` | Serve processed images |
+| 8.1 | Integrate govips library | IN PROGRESS | Junie | 2026-04-29 | | | `internal/service/image/processor.go` | libvips bindings |
+| 8.2 | Implement image resizing | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 8.1 | `internal/service/image/processor.go` | Resize operations |
+| 8.3 | Implement format conversion | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 8.1 | `internal/service/image/processor.go` | JPEG, PNG, WebP |
+| 8.4 | Implement image caching | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 8.2 | `internal/service/image/processor.go` | Memory + disk cache |
+| 8.5 | Implement image API endpoints | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 8.2 | `internal/api/handlers/images.go` | Serve processed images |
 | 8.6 | Test image quality and performance | NOT STARTED | | | | 8.5 | | Verify quality |
 
 ### Phase 9: Metadata Providers
 
 | # | Task | Status | Owner | Start | End | Dependencies | Files | Notes |
 |---|------|--------|-------|-------|-----|--------------|-------|-------|
-| 9.1 | Create provider interface | NOT STARTED | | | | | `internal/provider/metadata/provider.go` | Provider contract |
-| 9.2 | Implement local metadata parser | NOT STARTED | | | | 9.1 | `internal/provider/metadata/local.go` | NFO files |
-| 9.3 | Implement embedded metadata extractor | NOT STARTED | | | | 9.1 | `internal/provider/metadata/embedded.go` | Media file metadata |
-| 9.4 | Implement TMDb provider | NOT STARTED | | | | 9.1 | `internal/provider/metadata/tmdb.go` | The Movie Database |
-| 9.5 | Implement TVDb provider | NOT STARTED | | | | 9.1 | `internal/provider/metadata/tvdb.go` | The TV Database |
-| 9.6 | Implement MusicBrainz provider | NOT STARTED | | | | 9.1 | `internal/provider/metadata/musicbrainz.go` | Music metadata |
-| 9.7 | Implement metadata caching | NOT STARTED | | | | 9.4-9.6 | `internal/provider/metadata/cache.go` | Reduce API calls |
-| 9.8 | Implement rate limiting | NOT STARTED | | | | 9.4-9.6 | `internal/provider/metadata/limiter.go` | Respect API limits |
+| 9.1 | Create provider interface | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | | `internal/service/metadata/fetcher.go` | Provider contract |
+| 9.2 | Implement local metadata parser | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 9.1 | `internal/service/metadata/fetcher.go` | NFO files |
+| 9.3 | Implement embedded metadata extractor | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 9.1 | `internal/service/metadata/fetcher.go` | Media file metadata |
+| 9.4 | Implement TMDb provider | IN PROGRESS | Junie | 2026-04-29 | | 9.1 | `internal/service/metadata/tmdb.go` | The Movie Database |
+| 9.5 | Implement TVDb provider | IN PROGRESS | Junie | 2026-04-29 | | 9.1 | `internal/service/metadata/tvdb.go` | The TV Database |
+| 9.6 | Implement MusicBrainz provider | IN PROGRESS | Junie | 2026-04-29 | | 9.1 | `internal/service/metadata/musicbrainz.go` | Music metadata |
+| 9.7 | Implement metadata caching | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 9.4-9.6 | `internal/service/metadata/fetcher.go` | Reduce API calls |
+| 9.8 | Implement rate limiting | COMPLETED | Junie | 2026-04-29 | 2026-04-29 | 9.4-9.6 | `internal/service/metadata/limiter.go` | Respect API limits |
 
 ### Phase 10: Scheduled Tasks and Background Jobs
 

@@ -74,7 +74,7 @@ func main() {
 	_ = device.NewManager(logger)
 	_ = image.NewManager(logger)
 	_ = metadata.NewManager(logger)
-	_ = notification.NewManager(logger)
+	_ = notification.NewManager()
 	scheduledSvc := scheduled.NewManager(logger)
 	_ = transcoding.NewManager(cfg, logger)
 	_ = media.NewStreamManager(cfg.Stream.MaxConcurrentStreams, logger)

@@ -52,7 +52,7 @@ func (r *Router) RegisterAll() {
 	r.sessionSvc = session.NewManager(r.config, r.logger)
 	r.deviceSvc = device.NewManager(r.logger)
 	r.imageSvc = image.NewManager(r.logger)
-	r.notificationSvc = notification.NewManager(r.logger)
+	r.notificationSvc = notification.NewManager()
 	r.scheduledSvc = scheduled.NewManager(r.logger)
 	r.transcodingSvc = transcoding.NewManager(r.config, r.logger)
 

@@ -65,13 +65,24 @@ Emby/
 |------|-----------|------|-------------|
 | [000-root.md](./000-root.md) | Project root | Entry point | Master project overview |
 | [100-bdinfo.md](./100-bdinfo.md) | BDInfo | Module | Blu-ray disc analysis |
+| [100-01-bdrom.md](./100-01-bdrom.md) | BDROM.cs | File | BD-ROM disc reader |
+| [100-02-tsplaylistfile.md](./100-02-tsplaylistfile.md) | TSPlaylistFile.cs | File | Playlist parser |
+| [100-03-tsstreamfile.md](./100-03-tsstreamfile.md) | TSStreamFile.cs | File | Stream file parser |
+| [100-04-tsstreamclipfile.md](./100-04-tsstreamclipfile.md) | TSStreamClipFile.cs | File | Stream clip parser |
+| [100-05-languagecodes.md](./100-05-languagecodes.md) | LanguageCodes.cs | File | Language codes |
+| [100-06-tsstream.md](./100-06-tsstream.md) | TSStream.cs | File | Transport stream |
+| [100-07-tsstreamclip.md](./100-07-tsstreamclip.md) | TSStreamClip.cs | File | Stream clip |
+| [100-08-tsinterleavedfile.md](./100-08-tsinterleavedfile.md) | TSInterleavedFile.cs | File | Interleaved file |
+| [100-09-bdinfosettings.md](./100-09-bdinfosettings.md) | BDInfoSettings.cs | File | Settings |
+| [100-10-tsstreambuffer.md](./100-10-tsstreambuffer.md) | TSStreamBuffer.cs | File | Stream buffer |
+| [100-11-codecs.md](./100-11-codecs.md) | Codecs.cs | File | Codec definitions |
 | [110-dvdlib.md](./110-dvdlib.md) | DvdLib | Module | DVD structure parsing |
-| [120-emby-drawing.md](./130-emby-drawing.md) | Emby.Drawing | Module | Image processing |
+| [120-emby-drawing.md](./120-emby-drawing.md) | Emby.Drawing | Module | Image processing |
 | [121-emby-drawing-imagemagick.md](./121-emby-drawing-imagemagick.md) | Emby.Drawing.ImageMagick | Module | ImageMagick backend |
 | [122-emby-drawing-net.md](./122-emby-drawing-net.md) | Emby.Drawing.Net | Module | .NET drawing backend |
 | [123-emby-drawing-skia.md](./123-emby-drawing-skia.md) | Emby.Drawing.Skia | Module | SkiaSharp backend |
-| [130-emby-notifications.md](./140-emby-notifications.md) | Emby.Notifications | Module | Notification system |
-| [140-emby-photos.md](./150-emby-photos.md) | Emby.Photos | Module | Photo management |
+| [140-emby-notifications.md](./140-emby-notifications.md) | Emby.Notifications | Module | Notification system |
+| [150-emby-photos.md](./150-emby-photos.md) | Emby.Photos | Module | Photo management |
 | [160-emby-server-impl.md](./160-emby-server-impl.md) | Emby.Server.Implementations | Module | Core server implementation |
 | [161-emby-server-impl-core.md](./161-emby-server-impl-core.md) | Core Infrastructure | Sub-module | AppBase, Config, Crypto, etc. |
 | [162-emby-server-impl-library.md](./162-emby-server-impl-library.md) | Library Management | Sub-module | Library, Collections, Playlists |
@@ -82,7 +93,7 @@ Emby/
 | [167-emby-server-impl-encoding.md](./167-emby-server-impl-encoding.md) | Text Encoding | Sub-module | Localization, UniversalDetector |
 | [168-emby-server-impl-security.md](./168-emby-server-impl-security.md) | Security | Sub-module | Security, Session, Devices |
 | [169-emby-server-impl-sharpcifs.md](./169-emby-server-impl-sharpcifs.md) | SharpCifs | Sub-module | Embedded SMB/CIFS client |
-| [200-mediabrowser-localmetadata.md](./210-mediabrowser-localmetadata.md) | MediaBrowser.LocalMetadata | Module | Local metadata providers |
+| [210-mediabrowser-localmetadata.md](./210-mediabrowser-localmetadata.md) | MediaBrowser.LocalMetadata | Module | Local metadata providers |
 | [210-mediabrowser-server-mono.md](./210-mediabrowser-server-mono.md) | MediaBrowser.Server.Mono | Module | Mono runtime support |
 | [220-mediabrowser-serverapplication.md](./220-mediabrowser-serverapplication.md) | MediaBrowser.ServerApplication | Module | Windows server app |
 | [230-mediabrowser-tests.md](./230-mediabrowser-tests.md) | MediaBrowser.Tests | Module | Unit tests |
@@ -103,9 +114,12 @@ Emby/
 | [360-emby-go.md](./360-emby-go.md) | emby-go | Module | Go bindings |
 | [370-thirdparty.md](./370-thirdparty.md) | ThirdParty | Module | Native libraries |
 | [400-packages.md](./400-packages.md) | packages/ | Dependencies | NuGet package cache |
+| [900-solution.md](./900-solution.md) | MediaBrowser.sln | Config | VS Solution file |
+| [910-sharedversion.md](./910-sharedversion.md) | SharedVersion.cs | Config | Assembly version |
+| [920-readme.md](./920-readme.md) | README.md | Docs | Project README |
+| [930-contributors.md](./930-contributors.md) | CONTRIBUTORS.md | Legal | Contributors list |
 | [940-license.md](./940-license.md) | LICENSE.md | Legal | License file |
-| [950-project-artifacts.md](./950-project-artifacts.md) | Project Artifacts | Config | Git, VS, planning docs |
-| [950-project-artifacts.md](./950-project-artifacts.md) | Project Artifacts | Config | Git, VS, planning docs |
+| [950-project-artifacts.md](./950-project-artifacts.md) | Project Artifacts | Artifacts | Git, VS, planning docs |
 
 ## Dependency Graph
 
@@ -144,7 +158,7 @@ graph TD
 | Total JavaScript files | ~450 |
 | Total HTML/CSS files | ~100 |
 | Total project modules | 20+ |
-| Total discovery documents | 35+ |
+| Total discovery documents | 47 |
 | NuGet packages | 63 |
 | Total files in packages/ | 2485 |
 
