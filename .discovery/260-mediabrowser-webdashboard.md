@@ -5,6 +5,77 @@
 **Language:** C#, JavaScript, HTML, CSS
 **Maps to:** \`.discovery/260-mediabrowser-webdashboard.md\`
 
+## Decomposition
+
+### DashboardService.cs (Main API Endpoint)
+
+#### Imports
+```csharp
+using MediaBrowser.Model.Services;
+using System.Threading.Tasks;
+```
+
+#### Classes
+\`DashboardService\` (public class : IService)
+
+#### Key Methods
+```csharp
+Task<object> Get(DashboardInfo request)
+```
+
+### WebSocketListener.cs (WebSocket Handler)
+
+#### Classes
+\`WebSocketListener\` (public class)
+
+#### Key Methods
+```csharp
+void SendProgress(object progress)
+void SendRestartNotification()
+```
+
+### index.html (Main Entry Point)
+
+#### Structure
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="dashboard.js"></script>
+</head>
+<body>
+    <div id="dashboard-app"></div>
+</body>
+</html>
+```
+
+### main.js (Application Bootstrap)
+
+#### Key Functions
+```javascript
+function initializeDashboard()
+function loadLibrary()
+function setupWebSocket()
+```
+
+### apphost.js (Emby Client Host)
+
+#### Classes/Functions
+```javascript
+class AppHost extends Events
+    connect()
+    getApiClient()
+    getCurrentUser()
+```
+
+### globalize.js (i18n Support)
+
+#### Key Functions
+```javascript
+function t(key, params)
+function cultureInfo()
+```
+
 ## Description
 
 MediaBrowser.WebDashboard provides the web-based management interface for Emby Server. It includes a C# backend API and a rich HTML5/JavaScript frontend. The dashboard allows users to configure server settings, manage libraries, view activity, and control playback.
