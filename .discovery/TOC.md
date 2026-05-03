@@ -2,10 +2,10 @@
 
 **Project:** Emby Server
 **Generated:** 2026-05-02
-**Root:** `/`
-**Total files mapped:** 24
-**Total directories mapped:** 21
-**Coverage:** 100% ✅ (top-level)
+**Root:** MediaBrowser.sln
+**Total files mapped:** 5000+
+**Total directories mapped:** 200+
+**Coverage:** In Progress
 
 ---
 
@@ -15,31 +15,47 @@
 Emby/
 ├── BDInfo/                          → .discovery/100-bdinfo.md
 ├── DvdLib/                          → .discovery/110-dvdlib.md
-├── Emby.Dlna/                       → .discovery/120-emby-dlna.md
-├── Emby.Drawing/                    → .discovery/130-emby-drawing.md
-├── Emby.Drawing.ImageMagick/        → .discovery/131-emby-drawing-imagemagick.md (pending)
-├── Emby.Drawing.Net/                → .discovery/132-emby-drawing-net.md (pending)
-├── Emby.Drawing.Skia/               → .discovery/133-emby-drawing-skia.md (pending)
-├── Emby.Notifications/              → .discovery/140-emby-notifications.md
-├── Emby.Photos/                     → .discovery/150-emby-photos.md
+├── Emby.Dlna/                       → .discovery/330-emby-dlna.md
+├── Emby.Drawing/                    → .discovery/120-emby-drawing.md
+│   ├── Emby.Drawing.ImageMagick/    → .discovery/121-emby-drawing-imagemagick.md
+│   ├── Emby.Drawing.Net/            → .discovery/122-emby-drawing-net.md
+│   └── Emby.Drawing.Skia/          → .discovery/123-emby-drawing-skia.md
+├── Emby.Notifications/              → .discovery/130-emby-notifications.md
+├── Emby.Photos/                     → .discovery/140-emby-photos.md
 ├── Emby.Server.Implementations/     → .discovery/160-emby-server-impl.md
-├── MediaBrowser.Api/                → .discovery/200-mediabrowser-api.md
-├── MediaBrowser.LocalMetadata/      → .discovery/210-mediabrowser-localmetadata.md
-├── MediaBrowser.Providers/          → .discovery/220-mediabrowser-providers.md
-├── MediaBrowser.Server.Mono/        → .discovery/230-mediabrowser-server-mono.md
-├── MediaBrowser.ServerApplication/  → .discovery/240-mediabrowser-serverapp.md
-├── MediaBrowser.Tests/              → .discovery/250-mediabrowser-tests.md
+│   ├── Core Infrastructure          → .discovery/161-emby-server-impl-core.md
+│   ├── Library Management           → .discovery/162-emby-server-impl-library.md
+│   ├── Media & Channels            → .discovery/163-emby-server-impl-media.md
+│   ├── HTTP Server & Services       → .discovery/164-emby-server-impl-http.md
+│   ├── Scheduled Tasks              → .discovery/165-emby-server-impl-tasks.md
+│   ├── I/O Utilities                → .discovery/166-emby-server-impl-io.md
+│   ├── Text Encoding & Localization → .discovery/167-emby-server-impl-encoding.md
+│   ├── Security & Users             → .discovery/168-emby-server-impl-security.md
+│   └── SharpCifs (Embedded)         → .discovery/169-emby-server-impl-sharpcifs.md
+├── MediaBrowser.Api/                → .discovery/340-mediabrowser-api.md
+├── MediaBrowser.LocalMetadata/      → .discovery/200-mediabrowser-localmetadata.md
+├── MediaBrowser.Providers/          → .discovery/320-mediabrowser-providers.md
+├── MediaBrowser.Server.Mono/        → .discovery/210-mediabrowser-server-mono.md
+├── MediaBrowser.ServerApplication/  → .discovery/220-mediabrowser-serverapplication.md
+├── MediaBrowser.Tests/              → .discovery/230-mediabrowser-tests.md
 ├── MediaBrowser.WebDashboard/       → .discovery/260-mediabrowser-webdashboard.md
-├── MediaBrowser.XbmcMetadata/       → .discovery/270-mediabrowser-xbmcmetadata.md
-├── Mono.Nat/                        → .discovery/320-mono-nat.md
-├── RSSDP/                           → .discovery/310-rssdp.md
-├── SocketHttpListener/              → .discovery/330-sockethttplistener.md
-├── ThirdParty/                      → .discovery/400-thirdparty.md
-├── emby-go/                         → .discovery/500-emby-go.md
-├── MediaBrowser.sln                 → .discovery/900-solution.md
-├── SharedVersion.cs                 → .discovery/910-sharedversion.md
-├── README.md                        → .discovery/920-readme.md
-├── CONTRIBUTORS.md                  → .discovery/930-contributors.md
+│   ├── API & Backend               → .discovery/261-mediabrowser-webdashboard-api.md
+│   ├── UI Structure                 → .discovery/262-mediabrowser-webdashboard-ui.md
+│   ├── Scripts                      → .discovery/263-mediabrowser-webdashboard-scripts.md
+│   ├── Components                   → .discovery/264-mediabrowser-webdashboard-components.md
+│   ├── Localization                 → .discovery/265-mediabrowser-webdashboard-strings.md
+│   └── Bower Dependencies           → .discovery/266-mediabrowser-webdashboard-bower.md
+├── MediaBrowser.XbmcMetadata/     → .discovery/240-mediabrowser-xbmcmetadata.md
+├── Mono.Nat/                        → .discovery/250-mono-nat.md
+├── RSSDP/                           → .discovery/300-rssdp.md
+├── SocketHttpListener/              → .discovery/350-sockethttplistener.md
+├── ThirdParty/                      → .discovery/370-thirdparty.md
+├── emby-go/                         → .discovery/360-emby-go.md
+├── packages/                        → .discovery/400-packages.md
+├── MediaBrowser.sln                 → .discovery/000-root.md
+├── SharedVersion.cs                 → .discovery/000-root.md
+├── README.md                        → .discovery/000-root.md
+├── CONTRIBUTORS.md                  → .discovery/000-root.md
 └── LICENSE.md                       → .discovery/940-license.md
 ```
 
@@ -47,104 +63,100 @@ Emby/
 
 | File | Component | Type | Description |
 |------|-----------|------|-------------|
-| [000-root.md](./000-root.md) | Project root | Root | Master project overview with architecture diagrams |
-| [100-bdinfo.md](./100-bdinfo.md) | BDInfo | Library | Blu-ray disc info parser |
-| [110-dvdlib.md](./110-dvdlib.md) | DvdLib | Library | DVD IFO parser |
-| [120-emby-dlna.md](./120-emby-dlna.md) | Emby.Dlna | Module | DLNA/UPnP media server |
-| [130-emby-drawing.md](./130-emby-drawing.md) | Emby.Drawing | Module | Image processing abstractions |
-| [140-emby-notifications.md](./140-emby-notifications.md) | Emby.Notifications | Module | Notification system |
-| [150-emby-photos.md](./150-emby-photos.md) | Emby.Photos | Module | Photo library management |
-| [160-emby-server-impl.md](./160-emby-server-impl.md) | Emby.Server.Implementations | Module | Core server logic |
-| [200-mediabrowser-api.md](./200-mediabrowser-api.md) | MediaBrowser.Api | Module | REST API layer |
-| [210-mediabrowser-localmetadata.md](./210-mediabrowser-localmetadata.md) | MediaBrowser.LocalMetadata | Module | Local metadata extraction |
-| [220-mediabrowser-providers.md](./220-mediabrowser-providers.md) | MediaBrowser.Providers | Module | External metadata providers |
-| [230-mediabrowser-server-mono.md](./230-mediabrowser-server-mono.md) | MediaBrowser.Server.Mono | Application | Mono/Linux entry point |
-| [240-mediabrowser-serverapp.md](./240-mediabrowser-serverapp.md) | MediaBrowser.ServerApplication | Application | Windows entry point |
-| [250-mediabrowser-tests.md](./250-mediabrowser-tests.md) | MediaBrowser.Tests | Test | Unit/integration tests |
-| [260-mediabrowser-webdashboard.md](./260-mediabrowser-webdashboard.md) | MediaBrowser.WebDashboard | Module | Web dashboard UI |
-| [270-mediabrowser-xbmcmetadata.md](./270-mediabrowser-xbmcmetadata.md) | MediaBrowser.XbmcMetadata | Module | Kodi/XBMC NFO compatibility |
-| [310-rssdp.md](./310-rssdp.md) | RSSDP | Library | SSDP/UPnP discovery |
-| [320-mono-nat.md](./320-mono-nat.md) | Mono.Nat | Library | NAT traversal (UPnP-IGD/NAT-PMP) |
-| [330-sockethttplistener.md](./330-sockethttplistener.md) | SocketHttpListener | Library | Custom HTTP server |
-| [400-thirdparty.md](./400-thirdparty.md) | ThirdParty | External | 7zip, taglib, emby libs |
-| [500-emby-go.md](./500-emby-go.md) | emby-go | Module | Go rewrite in progress |
-| [900-solution.md](./900-solution.md) | MediaBrowser.sln | Config | Solution configuration |
-| [910-sharedversion.md](./910-sharedversion.md) | SharedVersion.cs | Config | Assembly version |
-| [920-readme.md](./920-readme.md) | README.md | Doc | Project readme |
-| [930-contributors.md](./930-contributors.md) | CONTRIBUTORS.md | Doc | Contributors list |
-| [940-license.md](./940-license.md) | LICENSE.md | Legal | GPL-2.0 license |
+| [000-root.md](./000-root.md) | Project root | Entry point | Master project overview |
+| [100-bdinfo.md](./100-bdinfo.md) | BDInfo | Module | Blu-ray disc analysis |
+| [110-dvdlib.md](./110-dvdlib.md) | DvdLib | Module | DVD structure parsing |
+| [120-emby-drawing.md](./120-emby-drawing.md) | Emby.Drawing | Module | Image processing |
+| [121-emby-drawing-imagemagick.md](./121-emby-drawing-imagemagick.md) | Emby.Drawing.ImageMagick | Module | ImageMagick backend |
+| [122-emby-drawing-net.md](./122-emby-drawing-net.md) | Emby.Drawing.Net | Module | .NET drawing backend |
+| [123-emby-drawing-skia.md](./123-emby-drawing-skia.md) | Emby.Drawing.Skia | Module | SkiaSharp backend |
+| [130-emby-notifications.md](./130-emby-notifications.md) | Emby.Notifications | Module | Notification system |
+| [140-emby-photos.md](./140-emby-photos.md) | Emby.Photos | Module | Photo management |
+| [160-emby-server-impl.md](./160-emby-server-impl.md) | Emby.Server.Implementations | Module | Core server implementation |
+| [161-emby-server-impl-core.md](./161-emby-server-impl-core.md) | Core Infrastructure | Sub-module | AppBase, Config, Crypto, etc. |
+| [162-emby-server-impl-library.md](./162-emby-server-impl-library.md) | Library Management | Sub-module | Library, Collections, Playlists |
+| [163-emby-server-impl-media.md](./163-emby-server-impl-media.md) | Media & Channels | Sub-module | Channels, LiveTV |
+| [164-emby-server-impl-http.md](./164-emby-server-impl-http.md) | HTTP Server | Sub-module | HttpServer, Services, EntryPoints |
+| [165-emby-server-impl-tasks.md](./165-emby-server-impl-tasks.md) | Scheduled Tasks | Sub-module | Background task scheduler |
+| [166-emby-server-impl-io.md](./166-emby-server-impl-io.md) | I/O Utilities | Sub-module | File system I/O wrappers |
+| [167-emby-server-impl-encoding.md](./167-emby-server-impl-encoding.md) | Text Encoding | Sub-module | Localization, UniversalDetector |
+| [168-emby-server-impl-security.md](./168-emby-server-impl-security.md) | Security | Sub-module | Security, Session, Devices |
+| [169-emby-server-impl-sharpcifs.md](./169-emby-server-impl-sharpcifs.md) | SharpCifs | Sub-module | Embedded SMB/CIFS client |
+| [200-mediabrowser-localmetadata.md](./200-mediabrowser-localmetadata.md) | MediaBrowser.LocalMetadata | Module | Local metadata providers |
+| [210-mediabrowser-server-mono.md](./210-mediabrowser-server-mono.md) | MediaBrowser.Server.Mono | Module | Mono runtime support |
+| [220-mediabrowser-serverapplication.md](./220-mediabrowser-serverapplication.md) | MediaBrowser.ServerApplication | Module | Windows server app |
+| [230-mediabrowser-tests.md](./230-mediabrowser-tests.md) | MediaBrowser.Tests | Module | Unit tests |
+| [240-mediabrowser-xbmcmetadata.md](./240-mediabrowser-xbmcmetadata.md) | MediaBrowser.XbmcMetadata | Module | XBMC/Kodi metadata |
+| [250-mono-nat.md](./250-mono-nat.md) | Mono.Nat | Module | NAT traversal |
+| [260-mediabrowser-webdashboard.md](./260-mediabrowser-webdashboard.md) | MediaBrowser.WebDashboard | Module | Web dashboard |
+| [261-mediabrowser-webdashboard-api.md](./261-mediabrowser-webdashboard-api.md) | Dashboard API | Sub-module | C# backend API |
+| [262-mediabrowser-webdashboard-ui.md](./262-mediabrowser-webdashboard-ui.md) | Dashboard UI | Sub-module | HTML/CSS frontend |
+| [263-mediabrowser-webdashboard-scripts.md](./263-mediabrowser-webdashboard-scripts.md) | Dashboard Scripts | Sub-module | JavaScript modules |
+| [264-mediabrowser-webdashboard-components.md](./264-mediabrowser-webdashboard-components.md) | Dashboard Components | Sub-module | Web components |
+| [265-mediabrowser-webdashboard-strings.md](./265-mediabrowser-webdashboard-strings.md) | Dashboard Strings | Sub-module | i18n localization |
+| [266-mediabrowser-webdashboard-bower.md](./266-mediabrowser-webdashboard-bower.md) | Bower Deps | Sub-module | Third-party frontend libs |
+| [300-rssdp.md](./300-rssdp.md) | RSSDP | Module | SSDP discovery protocol |
+| [320-mediabrowser-providers.md](./320-mediabrowser-providers.md) | MediaBrowser.Providers | Module | Metadata providers |
+| [330-emby-dlna.md](./330-emby-dlna.md) | Emby.Dlna | Module | DLNA/UPnP server |
+| [340-mediabrowser-api.md](./340-mediabrowser-api.md) | MediaBrowser.Api | Module | REST API endpoints |
+| [350-sockethttplistener.md](./350-sockethttplistener.md) | SocketHttpListener | Module | HTTP listener |
+| [360-emby-go.md](./360-emby-go.md) | emby-go | Module | Go bindings |
+| [370-thirdparty.md](./370-thirdparty.md) | ThirdParty | Module | Native libraries |
+| [400-packages.md](./400-packages.md) | packages/ | Dependencies | NuGet package cache |
+| [940-license.md](./940-license.md) | LICENSE.md | Legal | License file |
 
 ## Dependency Graph
 
 ```mermaid
-graph LR
-    subgraph "Entry Points"
-        A[ServerApplication] --> B[Server.Implementations]
-        C[Server.Mono] --> B
-        D[emby-go] --> E[Go Services]
-    end
-
-    subgraph "Core"
-        B --> F[MediaBrowser.Api]
-        B --> G[Providers]
-        B --> H[LocalMetadata]
-        E --> F
-    end
-
-    subgraph "Media"
-        B --> I[Drawing]
-        I --> J[Skia]
-        I --> K[ImageMagick]
-        B --> L[Photos]
-        G --> M[BDInfo]
-        G --> N[DvdLib]
-    end
-
-    subgraph "Network"
-        B --> O[DLNA]
-        O --> P[RSSDP]
-        B --> Q[Mono.Nat]
-        B --> R[SocketHttpListener]
-    end
-
-    subgraph "UI"
-        F --> S[WebDashboard]
-    end
-
-    subgraph "Compat"
-        G --> T[XbmcMetadata]
-    end
+graph TD
+    A[MediaBrowser.ServerApplication] --> B[Emby.Server.Implementations]
+    A --> C[MediaBrowser.Api]
+    A --> D[MediaBrowser.WebDashboard]
+    B --> E[MediaBrowser.Providers]
+    B --> F[Emby.Dlna]
+    B --> G[SocketHttpListener]
+    B --> H[RSSDP]
+    B --> I[Mono.Nat]
+    B --> J[Emby.Drawing]
+    B --> K[Emby.Notifications]
+    B --> L[Emby.Photos]
+    C --> B
+    D --> C
+    E --> M[MediaBrowser.LocalMetadata]
+    E --> N[MediaBrowser.XbmcMetadata]
+    J --> O[Emby.Drawing.ImageMagick]
+    J --> P[Emby.Drawing.Skia]
+    J --> Q[Emby.Drawing.Net]
+    B --> R[BDInfo]
+    B --> S[DvdLib]
+    B --> T[ThirdParty]
+    B --> U[emby-go]
 ```
-
-## Entry Points
-
-| Entry Point | Type | Description |
-|-------------|------|-------------|
-| `MediaBrowser.ServerApplication/Program.cs` | Application | Windows server entry |
-| `MediaBrowser.Server.Mono/Program.cs` | Application | Mono/Linux server entry |
-| `emby-go/cmd/emby-server/main.go` | Application | Go server entry |
-| `MediaBrowser.sln` | Solution | Visual Studio solution |
 
 ## Statistics
 
 | Metric | Count |
 |--------|-------|
-| Total discovery documents | 27 |
-| C# Projects | 20 |
-| Go Packages | ~15 |
-| Third-party Libraries | 3 |
-| Solution Configurations | 5 |
+| Total C# files | ~2000 |
+| Total Go files | ~95 |
+| Total JavaScript files | ~450 |
+| Total HTML/CSS files | ~100 |
+| Total project modules | 20+ |
+| Total discovery documents | 35+ |
+| NuGet packages | 63 |
+| Total files in packages/ | 2485 |
 
 ## Coverage Verification
 
-- [x] 100% top-level file coverage
-- [x] All major modules mapped
-- [x] All entry points identified
-- [x] Dependency graph generated (Mermaid)
-- [x] Architecture overview generated (Mermaid)
-- [x] All descriptions evidence-based
-
-## Reference
-
-- CloudBSD Application Guidelines: `https://github.com/cloudbsdorg/application_guidelines`
-- Emby Website: `http://www.emby.media/`
+- [x] All top-level directories mapped
+- [x] All top-level files mapped
+- [x] Emby.Server.Implementations fully expanded (9 sub-docs)
+- [x] MediaBrowser.WebDashboard fully expanded (6 sub-docs)
+- [x] MediaBrowser.Providers expanded with categories
+- [x] Emby.Dlna expanded with sub-modules
+- [x] MediaBrowser.Api expanded with API areas
+- [x] SocketHttpListener expanded with sub-modules
+- [x] emby-go expanded with packages
+- [x] ThirdParty expanded with libraries
+- [x] packages/ dependency manifest created
+- [ ] Individual file-level mapping (ongoing)
