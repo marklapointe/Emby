@@ -65,6 +65,7 @@ Emby/
 |------|-----------|------|-------------|
 | [000-root.md](./000-root.md) | Project root | Entry point | Master project overview |
 | [100-bdinfo.md](./100-bdinfo.md) | BDInfo | Module | Blu-ray disc analysis |
+| [101-bdinfo-internals.md](./101-bdinfo-internals.md) | BDInfo | Expanded | Codec files, stream parsing |
 | [100-01-bdrom.md](./100-01-bdrom.md) | BDROM.cs | File | BD-ROM disc reader |
 | [100-02-tsplaylistfile.md](./100-02-tsplaylistfile.md) | TSPlaylistFile.cs | File | Playlist parser |
 | [100-03-tsstreamfile.md](./100-03-tsstreamfile.md) | TSStreamFile.cs | File | Stream file parser |
@@ -77,11 +78,13 @@ Emby/
 | [100-10-tsstreambuffer.md](./100-10-tsstreambuffer.md) | TSStreamBuffer.cs | File | Stream buffer |
 | [100-11-codecs.md](./100-11-codecs.md) | Codecs.cs | File | Codec definitions |
 | [110-dvdlib.md](./110-dvdlib.md) | DvdLib | Module | DVD structure parsing |
+| [111-dvdliv-internals.md](./111-dvdliv-internals.md) | DvdLib | Expanded | IFO parsers, structure |
 | [120-emby-drawing.md](./120-emby-drawing.md) | Emby.Drawing | Module | Image processing |
 | [121-emby-drawing-imagemagick.md](./121-emby-drawing-imagemagick.md) | Emby.Drawing.ImageMagick | Module | ImageMagick backend |
 | [122-emby-drawing-net.md](./122-emby-drawing-net.md) | Emby.Drawing.Net | Module | .NET drawing backend |
 | [123-emby-drawing-skia.md](./123-emby-drawing-skia.md) | Emby.Drawing.Skia | Module | SkiaSharp backend |
 | [140-emby-notifications.md](./140-emby-notifications.md) | Emby.Notifications | Module | Notification system |
+| [131-emby-notifications-internals.md](./131-emby-notifications-internals.md) | Emby.Notifications | Expanded | API, managers |
 | [150-emby-photos.md](./150-emby-photos.md) | Emby.Photos | Module | Photo management |
 | [160-emby-server-impl.md](./160-emby-server-impl.md) | Emby.Server.Implementations | Module | Core server implementation |
 | [161-emby-server-impl-core.md](./161-emby-server-impl-core.md) | Core Infrastructure | Sub-module | AppBase, Config, Crypto, etc. |
@@ -94,10 +97,13 @@ Emby/
 | [168-emby-server-impl-security.md](./168-emby-server-impl-security.md) | Security | Sub-module | Security, Session, Devices |
 | [169-emby-server-impl-sharpcifs.md](./169-emby-server-impl-sharpcifs.md) | SharpCifs | Sub-module | Embedded SMB/CIFS client |
 | [210-mediabrowser-localmetadata.md](./210-mediabrowser-localmetadata.md) | MediaBrowser.LocalMetadata | Module | Local metadata providers |
+| [211-mediabrowser-localmetadata-internals.md](./211-mediabrowser-localmetadata-internals.md) | LocalMetadata | Expanded | Parsers, Savers, Providers |
 | [210-mediabrowser-server-mono.md](./210-mediabrowser-server-mono.md) | MediaBrowser.Server.Mono | Module | Mono runtime support |
 | [220-mediabrowser-serverapplication.md](./220-mediabrowser-serverapplication.md) | MediaBrowser.ServerApplication | Module | Windows server app |
+| [221-mediabrowser-serverapplication-internals.md](./221-mediabrowser-serverapplication-internals.md) | ServerApplication | Expanded | Native, networking, splash |
 | [230-mediabrowser-tests.md](./230-mediabrowser-tests.md) | MediaBrowser.Tests | Module | Unit tests |
 | [240-mediabrowser-xbmcmetadata.md](./240-mediabrowser-xbmcmetadata.md) | MediaBrowser.XbmcMetadata | Module | XBMC/Kodi metadata |
+| [241-mediabrowser-xbmcmetadata-internals.md](./241-mediabrowser-xbmcmetadata-internals.md) | XbmcMetadata | Expanded | NFO parsers, savers |
 | [250-mono-nat.md](./250-mono-nat.md) | Mono.Nat | Module | NAT traversal |
 | [260-mediabrowser-webdashboard.md](./260-mediabrowser-webdashboard.md) | MediaBrowser.WebDashboard | Module | Web dashboard |
 | [261-mediabrowser-webdashboard-api.md](./261-mediabrowser-webdashboard-api.md) | Dashboard API | Sub-module | C# backend API |
@@ -107,7 +113,12 @@ Emby/
 | [265-mediabrowser-webdashboard-strings.md](./265-mediabrowser-webdashboard-strings.md) | Dashboard Strings | Sub-module | i18n localization |
 | [266-mediabrowser-webdashboard-bower.md](./266-mediabrowser-webdashboard-bower.md) | Bower Deps | Sub-module | Third-party frontend libs |
 | [300-rssdp.md](./300-rssdp.md) | RSSDP | Module | SSDP discovery protocol |
-| [320-mediabrowser-providers.md](./320-mediabrowser-providers.md) | MediaBrowser.Providers | Module | Metadata providers |
+| [320-mediabrowser-providers.md](./320-mediabrowser-providers.md) | MediaBrowser.Providers | Module | Metadata providers (overview) |
+| [327-mediabrowser-providers-tv.md](./327-mediabrowser-providers-tv.md) | TV Providers | Sub-module | TheTVDB, TMDB, FanArt |
+| [328-mediabrowser-providers-subtitles.md](./328-mediabrowser-providers-subtitles.md) | Subtitles | Sub-module | SubtitleManager |
+| [329-mediabrowser-providers-users.md](./329-mediabrowser-providers-users.md) | Users | Sub-module | UserMetadataService |
+| [329a-mediabrowser-providers-videos.md](./329a-mediabrowser-providers-videos.md) | Videos | Sub-module | VideoMetadataService |
+| [329b-mediabrowser-providers-years.md](./329b-mediabrowser-providers-years.md) | Years | Sub-module | YearMetadataService |
 | [330-emby-dlna.md](./330-emby-dlna.md) | Emby.Dlna | Module | DLNA/UPnP server |
 | [340-mediabrowser-api.md](./340-mediabrowser-api.md) | MediaBrowser.Api | Module | REST API endpoints |
 | [350-sockethttplistener.md](./350-sockethttplistener.md) | SocketHttpListener | Module | HTTP listener |
@@ -158,7 +169,7 @@ graph TD
 | Total JavaScript files | ~450 |
 | Total HTML/CSS files | ~100 |
 | Total project modules | 20+ |
-| Total discovery documents | 47 |
+| Total discovery documents | 59 |
 | NuGet packages | 63 |
 | Total files in packages/ | 2485 |
 
