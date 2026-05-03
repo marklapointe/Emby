@@ -264,3 +264,67 @@ Embedded SharpCifs SMB/CIFS client library for network file access. Provides SMB
 - `Transport.cs` — Emby.Server.Implementations/IO/SharpCifs/Util/Transport/Transport.cs
 - `TransportException.cs` — Emby.Server.Implementations/IO/SharpCifs/Util/Transport/TransportException.cs
 
+## Decomposition
+
+### SmbFile.cs (SMB File Access)
+
+#### Imports
+```csharp
+using System;
+using System.IO;
+```
+
+#### Classes
+`SmbFile` (public class : FileEntry)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `Path` | `string` | SMB file path |
+| `IsDirectory` | `bool` | Is directory |
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `OpenRead()` | `Stream` | Open for reading |
+| `OpenWrite()` | `Stream` | Open for writing |
+| `Delete()` | `void` | Delete file |
+| `GetAttributes()` | `SmbFile` | Get attributes |
+| `ListFiles()` | `SmbFile[]` | List directory |
+
+### SmbSession.cs (SMB Session)
+
+#### Classes
+`SmbSession` (public class)
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `Logon(string, string)` | `void` | Authenticate |
+| `ConnectTree(string)` | `SmbTree` | Connect to share |
+| `Disconnect()` | `void` | End session |
+
+### SmbTree.cs (SMB Tree Connection)
+
+#### Classes
+`SmbTree` (public class)
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `Connect()` | `void` | Establish connection |
+| `Disconnect()` | `void` | End connection |
+| `OpenFile(string, Access)` | `SmbFile` | Open remote file |
+
+### NtlmPasswordAuthentication.cs (NTLM Auth)
+
+#### Classes
+`NtlmPasswordAuthentication` (public class : NtlmAuthenticator)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `Domain` | `string` | Domain name |
+| `Username` | `string` | Username |
+| `Password` | `string` | Password |
+
