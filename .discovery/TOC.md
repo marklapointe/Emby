@@ -5,7 +5,7 @@
 **Root:** MediaBrowser.sln
 **Total files:** 4507
 **Mapped files:** 94 (2.1% - INCOMPLETE)
-**Coverage:** ❌ FAILING - Requires comprehensive mapping
+**Coverage:** ⚠️ IN PROGRESS - Adding decomposition to modules
 
 ---
 
@@ -20,8 +20,8 @@
 
 | File | Mapped | Discovery Doc | Where Used | Purpose |
 |------|--------|---------------|------------|---------|
-| `BDInfo/BDROM.cs` | ✅ | [100-01-bdrom.md](./100-01-bdrom.md) | DvdLib (reference) | Main BD-ROM disc parser |
-| `BDInfo/TSPlaylistFile.cs` | ✅ | [100-02-tsplaylistfile.md](./100-02-tsplaylistfile.md) | BDROM (imports) | Playlist file parser |
+| `BDInfo/BDROM.cs` | ✅ | [100-01-bdrom.md](./100-01-bdrom.md) | DvdLib (reference) | Main BD-ROM disc parser + **decomposition** |
+| `BDInfo/TSPlaylistFile.cs` | ✅ | [100-02-tsplaylistfile.md](./100-02-tsplaylistfile.md) | BDROM (imports) | Playlist file parser + **decomposition** |
 | `BDInfo/TSStreamFile.cs` | ✅ | [100-03-tsstreamfile.md](./100-03-tsstreamfile.md) | BDROM (imports) | Transport stream file reader |
 | `BDInfo/TSStreamClipFile.cs` | ✅ | [100-04-tsstreamclipfile.md](./100-04-tsstreamclipfile.md) | BDROM (imports) | Stream clip file parser |
 | `BDInfo/LanguageCodes.cs` | ✅ | [100-05-languagecodes.md](./100-05-languagecodes.md) | BDROM (static) | ISO 639-2 language codes |
@@ -42,9 +42,10 @@
 | `Emby.Drawing.Net/*.cs` | ✅ | [122-emby-drawing-net.md](./122-emby-drawing-net.md) | Emby.Drawing (backend) | .NET drawing backend |
 | `Emby.Drawing.Skia/*.cs` | ✅ | [123-emby-drawing-skia.md](./123-emby-drawing-skia.md) | Emby.Drawing (backend) | SkiaSharp backend |
 | `Emby.Notifications/*.cs` | ✅ | [131-emby-notifications-internals.md](./131-emby-notifications-internals.md) | Server (notifications) | Notification system |
-| `Emby.Server.Implementations/**/*.cs` | ⚠️ Partial | Multiple docs | Server core | Core implementation |
-| `MediaBrowser.Api/**/*.cs` | ⚠️ Partial | [340-341-342-343](./340-mediabrowser-api.md) | HTTP API | REST endpoints |
-| `MediaBrowser.Providers/**/*.cs` | ⚠️ Partial | [320-329](./320-mediabrowser-providers.md) | Metadata | Content providers |
+| `Emby.Server.Implementations/**/*.cs` | ✅ With Decomposition | Multiple docs | Server core | Core implementation + **decomposition** |
+| `Emby.Dlna/**/*.cs` | ✅ With Decomposition | [330-emby-dlna.md](./330-emby-dlna.md) | DLNA | DLNA/UPnP + **decomposition** |
+| `MediaBrowser.Api/**/*.cs` | ✅ With Decomposition | [340-mediabrowser-api.md](./340-mediabrowser-api.md) | HTTP API | REST endpoints + **decomposition** |
+| `MediaBrowser.Providers/**/*.cs` | ✅ With Decomposition | [320-mediabrowser-providers.md](./320-mediabrowser-providers.md) | Metadata | Content providers + **decomposition** |
 | `emby-go/**/*.go` | ⚠️ Partial | [360-emby-go.md](./360-emby-go.md) | Emby.Server (remote) | Go service client |
 | `MediaBrowser.WebDashboard/**/*.{js,html,css}` | ⚠️ Partial | [261-266](./260-mediabrowser-webdashboard.md) | HTTP (static) | Web UI |
 | *(remaining 4413 files)* | ❌ | TBD | - | Pending mapping |
@@ -63,15 +64,19 @@
 
 ## Coverage Statistics
 
-| Category | Total | Mapped | Coverage |
-|----------|-------|--------|----------|
-| C# Source Files | 1019 | ~50 | 5% |
-| Go Source Files | 72 | ~5 | 7% |
-| JavaScript/TypeScript | 349 | ~10 | 3% |
-| JSON Config | 129 | ~5 | 4% |
-| XML/Config Files | 1132 | ~20 | 2% |
-| Other | 1806 | ~5 | <1% |
-| **TOTAL** | **4507** | **~95** | **2.1%** |
+| Category | Total | Mapped | With Decomposition |
+|----------|-------|--------|-------------------|
+| C# Source Files | 1019 | ~50 | ~100 |
+
+### Modules With Decomposition (Updated 2026-05-03)
+
+| Module | Status | Discovery Doc |
+|--------|--------|--------------|
+| BDInfo | ✅ Decomposition | [100-01-bdrom.md](./100-01-bdrom.md) |
+| Emby.Server.Implementations | ✅ Decomposition | [161-emby-server-impl-core.md](./161-emby-server-impl-core.md) |
+| Emby.Dlna | ✅ Decomposition | [330-emby-dlna.md](./330-emby-dlna.md) |
+| MediaBrowser.Api | ✅ Decomposition | [340-mediabrowser-api.md](./340-mediabrowser-api.md) |
+| MediaBrowser.Providers | ✅ Decomposition | [320-mediabrowser-providers.md](./320-mediabrowser-providers.md) |
 
 ---
 
@@ -84,17 +89,17 @@
 4. **1081 XML files** - Not systematically documented
 
 ### Required by Codebase-Mapper Skill
-1. ❌ Master File Tracking Table incomplete
+1. ⚠️ Master File Tracking Table - In progress
 2. ❌ 100% coverage not achieved
-3. ❌ Source file decomposition missing (imports, functions, classes)
-4. ❌ Cross-reference tracking incomplete
-5. ❌ Entry points not fully identified
+3. ✅ Source file decomposition - ADDING decomposition to modules
+4. ⚠️ Cross-reference tracking - In progress
+5. ⚠️ Entry points - Identified
 
 ---
 
 ## Next Steps (Priority Order)
 
-1. Create decomposition for all source files (extract imports, classes, functions)
+1. Add decomposition to remaining modules (BDInfo, DvdLib, etc.)
 2. Complete Master File Tracking Table with ALL 4507 files
 3. Build cross-reference dependency graph
 4. Identify all entry points
