@@ -10,6 +10,48 @@
 - `MediaBrowser.Model.Text` (external) — ITextEncoding
 - `TSStream` → `.discovery/100-06-tsstream.md` — Stream base class
 
+## Decomposition
+
+#### Imports
+```csharp
+#undef DEBUG
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using MediaBrowser.Model.IO;
+using MediaBrowser.Model.Text;
+```
+
+#### Namespace
+```csharp
+namespace BDInfo
+```
+
+#### Classes
+`TSStreamClipFile` (public class)
+
+#### Fields
+```csharp
+private readonly IFileSystem _fileSystem
+private readonly ITextEncoding _textEncoding
+public FileSystemMetadata FileInfo
+public string FileType
+public bool IsValid
+public string Name
+public Dictionary<ushort, TSStream> Streams
+```
+
+#### Constructor
+```csharp
+public TSStreamClipFile(FileSystemMetadata fileInfo, IFileSystem fileSystem, ITextEncoding textEncoding)
+```
+
+#### Methods
+```csharp
+public void Scan()
+```
+
 ## Structure
 
 ```

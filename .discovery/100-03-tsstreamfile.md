@@ -12,6 +12,95 @@
 - `TSCodec*` → `.discovery/100-11-codecs.md` — Codec scanners
 - `TSPlaylistFile` → `.discovery/100-02-tsplaylistfile.md` — Playlist references
 
+## Decomposition
+
+#### Imports
+```csharp
+#undef DEBUG
+using System;
+using System.Collections.Generic;
+using System.IO;
+using MediaBrowser.Model.IO;
+```
+
+#### Namespace
+```csharp
+namespace BDInfo
+```
+
+#### Classes
+- `TSStreamState` — Tracks per-stream parsing state during transport stream demux
+- `TSPacketParser` — Tracks MPEG-TS packet-level parsing state
+- `TSStreamDiagnostics` — Holds diagnostic metrics per stream
+- `TSStreamFile` — Main transport stream scanner
+
+#### TSStreamState Fields
+```csharp
+public ulong TransferCount
+public string StreamTag
+public ulong TotalPackets, WindowPackets
+public ulong TotalBytes, WindowBytes
+public long PeakTransferLength, PeakTransferRate
+public double TransferMarker, TransferInterval
+public TSStreamBuffer StreamBuffer
+public uint Parse
+public bool TransferState
+public int TransferLength, PacketLength
+public byte PacketLengthParse, PacketParse
+public byte PTSParse
+public ulong PTS, PTSTemp, PTSLast, PTSPrev, PTSDiff, PTSCount, PTSTransfer
+public byte DTSParse
+public ulong DTSTemp, DTSPrev
+public byte PESHeaderLength, PESHeaderFlags, PESHeaderIndex
+public byte[] PESHeader
+```
+
+#### TSPacketParser Fields
+```csharp
+public bool SyncState
+public byte TimeCodeParse, PacketLength, HeaderParse
+public uint TimeCode
+public byte TransportErrorIndicator, PayloadUnitStartIndicator
+public byte TransportPriority, TransportScramblingControl
+public ushort PID
+public byte AdaptionFieldControl, AdaptionFieldParse, AdaptionFieldLength
+public bool AdaptionFieldState
+public ushort PCRPID
+public byte PCRParse
+public ulong PCR, PCRTemp, PCRDiff, PCRCount, PCRTransfer
+public ulong PTSFirst, PTSLast, PTSDiff
+public byte[] PAT
+public bool PATSectionStart, PATTransferState
+```
+
+#### TSStreamDiagnostics Fields
+```csharp
+public ulong Bytes
+public ulong Packets
+public double Seconds
+public double BitRate
+public double TransferRate
+```
+
+#### TSStreamFile Fields
+```csharp
+public FileSystemMetadata FileInfo
+public string Name
+public TSInterleavedFile InterleavedFile
+public Dictionary<ushort, TSStream> Streams
+public bool IsInitialized
+public bool Is3D
+private readonly IFileSystem _fileSystem
+```
+
+#### TSStreamFile Methods
+```csharp
+public TSStreamFile(FileSystemMetadata fileInfo, IFileSystem fileSystem)
+public void Scan(List<TSPlaylistFile> playlists, bool isFullScan)
+private void UpdateStreamBitrates(List<TSPlaylistFile> playlists, bool isFullScan)
+private void UpdateStreamBitrate(TSStream stream, TSStreamDiagnostics diag)
+```
+
 ## Structure
 
 ```

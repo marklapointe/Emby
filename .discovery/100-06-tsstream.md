@@ -6,6 +6,130 @@
 **Maps to:** `.discovery/100-06-tsstream.md`
 **Parent:** `.discovery/100-bdinfo.md`
 
+## Decomposition
+
+#### Imports
+```csharp
+using System;
+using System.Collections.Generic;
+```
+
+#### Namespace
+```csharp
+namespace BDInfo
+```
+
+#### Enums
+```csharp
+public enum TSStreamType : byte
+    Unknown = 0, MPEG1_VIDEO = 0x01, MPEG2_VIDEO = 0x02, AVC_VIDEO = 0x1b
+    MVC_VIDEO = 0x20, VC1_VIDEO = 0xea, MPEG1_AUDIO = 0x03, MPEG2_AUDIO = 0x04
+    LPCM_AUDIO = 0x80, AC3_AUDIO = 0x81, AC3_PLUS_AUDIO = 0x84
+    AC3_PLUS_SECONDARY_AUDIO = 0xA1, AC3_TRUE_HD_AUDIO = 0x83
+    DTS_AUDIO = 0x82, DTS_HD_AUDIO = 0x85, DTS_HD_SECONDARY_AUDIO = 0xA2
+    DTS_HD_MASTER_AUDIO = 0x86, PRESENTATION_GRAPHICS = 0x90
+    INTERACTIVE_GRAPHICS = 0x91, SUBTITLE = 0x92
+
+public enum TSVideoFormat : byte
+    Unknown = 0, VIDEOFORMAT_480i = 1, VIDEOFORMAT_576i = 2, VIDEOFORMAT_480p = 3
+    VIDEOFORMAT_1080i = 4, VIDEOFORMAT_720p = 5, VIDEOFORMAT_1080p = 6, VIDEOFORMAT_576p = 7
+
+public enum TSFrameRate : byte
+    Unknown = 0, FRAMERATE_23_976 = 1, FRAMERATE_24 = 2, FRAMERATE_25 = 3
+    FRAMERATE_29_97 = 4, FRAMERATE_50 = 6, FRAMERATE_59_94 = 7
+
+public enum TSChannelLayout : byte
+    Unknown = 0, CHANNELLAYOUT_MONO = 1, CHANNELLAYOUT_STEREO = 3
+    CHANNELLAYOUT_MULTI = 6, CHANNELLAYOUT_COMBO = 12
+
+public enum TSSampleRate : byte
+    Unknown = 0, SAMPLERATE_48_KHZ = 1, SAMPLERATE_96_KHZ = 2, SAMPLERATE_192_KHZ = 3
+    SAMPLERATE_44_1_KHZ = 4, SAMPLERATE_88_2_KHZ = 5, SAMPLERATE_176_4_KHZ = 6
+
+public enum TSAspectRatio
+    Unknown = 0, ASPECT_4_3 = 1, ASPECT_16_9 = 2, ASPECT_2_21 = 3
+
+public enum TSAudioMode
+    Unknown = 0, DualMono = 1, Stereo = 2, MultiChannel = 3
+```
+
+#### Classes
+- `TSDescriptor` — Stream descriptor tag/data container
+- `TSStream` — Base stream class with common properties
+- `TSVideoStream : TSStream` — Video stream with format/framerate/resolution
+- `TSAudioStream : TSStream` — Audio stream with channel/sample rate/bit depth
+- `TSGraphicsStream : TSStream` — Graphics stream (subtitles overlay)
+- `TSTextStream : TSStream` — Text subtitle stream
+
+#### TSStream Fields
+```csharp
+public ushort PID
+public TSStreamType StreamType
+public bool IsVBR
+public bool IsInitialized
+public List<TSDescriptor> Descriptors
+public ulong BitRate
+public ulong ActiveBitRate
+public bool IsHidden
+public bool HasMultipleAngles
+public bool IsPastel
+public string LanguageCode
+public string Description
+public string CodecShortName
+public string CodecLongName
+public string FrameRateDescription
+public string VideoFormatDescription
+public string AspectRatioDescription
+public string ChannelDescription
+public string SampleRateDescription
+public string BitDepthDescription
+public string DelayDescription
+public string VideoResolution
+public string AudioModeDescription
+```
+
+#### TSVideoStream Fields
+```csharp
+public TSVideoFormat VideoFormat
+public TSFrameRate FrameRate
+public TSAspectRatio AspectRatio
+public int Width
+public int Height
+public bool IsInterlaced
+public bool Is3D
+```
+
+#### TSAudioStream Fields
+```csharp
+public TSChannelLayout ChannelLayout
+public TSSampleRate SampleRate
+public int BitDepth
+public int AudioMode
+public int CoreAudioMode
+public int CoreSampleRate
+public int CoreBitDepth
+public int CoreChannelCount
+public int CoreFlags
+public bool HasDialogNormalization
+public int DialogNormalization
+public bool IsLossless
+public double Delay
+public double CoreDelay
+public bool IsVBR
+```
+
+#### TSGraphicsStream Fields
+```csharp
+public int Width
+public int Height
+```
+
+#### TSTextStream Fields
+```csharp
+public int Width
+public int Height
+```
+
 ## Structure
 
 ```
