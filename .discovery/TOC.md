@@ -96,6 +96,20 @@ Emby/
 | [167-emby-server-impl-encoding.md](./167-emby-server-impl-encoding.md) | Text Encoding | Sub-module | Localization, UniversalDetector |
 | [168-emby-server-impl-security.md](./168-emby-server-impl-security.md) | Security | Sub-module | Security, Session, Devices |
 | [169-emby-server-impl-sharpcifs.md](./169-emby-server-impl-sharpcifs.md) | SharpCifs | Sub-module | Embedded SMB/CIFS client |
+| [180-activity.md](./180-activity.md) | Activity | Sub-module | Activity logging |
+| [181-archiving.md](./181-archiving.md) | Archiving | Sub-module | ZIP archive handling |
+| [182-branding.md](./182-branding.md) | Branding | Sub-module | Server branding |
+| [183-browser.md](./183-browser.md) | Browser | Sub-module | Browser launcher |
+| [184-devices.md](./184-devices.md) | Devices | Sub-module | Device management |
+| [185-dto.md](./185-dto.md) | Dto | Sub-module | Data transfer objects |
+| [186-entrypoints.md](./186-entrypoints.md) | EntryPoints | Sub-module | Server entry points |
+| [187-ffmpeg.md](./187-ffmpeg.md) | FFMpeg | Sub-module | FFmpeg management |
+| [188-library-full.md](./188-library-full.md) | Library | Sub-module | Library management (full) |
+| [189-livetv-full.md](./189-livetv-full.md) | LiveTv | Sub-module | LiveTV (full) |
+| [190-localization.md](./190-localization.md) | Localization | Sub-module | i18n support |
+| [191-tv.md](./191-tv.md) | TV | Sub-module | TV series manager |
+| [192-udp.md](./192-udp.md) | Udp | Sub-module | UDP server |
+| [193-userviews.md](./193-userviews.md) | UserViews | Sub-module | User view images |
 | [210-mediabrowser-localmetadata.md](./210-mediabrowser-localmetadata.md) | MediaBrowser.LocalMetadata | Module | Local metadata providers |
 | [211-mediabrowser-localmetadata-internals.md](./211-mediabrowser-localmetadata-internals.md) | LocalMetadata | Expanded | Parsers, Savers, Providers |
 | [210-mediabrowser-server-mono.md](./210-mediabrowser-server-mono.md) | MediaBrowser.Server.Mono | Module | Mono runtime support |
@@ -169,7 +183,7 @@ graph TD
 | Total JavaScript files | ~450 |
 | Total HTML/CSS files | ~100 |
 | Total project modules | 20+ |
-| Total discovery documents | 59 |
+| Total discovery documents | 73 |
 | NuGet packages | 63 |
 | Total files in packages/ | 2485 |
 
