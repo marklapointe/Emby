@@ -8,18 +8,24 @@
 
 ## Description
 
-Book metadata providers.
+Metadata providers for books and audiobooks. Handles metadata extraction and organization for book content.
 
-## Structure
+## Files
 
-```
-Books/
-├── BookMetadataService.cs        # [class] BookMetadataService
-└── *BookProvider.cs              # Book providers
-```
+### Root Book Files (2 files)
+
+- `BookMetadataService.cs` — MediaBrowser.Providers/Books/BookMetadataService.cs
+- `AudioBookMetadataService.cs` — MediaBrowser.Providers/Books/AudioBookMetadataService.cs
 
 ## Key Classes
 
 | Class | File | Purpose |
 |-------|------|---------|
 | `BookMetadataService` | `BookMetadataService.cs` | Book metadata orchestration |
+| `AudioBookMetadataService` | `AudioBookMetadataService.cs` | Audiobook metadata orchestration |
+
+## Dependencies
+
+- **MediaBrowser.Controller** — Base entity types
+- **MediaBrowser.Model** — API models
+- **HttpClient** — External API calls
