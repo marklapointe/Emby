@@ -5,6 +5,86 @@
 **Language:** C#
 **Maps to:** `.discovery/330-emby-dlna.md`
 
+## Decomposition
+
+### DlnaManager.cs (Main Entry Point)
+
+#### Imports
+```csharp
+using MediaBrowser.Controller.Configuration;
+using MediaBrowser.Controller.Dlna;
+using MediaBrowser.Model.Configuration;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+```
+
+#### Classes
+\`DlnaManager\` (public class : IDlnaManager)
+
+#### Key Methods
+```csharp
+IDeviceDiscovery CreateDeviceDiscovery(DlnaOptions options)
+IContentDirectory GetContentDirectory(string serverUuid)
+IConnectionManager GetConnectionManager(string serverUuid)
+Task<DeviceProfile> GetProfile(DeviceInfo deviceInfo)
+```
+
+### DidlBuilder.cs (DIDL-Lite Builder)
+
+#### Imports
+```csharp
+using MediaBrowser.Controller.Entities;
+using MediaBrowser.Model.Dlna;
+using System.Collections.Generic;
+using System.Xml;
+```
+
+#### Classes
+\`DidlBuilder\` (public class)
+
+#### Key Methods
+```csharp
+string GetDidl(IEnumerable<BaseItem> items, string filter, string sort)
+string GetSingleItem(BaseItem item, string filter)
+```
+
+### ContentDirectory.cs (Browse/Search)
+
+#### Classes
+\`ContentDirectory\` (public class : BaseService, IContentDirectory)
+
+#### Key Methods
+```csharp
+Task<ControlResponse> Browse(ControlRequest request)
+Task<ControlResponse> Search(ControlRequest request)
+Task<ControlResponse> GetSearchCapabilities(ControlRequest request)
+```
+
+### PlayToController.cs (PlayTo Remote Control)
+
+#### Classes
+\`PlayToController\` (public class)
+
+#### Key Methods
+```csharp
+void Play(string url, string title)
+void Stop()
+void Pause()
+void Seek(TimeSpan position)
+```
+
+### DeviceDiscovery.cs (SSDP Discovery)
+
+#### Classes
+\`DeviceDiscovery\` (public class)
+
+#### Key Events
+```csharp
+event EventHandler<DeviceInfo> DeviceAdded
+event EventHandler<DeviceInfo> DeviceRemoved
+```
+
 ## Description
 
 Emby.Dlna implements DLNA/UPnP media server functionality. It provides device discovery, content directory services, connection management, media receiver registration, and PlayTo remote control. Contains 90 C# files.
