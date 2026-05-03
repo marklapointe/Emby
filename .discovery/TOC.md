@@ -135,6 +135,7 @@ Emby/
 | [329b-mediabrowser-providers-years.md](./329b-mediabrowser-providers-years.md) | Years | Sub-module | YearMetadataService |
 | [330-emby-dlna.md](./330-emby-dlna.md) | Emby.Dlna | Module | DLNA/UPnP server |
 | [340-mediabrowser-api.md](./340-mediabrowser-api.md) | MediaBrowser.Api | Module | REST API endpoints |
+| [343-mediabrowser-api-services.md](./343-mediabrowser-api-services.md) | API Services | Expanded | All 61 service files |
 | [350-sockethttplistener.md](./350-sockethttplistener.md) | SocketHttpListener | Module | HTTP listener |
 | [360-emby-go.md](./360-emby-go.md) | emby-go | Module | Go bindings |
 | [370-thirdparty.md](./370-thirdparty.md) | ThirdParty | Module | Native libraries |
@@ -183,7 +184,7 @@ graph TD
 | Total JavaScript files | ~450 |
 | Total HTML/CSS files | ~100 |
 | Total project modules | 20+ |
-| Total discovery documents | 73 |
+| Total discovery documents | 74 |
 | NuGet packages | 63 |
 | Total files in packages/ | 2485 |
 
