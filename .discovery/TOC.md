@@ -5,7 +5,7 @@
 **Root:** MediaBrowser.sln
 **Total files:** 4507
 **Mapped files:** 4507 (100% - COMPLETE)
-**Coverage:** ✅ COMPLETE - All 29 top-level modules documented with decomposition (180 documents total)
+**Coverage:** ✅ COMPLETE - All 29 top-level modules documented with decomposition (201 documents total)
 
 ---
 
@@ -69,7 +69,7 @@
 | C# Source Files | 1019 | 1019 | 1019 |
 | Go Files | 72 | 72 | 72 |
 | JS/TS Files | 349 | 349 | 349 |
-| Discovery Docs | 179 | 179 | 179 |
+| Discovery Docs | 201 | 201 | 201 |
 
 ### Modules With Decomposition (Updated 2026-05-03)
 
@@ -117,7 +117,9 @@
 | Emby.Server.Implementations/TextEncoding | ✅ Decomposition | [217-emby-server-impl-textencoding.md](./217-emby-server-impl-textencoding.md) |
 | Emby.Server.Implementations/Threading | ✅ Decomposition | [218-emby-server-impl-threading.md](./218-emby-server-impl-threading.md) |
 | Emby.Server.Implementations/Updates | ✅ Decomposition | [219-emby-server-impl-updates.md](./219-emby-server-impl-updates.md) |
-| Emby.Server.Implementations/Xml | ✅ Decomposition | [220-emby-server-impl-xml.md](./220-emby-server-impl-xml.md) |
+| Emby.Server.Implementations/Xml | ✅ Decomposition | [219-emby-server-impl-xml.md](./219-emby-server-impl-xml.md) |
+| Emby.Server.Implementations/Networking/IPNetwork | ✅ Decomposition | [209a-emby-server-impl-networking.md](./209a-emby-server-impl-networking.md) |
+| Emby.Server.Implementations/Session | ✅ Decomposition | [215-emby-server-impl-session.md](./215-emby-server-impl-session.md) |
 | MediaBrowser.Providers/BoxSets | ✅ Decomposition | [330-mediabrowser-providers-boxsets.md](./330-mediabrowser-providers-boxsets.md) |
 | MediaBrowser.Providers/Channels | ✅ Decomposition | [331-mediabrowser-providers-channels.md](./331-mediabrowser-providers-channels.md) |
 | MediaBrowser.Providers/Chapters | ✅ Decomposition | [332-mediabrowser-providers-chapters.md](./332-mediabrowser-providers-chapters.md) |

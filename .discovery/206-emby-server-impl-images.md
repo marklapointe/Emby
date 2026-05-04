@@ -1,8 +1,17 @@
-# Emby.Server.Implementations - Images Module
+# Component: Emby.Server.Implementations — Images
 
-**Module:** Emby.Server.Implementations/Images
+**Path:** `Emby.Server.Implementations/Images/`
+**Type:** Directory | Module
 **Language:** C#
 **Maps to:** `.discovery/206-emby-server-impl-images.md`
+
+## Description
+
+Dynamic image generation and management. Provides base image providers for posters, backdrops, and thumbnails.
+
+## Files
+
+- `BaseDynamicImageProvider.cs` — Emby.Server.Implementations/Images/BaseDynamicImageProvider.cs
 
 ## Decomposition
 
@@ -10,52 +19,49 @@
 
 #### Imports
 ```csharp
-using System.Threading.Tasks;
+using MediaBrowser.Controller.Drawing;
 using MediaBrowser.Controller.Entities;
-using MediaBrowser.Controller.Providers;
-using MediaBrowser.Model.Entities;
-using MediaBrowser.Model.Logging;
+using MediaBrowser.Model.Drawing;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 ```
 
 #### Classes
-`BaseDynamicImageProvider` (public abstract class : IDynamicImageProvider)
+`BaseDynamicImageProvider<T>` (public abstract class : IDynamicImageProvider) where T : BaseItem
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `Name` | `string` | Provider name |
+| `SupportedImages` | `ImageType[]` | Supported image types |
 
 #### Key Methods
-```csharp
-Task<DynamicImageResponse> GetImage responses(BaseItem item, ImageType type)
-abstract DynamicImageInfo GetLearnedBrandImage(BaseItem item)
-abstract bool Supports(BaseItem item);
-```
+| Method | Return | Description |
+|--------|--------|-------------|
+| `GetImages(T, IEnumerable<ImageType>)` | `Task<IEnumerable<ItemImageInfo>>` | Get images |
+| `CreateImage(Object, ItemImageInfo, IImageGenerator)` | `Task` | Create image |
+| `GetHash(T, ImageType)` | `string` | Get image hash |
 
-## Architecture
+## Data Flow
 
 ```mermaid
-graph TD
-    IDynamicImageProvider["IDynamicImageProvider<br/>(Interface)"]
-    BaseDynamicImageProvider["BaseDynamicImageProvider<br/>(Abstract Class)"]
-    
-    IDynamicImageProvider --> BaseDynamicImageProvider
+graph LR
+    A[BaseItem] --> B[BaseDynamicImageProvider]
+    B --> C[ItemImageInfo]
+    C --> D[ImageGenerator]
+    D --> E[Image File]
 ```
-
-## File Listing
-
-```
-Images/
-└── BaseDynamicImageProvider.cs - Base class for dynamic image generation
-```
-
-## Description
-
-Images module provides base classes for dynamic image generation. BaseDynamicImageProvider is an abstract base class that image providers (like backdrop or poster generators) can inherit from to create dynamic artwork.
 
 ## Dependencies
 
-- **MediaBrowser.Controller.Entities** - Base entities
-- **MediaBrowser.Controller.Providers** - Provider interfaces
-- **MediaBrowser.Model.Entities** - Entity models
+- `MediaBrowser.Controller.Drawing` — Drawing interfaces
+- `MediaBrowser.Controller.Entities` — Base item types
 
 ## Statistics
 
-- **Files:** 1
-- **Lines:** ~100
-- **Classes:** 1
+| Metric | Value |
+|--------|-------|
+| Files | 1 |
+| Classes | 1 |
+| LOC | ~100 |

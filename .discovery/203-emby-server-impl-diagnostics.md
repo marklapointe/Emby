@@ -1,72 +1,76 @@
-# Emby.Server.Implementations - Diagnostics Module
+# Component: Emby.Server.Implementations — Diagnostics
 
-**Module:** Emby.Server.Implementations/Diagnostics
+**Path:** `Emby.Server.Implementations/Diagnostics/`
+**Type:** Directory | Module
 **Language:** C#
 **Maps to:** `.discovery/203-emby-server-impl-diagnostics.md`
 
+## Description
+
+Diagnostics and process management utilities. Provides process discovery and monitoring capabilities.
+
+## Files
+
+- `CommonProcess.cs` — Emby.Server.Implementations/Diagnostics/CommonProcess.cs
+- `ProcessFactory.cs` — Emby.Server.Implementations/Diagnostics/ProcessFactory.cs
+
 ## Decomposition
 
-### CommonProcess.cs (Process Information)
+### CommonProcess.cs (Common Process Wrapper)
 
 #### Imports
 ```csharp
+using System;
 using System.Diagnostics;
-using System.IO;
-using MediaBrowser.Model.IO;
+using System.Threading.Tasks;
 ```
 
 #### Classes
 `CommonProcess` (public class)
 
 #### Key Properties
-```csharp
-string Name { get; }
-long MemoryBytes { get; }
-double CpuPercentage { get; }
-```
+| Property | Type | Description |
+|----------|------|-------------|
+| `ProcessName` | `string` | Name of process |
+| `Id` | `int` | Process ID |
+| `StartTime` | `DateTime` | When started |
+| `HasExited` | `bool` | Is process running |
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `Kill()` | `void` | Terminate process |
+| `WaitForExit(int)` | `bool` | Wait for exit |
+| `Start(ProcessStartInfo)` | `static CommonProcess` | Start new process |
 
 ### ProcessFactory.cs (Process Factory)
 
 #### Classes
-`ProcessFactory` (public class : IProcessFactory)
+`ProcessFactory` (public interface)
 
 #### Key Methods
-```csharp
-Process CreateProcess(ProcessOptions options)
-IProcess CreateProcessAsync(ProcessOptions options)
-```
+| Method | Return | Description |
+|--------|--------|-------------|
+| `CreateProcess(ProcessStartInfo)` | `IProcess` | Create new process |
 
-## Architecture
+## Data Flow
 
 ```mermaid
-graph TD
-    IProcessFactory["IProcessFactory<br/>(Interface)"]
-    ProcessFactory["ProcessFactory<br/>(Implementation)"]
-    CommonProcess["CommonProcess<br/>(Data Class)"]
-    
-    IProcessFactory --> ProcessFactory
-    ProcessFactory --> CommonProcess
+graph LR
+    A[Diagnostics Request] --> B[ProcessFactory]
+    B --> C[CommonProcess]
+    C --> D[System Process]
 ```
-
-## File Listing
-
-```
-Diagnostics/
-├── CommonProcess.cs    - Process information model
-└── ProcessFactory.cs   - Process creation factory
-```
-
-## Description
-
-Diagnostics module provides process management and monitoring utilities. The ProcessFactory creates and manages external processes (like FFmpeg). CommonProcess holds process information like memory usage and CPU percentage.
 
 ## Dependencies
 
-- **System.Diagnostics** - Process management
-- **MediaBrowser.Model.IO** - I/O interfaces
+- `System.Diagnostics` — Process management
+- `System.Threading.Tasks` — Async operations
 
 ## Statistics
 
-- **Files:** 2
-- **Lines:** ~200
-- **Classes:** 2
+| Metric | Value |
+|--------|-------|
+| Files | 2 |
+| Classes | 2 |
+| LOC | ~115 |

@@ -1,8 +1,18 @@
-# Emby.Server.Implementations - HttpClientManager Module
+# Component: Emby.Server.Implementations — HttpClientManager
 
-**Module:** Emby.Server.Implementations/HttpClientManager
+**Path:** `Emby.Server.Implementations/HttpClientManager/`
+**Type:** Directory | Module
 **Language:** C#
 **Maps to:** `.discovery/205-emby-server-impl-httpclientmanager.md`
+
+## Description
+
+HTTP client management with caching, retry logic, and connection pooling. Provides standardized HTTP operations for external API calls.
+
+## Files
+
+- `HttpClientManager.cs` — Emby.Server.Implementations/HttpClientManager/HttpClientManager.cs
+- `HttpClientManagerOptions.cs` — Emby.Server.Implementations/HttpClientManager/HttpClientManagerOptions.cs
 
 ## Decomposition
 
@@ -10,73 +20,66 @@
 
 #### Imports
 ```csharp
+using MediaBrowser.Common.Net;
+using MediaBrowser.Model.Net;
 using System;
 using System.Collections.Concurrent;
+using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using MediaBrowser.Common.Net;
-using MediaBrowser.Model.Net;
-using MediaBrowser.Model.Logging;
 ```
 
 #### Classes
-`HttpClientManager` (public class : IHttpClient, IServerEntryPoint)
-
-#### Key Methods
-```csharp
-Task<HttpResponseInfo> SendAsync(HttpRequestOptions options, string httpMethod)
-void SetCookie(Guid id, string url, string value, DateTime? expires)
-void RemoveCookie(Guid id, string url)
-IDisposable GetHttpMessageHandler()
-```
-
-### HttpClientInfo.cs (HTTP Client Information)
-
-#### Classes
-`HttpClientInfo` (internal class)
+`HttpClientManager` (public class : IHttpClient)
 
 #### Key Properties
-```csharp
-HttpClient Client { get; }
-CookieContainer Cookies { get; }
-DateTime LastAccess { get; }
-```
+| Property | Type | Description |
+|----------|------|-------------|
+| `HttpMessageHandler` | `HttpMessageHandler` | Custom handler |
 
-## Architecture
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `Get(string, CancellationToken)` | `Task<HttpResponseInfo>` | GET request |
+| `Post(string, HttpRequestOptions)` | `Task<HttpResponseInfo>` | POST request |
+| `SendAsync(HttpRequestMessage, CancellationToken)` | `Task<HttpResponseMessage>` | Custom request |
+| `AddDefaultRequestHeader(string, string)` | `void` | Add headers |
+| `SetCookie(CookieContainer)` | `void` | Set cookies |
+
+### HttpClientManagerOptions.cs (Options)
+
+#### Classes
+`HttpClientManagerOptions` (public class)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `TimeoutMs` | `int` | Request timeout |
+| `NumberOfRedirects` | `int` | Max redirects |
+| `EnableDefaultHttpClient` | `bool` | Use managed client |
+
+## Data Flow
 
 ```mermaid
-graph TD
-    IHttpClient["IHttpClient<br/>(Interface)"]
-    HttpClientManager["HttpClientManager<br/>(Implementation)"]
-    HttpClientInfo["HttpClientInfo<br/>(Client Info)"]
-    HttpClient["HttpClient<br/>(.NET)"]
-    
-    IHttpClient --> HttpClientManager
-    HttpClientManager --> HttpClientInfo
-    HttpClientInfo --> HttpClient
+graph LR
+    A[Request] --> B[HttpClientManager]
+    B --> C[Caching Layer]
+    B --> D[Retry Logic]
+    D --> E[HttpClient]
+    E --> F[External API]
 ```
-
-## File Listing
-
-```
-HttpClientManager/
-├── HttpClientManager.cs - HTTP client management and pooling
-└── HttpClientInfo.cs    - HTTP client info per endpoint
-```
-
-## Description
-
-HttpClientManager module manages HTTP client instances and cookie handling. It provides connection pooling, cookie management per endpoint, and HTTP request/response handling. Uses HttpClientInfo to track multiple client instances.
 
 ## Dependencies
 
-- **MediaBrowser.Common.Net** - HTTP interfaces
-- **MediaBrowser.Model.Net** - Network models
-- **System.Net.Http** - .NET HTTP libraries
+- `System.Net.Http` — HTTP client
+- `MediaBrowser.Model.Net` — Network models
 
 ## Statistics
 
-- **Files:** 2
-- **Lines:** ~300
-- **Classes:** 2
+| Metric | Value |
+|--------|-------|
+| Files | 2 |
+| Classes | 2 |
+| LOC | ~400 |

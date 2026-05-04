@@ -1,65 +1,64 @@
-# Emby.Server.Implementations - Cryptography Module
+# Component: Emby.Server.Implementations — Cryptography
 
-**Module:** Emby.Server.Implementations/Cryptography
+**Path:** `Emby.Server.Implementations/Cryptography/`
+**Type:** Directory | Module
 **Language:** C#
 **Maps to:** `.discovery/202-emby-server-impl-cryptography.md`
 
+## Description
+
+Provides cryptographic services for the server. Wraps system cryptography for hashing, encryption, and secure operations.
+
+## Files
+
+- `CryptographyProvider.cs` — Emby.Server.Implementations/Cryptography/CryptographyProvider.cs
+
 ## Decomposition
 
-### CryptographyProvider.cs
+### CryptographyProvider.cs (Cryptography Provider)
 
 #### Imports
 ```csharp
+using MediaBrowser.Model.Cryptography;
 using System;
 using System.Security.Cryptography;
-using MediaBrowser.Model.Cryptography;
+using System.Text;
 ```
 
 #### Classes
-`CryptographyProvider` (public class : ICryptoProvider)
+`CryptographyProvider` (public class : ICryptographyProvider)
 
 #### Key Methods
-```csharp
-byte[] GenerateSalt()
-byte[] GetMD5Hash(byte[] data)
-string GetMD5HashString(string value)
-byte[] GetSha1Hash(byte[] data)
-string GetSha1HashString(string value)
-byte[] GetMD5Hash(byte[] data, int offset, int count)
-string GetProprietaryHash(string value)
-```
+| Method | Return | Description |
+|--------|--------|-------------|
+| `ComputeMD5(byte[])` | `string` | MD5 hash |
+| `ComputeMD5(string)` | `string` | MD5 hash of string |
+| `ComputeSHA1(byte[])` | `string` | SHA1 hash |
+| `ComputeSHA256(byte[])` | `string` | SHA256 hash |
+| `GenerateSalt()` | `string` | Generate random salt |
+| `ComputeHmac(byte[], string)` | `byte[]` | HMAC computation |
+| `EncryptString(string, string)` | `string` | Encrypt string |
+| `DecryptString(string, string)` | `string` | Decrypt string |
 
-## Architecture
+## Data Flow
 
 ```mermaid
-graph TD
-    ICryptoProvider["ICryptoProvider<br/>(Interface)"]
-    CryptographyProvider["CryptographyProvider<br/>(Implementation)"]
-    
-    ICryptoProvider --> CryptographyProvider
-    
-    CryptographyProvider -->|uses| MD5["MD5<br/>(Hash)"]
-    CryptographyProvider -->|uses| SHA1["SHA1<br/>(Hash)"]
+graph LR
+    A[Input] --> B[CryptographyProvider]
+    B --> C[Hash/Encrypt]
+    C --> D[Output]
+    E[Salt] --> B
 ```
-
-## File Listing
-
-```
-Cryptography/
-└── CryptographyProvider.cs - Cryptographic operations provider
-```
-
-## Description
-
-Cryptography module provides cryptographic utilities for Emby Server. The CryptographyProvider implements ICryptoProvider and provides hash generation (MD5, SHA1), salt generation, and proprietary hashing for password storage and data integrity verification.
 
 ## Dependencies
 
-- **MediaBrowser.Model.Cryptography** - Cryptography interfaces
-- **System.Security.Cryptography** - .NET crypto libraries
+- `System.Security.Cryptography` — .NET crypto primitives
+- `MediaBrowser.Model.Cryptography` — Crypto interfaces
 
 ## Statistics
 
-- **Files:** 1
-- **Lines:** ~100
-- **Classes:** 1
+| Metric | Value |
+|--------|-------|
+| Files | 1 |
+| Classes | 1 |
+| LOC | ~30 |

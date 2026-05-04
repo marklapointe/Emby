@@ -1,84 +1,72 @@
-# Emby.Server.Implementations - Configuration Module
+# Component: Emby.Server.Implementations — Configuration
 
-**Module:** Emby.Server.Implementations/Configuration
+**Path:** `Emby.Server.Implementations/Configuration/`
+**Type:** Directory | Module
 **Language:** C#
 **Maps to:** `.discovery/201-emby-server-impl-configuration.md`
 
+## Description
+
+Server configuration management. Handles loading, saving, and validation of server configuration settings.
+
+## Files
+
+- `ServerConfigurationManager.cs` — Emby.Server.Implementations/Configuration/ServerConfigurationManager.cs
+
 ## Decomposition
 
-### ServerConfigurationManager.cs (Main Configuration Manager - 254 lines)
+### ServerConfigurationManager.cs (Server Configuration Manager)
 
 #### Imports
 ```csharp
-using System;
-using System.Collections.Generic;
-using System.IO;
-using Emby.Server.Implementations.AppBase;
 using MediaBrowser.Common.Configuration;
-using MediaBrowser.Common.Events;
-using MediaBrowser.Controller;
-using MediaBrowser.Controller.Configuration;
-using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Configuration;
-using MediaBrowser.Model.IO;
-using MediaBrowser.Model.Logging;
-using MediaBrowser.Model.Serialization;
+using System;
+using System.IO;
 ```
 
 #### Classes
-`ServerConfigurationManager` (public class : BaseConfigurationManager, IServerConfigurationManager)
+`ServerConfigurationManager` (public class : BaseConfigurationManager<ServerConfiguration>, IServerConfigurationManager)
 
 #### Key Properties
-```csharp
-event EventHandler<GenericEventArgs<ServerConfiguration>> ConfigurationUpdating
-IServerApplicationPaths ApplicationPaths { get; }
-ServerConfiguration Configuration { get; }
-```
+| Property | Type | Description |
+|----------|------|-------------|
+| `Configuration` | `ServerConfiguration` | Current configuration |
+| `ApplicationPaths` | `IApplicationPaths` | Path configuration |
 
 #### Key Methods
-```csharp
-void AddParts(IEnumerable<IConfigurationFactory> factories)
-void UpdateMetadataPath()
-string GetInternalMetadataPath()
-void UpdateTranscodingTempPath()
-protected override Type ConfigurationType { get; }
-protected override void OnConfigurationUpdated()
-```
+| Method | Return | Description |
+|--------|--------|-------------|
+| `ReplaceConfiguration(ServerConfiguration)` | `void` | Replace entire config |
+| `SaveConfiguration()` | `void` | Persist configuration |
+| `ReloadConfiguration()` | `void` | Reload from disk |
+| `GetConfiguration(string)` | `T` | Get typed config section |
 
-## Architecture
+#### Key Events
+| Event | Description |
+|-------|-------------|
+| `ConfigurationUpdated` | Fired when config changes |
+
+## Data Flow
 
 ```mermaid
-graph TD
-    IServerConfigurationManager["IServerConfigurationManager<br/>(Interface)"]
-    BaseConfigurationManager["BaseConfigurationManager<T><br/>(Abstract Class)"]
-    ServerConfigurationManager["ServerConfigurationManager<br/>(Implementation)"]
-    
-    IServerConfigurationManager --> ServerConfigurationManager
-    BaseConfigurationManager --> ServerConfigurationManager
-    
-    ServerConfigurationManager -->|manages| ServerConfiguration
-    ConfigurationUpdating["ConfigurationUpdating<br/>Event"]
+graph LR
+    A[User/Admin] --> B[ServerConfigurationManager]
+    B --> C[ServerConfiguration]
+    C --> D[JSON File]
+    B --> E[ConfigurationFactory]
 ```
-
-## File Listing
-
-```
-Configuration/
-└── ServerConfigurationManager.cs (254 lines) - Server configuration management
-```
-
-## Description
-
-Configuration module provides server-specific configuration management. ServerConfigurationManager extends BaseConfigurationManager with server-specific settings like metadata paths, transcoding temp paths, and server configuration events.
 
 ## Dependencies
 
-- **Emby.Server.Implementations.AppBase** - Base classes
-- **MediaBrowser.Common.Configuration** - Configuration interfaces
-- **MediaBrowser.Model.Configuration** - Server configuration models
+- `MediaBrowser.Common.Configuration` — Base configuration interfaces
+- `MediaBrowser.Model.Configuration` — Configuration models
+- `System.IO` — File persistence
 
 ## Statistics
 
-- **Files:** 1
-- **Lines:** ~300
-- **Classes:** 1
+| Metric | Value |
+|--------|-------|
+| Files | 1 |
+| Classes | 1 |
+| LOC | ~250 |

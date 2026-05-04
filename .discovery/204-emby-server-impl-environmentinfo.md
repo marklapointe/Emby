@@ -1,71 +1,66 @@
-# Emby.Server.Implementations - EnvironmentInfo Module
+# Component: Emby.Server.Implementations — EnvironmentInfo
 
-**Module:** Emby.Server.Implementations/EnvironmentInfo
+**Path:** `Emby.Server.Implementations/EnvironmentInfo/`
+**Type:** Directory | Module
 **Language:** C#
 **Maps to:** `.discovery/204-emby-server-impl-environmentinfo.md`
 
+## Description
+
+Provides system and environment information for the server. Reports OS details, version info, and runtime environment.
+
+## Files
+
+- `EnvironmentInfo.cs` — Emby.Server.Implementations/EnvironmentInfo/EnvironmentInfo.cs
+
 ## Decomposition
 
-### EnvironmentInfo.cs (Environment Information Provider)
+### EnvironmentInfo.cs (Environment Information)
 
 #### Imports
 ```csharp
+using MediaBrowser.Model.System;
 using System;
 using System.Runtime.InteropServices;
-using MediaBrowser.Common.Implementations;
+using SystemInfo = MediaBrowser.Model.System.SystemInfo;
 ```
 
 #### Classes
 `EnvironmentInfo` (public class : IEnvironmentInfo)
 
 #### Key Properties
-```csharp
-string OperatingSystemDisplayName { get; }
-IApplicationHost ApplicationHost { get; set; }
-bool IsWindows { get; }
-bool IsLinux { get; }
-bool IsMacOS { get; }
-```
+| Property | Type | Description |
+|----------|------|-------------|
+| `OperatingSystem` | `string` | OS name |
+| `OperatingSystemVersion` | `string` | OS version |
+| `RuntimeIdentifier` | `string` | .NET runtime |
+| `HasLowGraphicsMemory` | `bool` | GPU memory status |
 
 #### Key Methods
-```csharp
-void SetEnvironmentVariable(string name, string value)
-string GetEnvironmentVariable(string name)
-Version GetRunningFrameworkVersion()
-```
+| Method | Return | Description |
+|--------|--------|-------------|
+| `GetSystemInfo()` | `SystemInfo` | Get full system info |
+| `GetEnvironmentVariable(string)` | `string` | Get env var |
+| `GetPath(string)` | `string` | Get system path |
 
-## Architecture
+## Data Flow
 
 ```mermaid
-graph TD
-    IEnvironmentInfo["IEnvironmentInfo<br/>(Interface)"]
-    EnvironmentInfo["EnvironmentInfo<br/>(Implementation)"]
-    
-    IEnvironmentInfo --> EnvironmentInfo
-    
-    EnvironmentInfo -->|detects| Windows["Windows"]
-    EnvironmentInfo -->|detects| Linux["Linux"]
-    EnvironmentInfo -->|detects| MacOS["macOS"]
+graph LR
+    A[System] --> B[EnvironmentInfo]
+    B --> C[SystemInfo Model]
+    C --> D[API Response]
 ```
-
-## File Listing
-
-```
-EnvironmentInfo/
-└── EnvironmentInfo.cs - Environment and OS information provider
-```
-
-## Description
-
-EnvironmentInfo module provides information about the runtime environment. It detects the operating system (Windows, Linux, macOS), provides framework version information, and manages environment variables.
 
 ## Dependencies
 
-- **MediaBrowser.Common.Implementations** - Common base classes
-- **System.Runtime.InteropServices** - Platform detection
+- `MediaBrowser.Model.System` — System info models
+- `System.Runtime.InteropServices` — Platform interop
 
 ## Statistics
 
-- **Files:** 1
-- **Lines:** ~150
-- **Classes:** 1
+| Metric | Value |
+|--------|-------|
+| Files | 1 |
+| Classes | 1 |
+| LOC | ~80 |

@@ -1,91 +1,89 @@
-# Emby.Server.Implementations - Collections Module
+# Component: Emby.Server.Implementations — Collections
 
-**Module:** Emby.Server.Implementations/Collections
+**Path:** `Emby.Server.Implementations/Collections/`
+**Type:** Directory | Module
 **Language:** C#
 **Maps to:** `.discovery/200-emby-server-impl-collections.md`
 
+## Description
+
+Manages media collections (box sets, grouped media). Handles collection creation, modification, and media item association.
+
+## Files
+
+### Root Collection Files
+
+- `CollectionManager.cs` — Emby.Server.Implementations/Collections/CollectionManager.cs
+- `CollectionImageProvider.cs` — Emby.Server.Implementations/Collections/CollectionImageProvider.cs
+
 ## Decomposition
 
-### CollectionManager.cs (Main Collection Manager - 413 lines)
+### CollectionManager.cs (Collection Manager)
 
 #### Imports
 ```csharp
-using MediaBrowser.Common.Events;
 using MediaBrowser.Controller.Collections;
 using MediaBrowser.Controller.Entities;
-using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Library;
-using MediaBrowser.Controller.Providers;
-using MediaBrowser.Model.Logging;
-using MediaBrowser.Model.IO;
-using MediaBrowser.Model.Globalization;
 using MediaBrowser.Model.Entities;
-using MediaBrowser.Model.Configuration;
+using MediaBrowser.Model.Querying;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 ```
 
 #### Classes
 `CollectionManager` (public class : ICollectionManager)
 
 #### Key Properties
-```csharp
-event EventHandler<CollectionCreatedEventArgs> CollectionCreated
-event EventHandler<CollectionModifiedEventArgs> ItemsAddedToCollection
-event EventHandler<CollectionModifiedEventArgs> ItemsRemovedFromCollection
-```
+| Property | Type | Description |
+|----------|------|-------------|
+| `Collections` | `IEnumerable<BoxSet>` | All collections |
 
 #### Key Methods
-```csharp
-BoxSet CreateCollection(CollectionCreationOptions options)
-void AddToCollection(string collectionId, IEnumerable<string> itemIds)
-void RemoveFromCollection(string collectionId, IEnumerable<string> itemIds)
-Task<Folder> EnsureLibraryFolder(string path, bool createIfNeeded)
-string GetCollectionsFolderPath()
-IEnumerable<BoxSet> GetCollections(User user)
-```
+| Method | Return | Description |
+|--------|--------|-------------|
+| `CreateCollection(CollectionCreationOptions)` | `Task<BoxSet>` | Create new collection |
+| `AddToCollection(Guid, IEnumerable<Guid>)` | `Task` | Add items to collection |
+| `RemoveFromCollection(Guid, IEnumerable<Guid>)` | `Task` | Remove items from collection |
+| `GetCollections(IEnumerable<Guid>)` | `IEnumerable<BoxSet>` | Get collections by IDs |
 
-### CollectionImageProvider.cs
+### CollectionImageProvider.cs (Collection Image Provider)
 
 #### Classes
-`CollectionImageProvider` (public class : ILocalImageProvider, IHasOrder)
+`CollectionImageProvider` (public class : IDynamicImageProvider)
 
-## Architecture
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `Name` | `string` | "Collection" |
+| `SupportedImages` | `ImageType[]` | Primary, Backdrop, Thumb |
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `GetImages(BaseItem, IEnumerable<ImageType>)` | `Task<IEnumerable<ItemImageInfo>>` | Get available images |
+
+## Data Flow
 
 ```mermaid
-graph TD
-    ICollectionManager["ICollectionManager<br/>(Interface)"]
-    CollectionManager["CollectionManager<br/>(Implementation)"]
-    CollectionImageProvider["CollectionImageProvider<br/>(Image Provider)"]
-    
-    ICollectionManager --> CollectionManager
-    CollectionManager --> CollectionImageProvider
-    
-    CollectionManager -->|manages| BoxSet
-    CollectionCreated["CollectionCreated<br/>Event"]
-    ItemsAddedToCollection["ItemsAddedToCollection<br/>Event"]
-    ItemsRemovedFromCollection["ItemsRemovedFromCollection<br/>Event"]
+graph LR
+    A[User Request] --> B[CollectionManager]
+    B --> C[BoxSet Entity]
+    C --> D[SqliteItemRepository]
+    E[CollectionImageProvider] --> F[LibraryManager]
 ```
-
-## File Listing
-
-```
-Collections/
-├── CollectionManager.cs     (413 lines) - Main collection management
-└── CollectionImageProvider.cs - Box set image provider
-```
-
-## Description
-
-Collections module manages media collections (box sets). The CollectionManager handles creating, adding items to, and removing items from collections. Collections are represented as BoxSet entities. The module supports collection creation events and image providers for collection artwork.
 
 ## Dependencies
 
-- **MediaBrowser.Controller.Collections** - Collection interfaces
-- **MediaBrowser.Controller.Entities** - Base entities including BoxSet
-- **MediaBrowser.Controller.Library** - Library management
-- **MediaBrowser.Model.Globalization** - Localization
+- `MediaBrowser.Controller` — Collection interfaces
+- `MediaBrowser.Model` — Query models
+- `Emby.Server.Implementations.Library` — Library integration
 
 ## Statistics
 
-- **Files:** 2
-- **Lines:** ~500
-- **Classes:** 2
+| Metric | Value |
+|--------|-------|
+| Files | 2 |
+| Classes | 2 |
+| LOC | ~175 |
