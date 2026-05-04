@@ -5,7 +5,7 @@
 **Root:** MediaBrowser.sln
 **Total files:** 4507
 **Mapped files:** 4507 (100% - COMPLETE)
-**Coverage:** ✅ COMPLETE - All 23 top-level modules documented with decomposition (129 documents total)
+**Coverage:** ✅ COMPLETE - All 23 top-level modules documented with decomposition (154 documents total)
 
 ---
 
@@ -16,7 +16,7 @@
 | C# Source Files | 1019 | 1019 | 1019 |
 | Go Files | 72 | 72 | 72 |
 | JS/TS Files | 349 | 349 | 349 |
-| Discovery Docs | 129 | 129 | 129 |
+| Discovery Docs | 154 | 154 | 154 |
 
 ---
 
@@ -99,7 +99,18 @@
 | 193-userviews.md | [UserViews](./193-userviews.md) | User views |
 | 194-emby-server-impl-appbase.md | [AppBase](./194-emby-server-impl-appbase.md) | AppBase |
 | 195-emby-server-impl-channels.md | [Channels](./195-emby-server-impl-channels.md) | Channel manager |
+| 196-emby-server-impl-collections.md | [Collections](./196-emby-server-impl-collections.md) | Collection management |
+| 197-emby-server-impl-configuration.md | [Configuration](./197-emby-server-impl-configuration.md) | Configuration |
 | 198-emby-server-impl-scheduledtasks.md | [ScheduledTasks](./198-emby-server-impl-scheduledtasks.md) | Scheduled tasks |
+| 199-emby-server-impl-cryptography.md | [Cryptography](./199-emby-server-impl-cryptography.md) | Cryptography |
+| 200-emby-server-impl-diagnostics.md | [Diagnostics](./200-emby-server-impl-diagnostics.md) | Diagnostics |
+| 201-emby-server-impl-environmentinfo.md | [EnvironmentInfo](./201-emby-server-impl-environmentinfo.md) | Environment info |
+| 202-emby-server-impl-io.md | [IO](./202-emby-server-impl-io.md) | File I/O |
+| 203-emby-server-impl-logging.md | [Logging](./203-emby-server-impl-logging.md) | Logging |
+| 204-emby-server-impl-net.md | [Net](./204-emby-server-impl-net.md) | Networking |
+| 205-emby-server-impl-reflection.md | [Reflection](./205-emby-server-impl-reflection.md) | Reflection |
+| 206-emby-server-impl-serialization.md | [Serialization](./206-emby-server-impl-serialization.md) | Serialization |
+| 207-emby-server-impl-session.md | [Session](./207-emby-server-impl-session.md) | Session management |
 | 208-emby-server-impl-mediaencoder.md | [MediaEncoder](./208-emby-server-impl-mediaencoder.md) | Media encoder |
 | 210-emby-server-impl-news.md | [News](./210-emby-server-impl-news.md) | News |
 | 211-emby-server-impl-playlists.md | [Playlists](./211-emby-server-impl-playlists.md) | Playlist management |
@@ -131,6 +142,12 @@
 | # | Document | Description |
 |---|----------|-------------|
 | 340-mediabrowser-api.md | [Overview](./340-mediabrowser-api.md) | API overview |
+| 346-mediabrowser-api-images.md | [Images](./346-mediabrowser-api-images.md) | Image API |
+| 347-mediabrowser-api-library.md | [Library](./347-mediabrowser-api-library.md) | Library API |
+| 348-mediabrowser-api-livetv.md | [LiveTv](./348-mediabrowser-api-livetv.md) | LiveTV API |
+| 349-mediabrowser-api-scheduledtasks.md | [ScheduledTasks](./349-mediabrowser-api-scheduledtasks.md) | Tasks API |
+| 351-mediabrowser-api-session.md | [Session](./351-mediabrowser-api-session.md) | Session API |
+| 354-mediabrowser-api-userlibrary.md | [UserLibrary](./354-mediabrowser-api-userlibrary.md) | User library API |
 | 342-mediabrowser-api-models.md | [Models](./342-mediabrowser-api-models.md) | API models |
 | 343-mediabrowser-api-services.md | [Services](./343-mediabrowser-api-services.md) | API services |
 | 344-mediabrowser-api-controllers.md | [Controllers](./344-mediabrowser-api-controllers.md) | Controllers |
@@ -147,6 +164,7 @@
 | 320-mediabrowser-providers.md | [Overview](./320-mediabrowser-providers.md) | Providers overview |
 | 321-mediabrowser-providers-movies.md | [Movies](./321-mediabrowser-providers-movies.md) | Movie providers |
 | 323-mediabrowser-providers-music.md | [Music](./323-mediabrowser-providers-music.md) | Music providers |
+| 337-mediabrowser-providers-livetv.md | [LiveTv](./337-mediabrowser-providers-livetv.md) | Live TV providers |
 | 325-mediabrowser-providers-people.md | [People](./325-mediabrowser-providers-people.md) | Person providers |
 | 326-mediabrowser-providers-books.md | [Books](./326-mediabrowser-providers-books.md) | Book providers |
 | 327-mediabrowser-providers-tv.md | [TV](./327-mediabrowser-providers-tv.md) | TV providers |
@@ -155,6 +173,11 @@
 | 331-mediabrowser-providers-channels.md | [Channels](./331-mediabrowser-providers-channels.md) | Channel providers |
 | 332-mediabrowser-providers-chapters.md | [Chapters](./332-mediabrowser-providers-chapters.md) | Chapter providers |
 | 333-mediabrowser-providers-folders.md | [Folders](./333-mediabrowser-providers-folders.md) | Folder providers |
+| 343-mediabrowser-providers-playlists.md | [Playlists](./343-mediabrowser-providers-playlists.md) | Playlist providers |
+| 344-mediabrowser-providers-studios.md | [Studios](./344-mediabrowser-providers-studios.md) | Studio providers |
+| 346-mediabrowser-providers-users.md | [Users](./346-mediabrowser-providers-users.md) | User providers |
+| 347-mediabrowser-providers-videos.md | [Videos](./347-mediabrowser-providers-videos.md) | Video providers |
+| 348-mediabrowser-providers-years.md | [Years](./348-mediabrowser-providers-years.md) | Year providers |
 | 334-mediabrowser-providers-gamegenres.md | [GameGenres](./334-mediabrowser-providers-gamegenres.md) | Game genre providers |
 | 335-mediabrowser-providers-games.md | [Games](./335-mediabrowser-providers-games.md) | Game providers |
 | 336-mediabrowser-providers-genres.md | [Genres](./336-mediabrowser-providers-genres.md) | Genre providers |
