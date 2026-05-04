@@ -113,11 +113,21 @@ type MediaSource struct {
 
 emby-go contains Go language bindings and utilities for Emby Server. It provides Go packages for interacting with the Emby API and server functionality. Contains 95 Go files.
 
-## Packages
+## Directories
 
-- `cmd/` — 1 Go files
-- `cmd/emby-server/` — 1 Go files
-- `internal/` — 68 Go files
+- `bin/` — Build output binaries
+- `cmd/` — Command-line tools
+- `cmd/emby-server/` — Emby server command
+- `configs/` — Configuration files
+- `docs/` — Documentation files
+- `internal/` — Internal packages (68 Go files)
+- `migrations/` — Database migrations
+- `packaging/` — Packaging scripts
+- `pkg/` — Public packages
+- `tests/` — Test files
+
+## Internal Packages
+
 - `internal/api/` — 30 Go files
 - `internal/api/handlers/` — 27 Go files
 - `internal/api/middleware/` — 2 Go files
@@ -151,6 +161,9 @@ emby-go contains Go language bindings and utilities for Emby Server. It provides
 - `internal/util/fs/` — Filesystem utilities
 - `internal/util/hash/` — Hash utilities
 - `internal/util/mime/` — MIME type utilities
+
+## Test Directories
+
 - `tests/` — 3 Go files
 - `tests/e2e/` — 1 Go files
 - `tests/integration/` — 1 Go files
