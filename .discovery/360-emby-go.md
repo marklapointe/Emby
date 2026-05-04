@@ -125,9 +125,13 @@ emby-go contains Go language bindings and utilities for Emby Server. It provides
 - `internal/database/` — 1 Go files
 - `internal/dlna/` — 2 Go files
 - `internal/dlna/xml/` — 1 Go files
+- `internal/licensing/` — License management
 - `internal/logging/` — 1 Go files
 - `internal/model/` — 5 Go files
 - `internal/plugin/` — 1 Go files
+- `internal/provider/` — Media provider services
+- `internal/provider/images/` — Image provider
+- `internal/provider/metadata/` — Metadata provider
 - `internal/repository/` — 3 Go files
 - `internal/server/` — 2 Go files
 - `internal/server/ws/` — 1 Go files
@@ -143,6 +147,10 @@ emby-go contains Go language bindings and utilities for Emby Server. It provides
 - `internal/service/session/` — 3 Go files
 - `internal/service/transcoding/` — 1 Go files
 - `internal/service/user/` — 2 Go files
+- `internal/util/` — Utility packages
+- `internal/util/fs/` — Filesystem utilities
+- `internal/util/hash/` — Hash utilities
+- `internal/util/mime/` — MIME type utilities
 - `tests/` — 3 Go files
 - `tests/e2e/` — 1 Go files
 - `tests/integration/` — 1 Go files
