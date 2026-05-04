@@ -15,8 +15,16 @@ Emby.Photos provides photo album and image library management. It handles photo 
 Emby.Photos/
 ├── Emby.Photos.csproj           # Project file
 ├── PhotoProvider.cs             # Photo metadata provider
-└── Properties/                  # Assembly info
+└── Properties/
+    └── AssemblyInfo.cs          # Assembly metadata
 ```
+
+## Files
+
+| File | Purpose |
+|------|---------|
+| `PhotoProvider.cs` | Photo metadata provider - extracts EXIF data |
+| `Properties/AssemblyInfo.cs` | Assembly metadata |
 
 ## Key Classes
 
