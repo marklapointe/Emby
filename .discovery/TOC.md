@@ -5,7 +5,7 @@
 **Root:** MediaBrowser.sln
 **Total files:** 4507
 **Mapped files:** 4507 (100% - COMPLETE)
-**Coverage:** ✅ COMPLETE - All 29 top-level modules documented with decomposition (201 documents total)
+**Coverage:** ✅ COMPLETE - All 29 top-level modules documented with decomposition (210 documents total)
 
 ---
 
@@ -69,7 +69,7 @@
 | C# Source Files | 1019 | 1019 | 1019 |
 | Go Files | 72 | 72 | 72 |
 | JS/TS Files | 349 | 349 | 349 |
-| Discovery Docs | 201 | 201 | 201 |
+| Discovery Docs | 210 | 210 | 210 |
 
 ### Modules With Decomposition (Updated 2026-05-03)
 
