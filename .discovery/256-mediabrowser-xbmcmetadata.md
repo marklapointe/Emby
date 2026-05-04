@@ -27,9 +27,25 @@ MediaBrowser.XbmcMetadata/
 |------|-------------|
 | `EntryPoint.cs` | Module initialization |
 | `Configuration/NfoOptions.cs` | NFO options |
-| `Parsers/*.cs` | NFO parsers |
-| `Providers/*.cs` | Metadata providers |
-| `Savers/*.cs` | Metadata savers |
+| **Parsers/** | |
+| `Parsers/BaseNfoParser.cs` | Base NFO parser |
+| `Parsers/MovieNfoParser.cs` | Movie NFO parser |
+| `Parsers/SeriesNfoParser.cs` | Series NFO parser |
+| `Parsers/SeasonNfoParser.cs` | Season NFO parser |
+| **Providers/** | |
+| `Providers/AlbumNfoProvider.cs` | Album NFO provider |
+| `Providers/ArtistNfoProvider.cs` | Artist NFO provider |
+| `Providers/MovieNfoProvider.cs` | Movie NFO provider |
+| `Providers/SeasonNfoProvider.cs` | Season NFO provider |
+| `Providers/SeriesNfoProvider.cs` | Series NFO provider |
+| **Savers/** | |
+| `Savers/AlbumNfoSaver.cs` | Album NFO saver |
+| `Savers/ArtistNfoSaver.cs` | Artist NFO saver |
+| `Savers/BaseNfoSaver.cs` | Base NFO saver |
+| `Savers/BoxSetNfoSaver.cs` | Box set NFO saver |
+| `Savers/MovieNfoSaver.cs` | Movie NFO saver |
+| `Savers/SeasonNfoSaver.cs` | Season NFO saver |
+| `Savers/SeriesNfoSaver.cs` | Series NFO saver |
 
 ## Decomposition
 

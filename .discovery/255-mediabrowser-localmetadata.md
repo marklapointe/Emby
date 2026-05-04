@@ -26,10 +26,24 @@ MediaBrowser.LocalMetadata/
 | File | Description |
 |------|-------------|
 | `BaseXmlProvider.cs` | Base class for XML providers |
-| `Images/*.cs` | Local image providers |
-| `Parsers/*.cs` | XML parsers |
-| `Providers/*.cs` | Metadata providers |
-| `Savers/*.cs` | Metadata savers |
+| **Images/** | |
+| `Images/InternalMetadataFolderImageProvider.cs` | Internal metadata folder image provider |
+| **Parsers/** | |
+| `Parsers/GameXmlParser.cs` | Game XML parser |
+| `Parsers/PlaylistXmlParser.cs` | Playlist XML parser |
+| `Parsers/GameSystemXmlParser.cs` | Game system XML parser |
+| **Providers/** | |
+| `Providers/BoxSetXmlProvider.cs` | Box set XML provider |
+| `Providers/GameSystemXmlProvider.cs` | Game system XML provider |
+| `Providers/GameXmlProvider.cs` | Game XML provider |
+| `Providers/PlaylistXmlProvider.cs` | Playlist XML provider |
+| **Savers/** | |
+| `Savers/BaseXmlSaver.cs` | Base XML saver |
+| `Savers/BoxSetXmlSaver.cs` | Box set XML saver |
+| `Savers/GameSystemXmlSaver.cs` | Game system XML saver |
+| `Savers/GameXmlSaver.cs` | Game XML saver |
+| `Savers/PlaylistXmlSaver.cs` | Playlist XML saver |
+| `Savers/PersonXmlSaver.cs` | Person XML saver |
 
 ## Decomposition
 

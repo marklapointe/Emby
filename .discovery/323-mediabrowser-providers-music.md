@@ -12,27 +12,31 @@ Metadata providers for music albums, artists, and tracks. Supports external meta
 
 ## Files
 
-### Root Music Files (9 files)
+### Root Music Files (18 files)
 
 - `AlbumMetadataService.cs` — MediaBrowser.Providers/Music/AlbumMetadataService.cs
 - `ArtistMetadataService.cs` — MediaBrowser.Providers/Music/ArtistMetadataService.cs
+- `AudioDbAlbumImageProvider.cs` — MediaBrowser.Providers/Music/AudioDbAlbumImageProvider.cs
+- `AudioDbAlbumProvider.cs` — MediaBrowser.Providers/Music/AudioDbAlbumProvider.cs
+- `AudioDbArtistImageProvider.cs` — MediaBrowser.Providers/Music/AudioDbArtistImageProvider.cs
+- `AudioDbArtistProvider.cs` — MediaBrowser.Providers/Music/AudioDbArtistProvider.cs
+- `AudioDbExternalIds.cs` — MediaBrowser.Providers/Music/AudioDbExternalIds.cs
+- `AudioMetadataService.cs` — MediaBrowser.Providers/Music/AudioMetadataService.cs
+- `FanartAlbumProvider.cs` — MediaBrowser.Providers/Music/FanartMusic/FanartAlbumProvider.cs
+- `FanartArtistProvider.cs` — MediaBrowser.Providers/Music/FanartMusic/FanartArtistProvider.cs
+- `FanArtAlbumProvider.cs` — MediaBrowser.Providers/Music/FanArtAlbumProvider.cs
+- `FanArtArtistProvider.cs` — MediaBrowser.Providers/Music/FanArtArtistProvider.cs
+- `FanartMusicHelper.cs` — MediaBrowser.Providers/Music/FanartMusic/FanartMusicHelper.cs
+- `FanartMusicImageProvider.cs` — MediaBrowser.Providers/Music/FanartMusic/FanartMusicImageProvider.cs
+- `MovieDbMusicVideoProvider.cs` — MediaBrowser.Providers/Music/MovieDbMusicVideoProvider.cs
 - `MusicAlbumImageProvider.cs` — MediaBrowser.Providers/Music/MusicAlbumImageProvider.cs
 - `MusicArtistImageProvider.cs` — MediaBrowser.Providers/Music/MusicArtistImageProvider.cs
 - `MusicAlbumProvider.cs` — MediaBrowser.Providers/Music/MusicAlbumProvider.cs
 - `MusicArtistProvider.cs` — MediaBrowser.Providers/Music/MusicArtistProvider.cs
-- `MusicMetadataSearchExecutor.cs` — MediaBrowser.Providers/Music/MusicMetadataSearchExecutor.cs
+- `MusicExternalIds.cs` — MediaBrowser.Providers/Music/MusicExternalIds.cs
 - `MusicFanartProvider.cs` — MediaBrowser.Providers/Music/MusicFanartProvider.cs
-- `MusicBrainzAlbumProvider.cs` — MediaBrowser.Providers/Music/MusicBrainzAlbumProvider.cs
-
-### FanartMusic/ (4 files)
-
-- `FanartAlbumProvider.cs` — MediaBrowser.Providers/Music/FanartMusic/FanartAlbumProvider.cs
-- `FanartArtistProvider.cs` — MediaBrowser.Providers/Music/FanartMusic/FanartArtistProvider.cs
-- `FanartMusicHelper.cs` — MediaBrowser.Providers/Music/FanartMusic/FanartMusicHelper.cs
-- `FanartMusicImageProvider.cs` — MediaBrowser.Providers/Music/FanartMusic/FanartMusicImageProvider.cs
-
-### MusicBrainz/ (3 files)
-
+- `MusicMetadataSearchExecutor.cs` — MediaBrowser.Providers/Music/MusicMetadataSearchExecutor.cs
+- `MusicVideoMetadataService.cs` — MediaBrowser.Providers/Music/MusicVideoMetadataService.cs
 - `MusicBrainzAlbumProvider.cs` — MediaBrowser.Providers/Music/MusicBrainz/MusicBrainzAlbumProvider.cs
 - `MusicBrainzArtistProvider.cs` — MediaBrowser.Providers/Music/MusicBrainz/MusicBrainzArtistProvider.cs
 - `MusicBrainzSearchProvider.cs` — MediaBrowser.Providers/Music/MusicBrainz/MusicBrainzSearchProvider.cs

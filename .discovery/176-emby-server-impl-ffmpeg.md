@@ -8,7 +8,15 @@
 
 ## Description
 
-FFMpeg integration for media transcoding, thumbnail extraction, and media analysis.
+FFMpeg integration for media transcoding, thumbnail extraction, and media analysis. This module manages FFMpeg processes, configures transcoding parameters, and handles media conversion.
+
+## Files
+
+| File | Purpose |
+|------|---------|
+| `FFMpegInfo.cs` | FFMpeg version and capabilities info |
+| `FFMpegInstallInfo.cs` | FFMpeg installation status |
+| `FFMpegLoader.cs` | FFMpeg discovery and loading |
 
 ## Structure
 
@@ -22,7 +30,9 @@ FFMpeg/
 │   └── Media encoding/transcoding
 ├── FFMpegImageExtractor.cs       # [class] FFMpegImageExtractor
 │   └── Thumbnail/screenshot extraction
-└── *FFMpeg*.cs                   # Supporting classes
+├── FFMpegInfo.cs                 # [class] FFMpegInfo
+├── FFMpegInstallInfo.cs          # [class] FFMpegInstallInfo
+└── FFMpegLoader.cs               # [class] FFMpegLoader
 ```
 
 ## Key Classes
@@ -32,3 +42,56 @@ FFMpeg/
 | `FFMpegManager` | `FFMpegManager.cs` | FFMpeg process management |
 | `FFMpegEncoder` | `FFMpegEncoder.cs` | Media transcoding |
 | `FFMpegImageExtractor` | `FFMpegImageExtractor.cs` | Image extraction |
+| `FFMpegInfo` | `FFMpegInfo.cs` | FFMpeg version/capabilities |
+| `FFMpegInstallInfo` | `FFMpegInstallInfo.cs` | Installation status |
+| `FFMpegLoader` | `FFMpegLoader.cs` | FFMpeg discovery |
+
+## Decomposition
+
+### FFMpegLoader.cs (FFMpeg Discovery)
+
+#### Imports
+```csharp
+using MediaBrowser.Common.Configuration;
+using MediaBrowser.Common.IO;
+using MediaBrowser.Controller.Configuration;
+using MediaBrowser.Model.IO;
+using MediaBrowser.Model.Logging;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+```
+
+#### Classes
+`FFMpegLoader` (public class)
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `GetFilesystemMetadata()` | `IEnumerable<string>` | Get FFMpeg executable paths |
+| `GetProcessMetadata()` | `IEnumerable<string>` | Get FFMpeg process paths |
+
+### FFMpegInfo.cs (FFMpeg Info)
+
+#### Classes
+`FFMpegInfo` (public class)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `Version` | `string` | FFMpeg version |
+| `Path` | `string` | FFMpeg executable path |
+
+### FFMpegInstallInfo.cs (Install Info)
+
+#### Classes
+`FFMpegInstallInfo` (public class)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `Path` | `string` | Installation path |
+| `Version` | `string` | Version info |

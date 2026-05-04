@@ -5,7 +5,38 @@
 **Language:** C#, JavaScript, HTML, CSS
 **Maps to:** \`.discovery/260-mediabrowser-webdashboard.md\`
 
+## C# Files
+
+| File | Purpose |
+|------|---------|
+| `Api/DashboardService.cs` | Main API endpoint |
+| `Api/ConfigurationPageInfo.cs` | Configuration page info |
+| `Api/PackageCreator.cs` | Package creation service |
+| `ServerEntryPoint.cs` | Server entry point |
+| `Properties/AssemblyInfo.cs` | Assembly metadata |
+
 ## Decomposition
+
+### ConfigurationPageInfo.cs (Configuration Page)
+
+#### Classes
+`ConfigurationPageInfo` (public class)
+
+#### Key Properties
+| Property | Type | Description |
+|----------|------|-------------|
+| `Name` | `string` | Page name |
+| `EnableInEasyMode` | `bool` | Show in easy mode |
+
+### PackageCreator.cs (Package Creator)
+
+#### Classes
+`PackageCreator` (public class)
+
+#### Key Methods
+| Method | Return | Description |
+|--------|--------|-------------|
+| `CreatePackage()` | `byte[]` | Create package bundle |
 
 ### DashboardService.cs (Main API Endpoint)
 

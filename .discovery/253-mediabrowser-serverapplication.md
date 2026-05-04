@@ -38,11 +38,26 @@ MediaBrowser.ServerApplication/
 | `BackgroundServiceInstaller.cs` | Service installer |
 | `ImageEncoderHelper.cs` | Image encoder setup |
 | `ServerNotifyIcon.cs` | System tray icon |
-| `Native/*.cs` | Windows native API wrappers |
-| `Networking/*.cs` | Network management |
-| `SocketSharp/*.cs` | WebSocket server |
-| `Splash/*.cs` | Splash screen |
-| `Updates/*.cs` | Update management |
+| `Properties/Resources.Designer.cs` | Embedded resources |
+| **Native/** | |
+| `Native/LoopUtil.cs` | Loopback utility |
+| `Native/ServerAuthorization.cs` | Server authorization |
+| `Native/Standby.cs` | Standby management |
+| `Native/LnkShortcutHandler.cs` | Shortcut handler |
+| **Networking/** | |
+| `Networking/NetworkShares.cs` | Network shares |
+| `Networking/NativeMethods.cs` | Native network methods |
+| **SocketSharp/** | |
+| `SocketSharp/WebSocketSharpListener.cs` | WebSocket listener |
+| `SocketSharp/WebSocketSharpRequest.cs` | WebSocket request |
+| `SocketSharp/WebSocketSharpResponse.cs` | WebSocket response |
+| `SocketSharp/RequestMono.cs` | Mono request handler |
+| `SocketSharp/SharpWebSocket.cs` | Sharp WebSocket |
+| **Splash/** | |
+| `Splash/SplashForm.cs` | Splash screen form |
+| `Splash/SplashForm.Designer.cs` | Splash screen designer |
+| **Updates/** | |
+| `Updates/ApplicationUpdater.cs` | Application updater |
 
 ## Decomposition
 
