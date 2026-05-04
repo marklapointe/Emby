@@ -6,7 +6,7 @@ import (
 
 	"github.com/emby/emby-go/internal/config"
 	"github.com/emby/emby-go/internal/repository"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 )
 
 // GamesHandler handles games-related API endpoints.
@@ -41,8 +41,7 @@ func (h *GamesHandler) GetGames(w http.ResponseWriter, r *http.Request) {
 
 // GetGame handles GET /Videos/Games/{id}
 func (h *GamesHandler) GetGame(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	gameId := vars["id"]
+	gameId := chi.URLParam(r, "id")
 
 	game, err := h.repo.GetGame(gameId)
 	if err != nil {
@@ -101,9 +100,8 @@ func (h *GamesHandler) GetGameCompanies(w http.ResponseWriter, r *http.Request) 
 
 // GetGameImage handles GET /Videos/Games/{id}/Images/{type}
 func (h *GamesHandler) GetGameImage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	gameId := vars["id"]
-	imageType := vars["type"]
+	gameId := chi.URLParam(r, "id")
+	imageType := chi.URLParam(r, "type")
 
 	_ = gameId
 	_ = imageType
@@ -114,8 +112,7 @@ func (h *GamesHandler) GetGameImage(w http.ResponseWriter, r *http.Request) {
 
 // GetGameBackdropImage handles GET /Videos/Games/{id}/BackdropImage
 func (h *GamesHandler) GetGameBackdropImage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	gameId := vars["id"]
+	gameId := chi.URLParam(r, "id")
 
 	_ = gameId
 
@@ -125,8 +122,7 @@ func (h *GamesHandler) GetGameBackdropImage(w http.ResponseWriter, r *http.Reque
 
 // GetGameLogoImage handles GET /Videos/Games/{id}/LogoImage
 func (h *GamesHandler) GetGameLogoImage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	gameId := vars["id"]
+	gameId := chi.URLParam(r, "id")
 
 	_ = gameId
 
@@ -136,8 +132,7 @@ func (h *GamesHandler) GetGameLogoImage(w http.ResponseWriter, r *http.Request) 
 
 // GetGameThumbImage handles GET /Videos/Games/{id}/ThumbImage
 func (h *GamesHandler) GetGameThumbImage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	gameId := vars["id"]
+	gameId := chi.URLParam(r, "id")
 
 	_ = gameId
 

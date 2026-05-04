@@ -8,7 +8,7 @@ import (
 	"github.com/emby/emby-go/internal/config"
 	"github.com/emby/emby-go/internal/database"
 	"github.com/emby/emby-go/internal/repository"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 )
 
 // ConfigHandler handles configuration-related API endpoints.
@@ -110,8 +110,7 @@ func (h *ConfigHandler) GetMacAddress(w http.ResponseWriter, r *http.Request) {
 
 // GetPluginConfig handles GET /Plugins/{pluginId}/Configuration
 func (h *ConfigHandler) GetPluginConfig(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	pluginId := vars["pluginId"]
+	pluginId := chi.URLParam(r, "pluginId")
 
 	// Return empty config for now
 	w.Header().Set("Content-Type", "application/json")
@@ -124,8 +123,7 @@ func (h *ConfigHandler) GetPluginConfig(w http.ResponseWriter, r *http.Request) 
 
 // UpdatePluginConfig handles POST /Plugins/{pluginId}/Configuration
 func (h *ConfigHandler) UpdatePluginConfig(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	pluginId := vars["pluginId"]
+	pluginId := chi.URLParam(r, "pluginId")
 
 	var req map[string]interface{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

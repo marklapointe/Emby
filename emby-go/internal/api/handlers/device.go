@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/emby/emby-go/internal/service/device"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 )
 
 // DeviceHandler handles device-related API endpoints.
@@ -28,8 +28,7 @@ func (h *DeviceHandler) GetDevices(w http.ResponseWriter, r *http.Request) {
 
 // GetDevice handles GET /Devices/{id}
 func (h *DeviceHandler) GetDevice(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	device, exists := h.deviceMgr.GetDevice(id)
 	if !exists {
@@ -43,8 +42,7 @@ func (h *DeviceHandler) GetDevice(w http.ResponseWriter, r *http.Request) {
 
 // UpdateDevice handles PUT /Devices/{id}
 func (h *DeviceHandler) UpdateDevice(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	var req struct {
 		Name        string `json:"Name"`
@@ -66,8 +64,7 @@ func (h *DeviceHandler) UpdateDevice(w http.ResponseWriter, r *http.Request) {
 
 // DeleteDevice handles DELETE /Devices/{id}
 func (h *DeviceHandler) DeleteDevice(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	if err := h.deviceMgr.RemoveDevice(id); err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -79,8 +76,7 @@ func (h *DeviceHandler) DeleteDevice(w http.ResponseWriter, r *http.Request) {
 
 // GetDeviceIcon handles GET /Devices/{id}/Icon
 func (h *DeviceHandler) GetDeviceIcon(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	device, exists := h.deviceMgr.GetDevice(id)
 	if !exists {
@@ -100,8 +96,7 @@ func (h *DeviceHandler) GetDeviceIcon(w http.ResponseWriter, r *http.Request) {
 
 // GetDeviceProfile handles GET /Devices/{id}/Profile
 func (h *DeviceHandler) GetDeviceProfile(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	profile, exists := h.deviceMgr.GetDeviceProfile(id)
 	if !exists {

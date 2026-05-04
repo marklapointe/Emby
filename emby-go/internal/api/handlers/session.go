@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/emby/emby-go/internal/service/session"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 )
 
 // SessionHandler handles session-related API endpoints.
@@ -28,8 +28,7 @@ func (h *SessionHandler) GetSessions(w http.ResponseWriter, r *http.Request) {
 
 // GetSession handles GET /Sessions/{id}
 func (h *SessionHandler) GetSession(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	sess, exists := h.sessionMgr.GetSession(id)
 	if !exists {
@@ -43,8 +42,7 @@ func (h *SessionHandler) GetSession(w http.ResponseWriter, r *http.Request) {
 
 // StartPlayback handles POST /Sessions/{id}/Playing
 func (h *SessionHandler) StartPlayback(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	var req struct {
 		ItemId        string `json:"ItemId"`
@@ -69,8 +67,7 @@ func (h *SessionHandler) StartPlayback(w http.ResponseWriter, r *http.Request) {
 
 // PlaybackProgress handles POST /Sessions/{id}/Playing/Progress
 func (h *SessionHandler) PlaybackProgress(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	var req struct {
 		PositionTicks      int64   `json:"PositionTicks"`
@@ -100,8 +97,7 @@ func (h *SessionHandler) PlaybackProgress(w http.ResponseWriter, r *http.Request
 
 // StopPlayback handles POST /Sessions/{id}/Playing/Stopped
 func (h *SessionHandler) StopPlayback(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	// Stop playback for session
 	_ = id
@@ -111,8 +107,7 @@ func (h *SessionHandler) StopPlayback(w http.ResponseWriter, r *http.Request) {
 
 // SetVolume handles POST /Sessions/{id}/Volume
 func (h *SessionHandler) SetVolume(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	var req struct {
 		Volume int `json:"Volume"`
@@ -135,8 +130,7 @@ func (h *SessionHandler) SetVolume(w http.ResponseWriter, r *http.Request) {
 
 // PausePlayback handles POST /Sessions/{id}/Pause
 func (h *SessionHandler) PausePlayback(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	isPaused := true
 	if err := h.sessionMgr.UpdateSession(id, nil, nil, &isPaused); err != nil {
@@ -149,8 +143,7 @@ func (h *SessionHandler) PausePlayback(w http.ResponseWriter, r *http.Request) {
 
 // UnpausePlayback handles POST /Sessions/{id}/Unpause
 func (h *SessionHandler) UnpausePlayback(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	isPaused := false
 	if err := h.sessionMgr.UpdateSession(id, nil, nil, &isPaused); err != nil {
@@ -163,8 +156,7 @@ func (h *SessionHandler) UnpausePlayback(w http.ResponseWriter, r *http.Request)
 
 // ToggleFullscreen handles POST /Sessions/{id}/ToggleFullscreen
 func (h *SessionHandler) ToggleFullscreen(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	// Toggle fullscreen state
 	_ = id
@@ -174,8 +166,7 @@ func (h *SessionHandler) ToggleFullscreen(w http.ResponseWriter, r *http.Request
 
 // NavigateTo handles POST /Sessions/{id}/GoTo
 func (h *SessionHandler) NavigateTo(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	var req struct {
 		ItemId string `json:"ItemId"`
@@ -195,8 +186,7 @@ func (h *SessionHandler) NavigateTo(w http.ResponseWriter, r *http.Request) {
 
 // SendKey handles POST /Sessions/{id}/SendKey
 func (h *SessionHandler) SendKey(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	var req struct {
 		Key string `json:"Key"`
@@ -216,8 +206,7 @@ func (h *SessionHandler) SendKey(w http.ResponseWriter, r *http.Request) {
 
 // SendText handles POST /Sessions/{id}/SendText
 func (h *SessionHandler) SendText(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	var req struct {
 		Text string `json:"Text"`
@@ -237,8 +226,7 @@ func (h *SessionHandler) SendText(w http.ResponseWriter, r *http.Request) {
 
 // CloseSession handles DELETE /Sessions/{id}
 func (h *SessionHandler) CloseSession(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	if err := h.sessionMgr.DeleteSession(id); err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)

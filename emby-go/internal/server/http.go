@@ -6,9 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/emby/emby-go/internal/api/middleware"
 	"github.com/emby/emby-go/internal/config"
-	cmid "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
@@ -23,29 +21,16 @@ type HTTPServer struct {
 
 // NewHTTPServer creates a new HTTP server.
 func NewHTTPServer(cfg *config.Config, logger *zap.Logger) *HTTPServer {
-	return &HTTPServer{
+	s := &HTTPServer{
 		config: cfg,
 		logger: logger,
 	}
+	s.router = chi.NewRouter()
+	return s
 }
 
 // Start starts the HTTP server.
 func (s *HTTPServer) Start() error {
-	// Create router
-	s.router = chi.NewRouter()
-
-	// Add chi middleware
-	s.router.Use(cmid.RequestID)
-	s.router.Use(cmid.RealIP)
-	s.router.Use(cmid.Recoverer)
-	s.router.Use(cmid.Timeout(60 * time.Second))
-	s.router.Use(cmid.Logger)
-	s.router.Use(cmid.AllowContentType("application/json"))
-
-	// Add custom middleware
-	s.router.Use(middleware.CORSMiddleware())
-	s.router.Use(middleware.RequestLogger(s.logger))
-
 	// Create HTTP server
 	addr := fmt.Sprintf("%s:%d", s.config.Server.Host, s.config.Server.Port)
 	s.server = &http.Server{

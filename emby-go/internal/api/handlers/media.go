@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/emby/emby-go/internal/service/media"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 )
 
 // MediaHandler handles media-related API endpoints.
@@ -20,8 +20,7 @@ func NewMediaHandler(mediaMgr *media.Manager) *MediaHandler {
 
 // GetItem handles GET /Items/{id}
 func (h *MediaHandler) GetItem(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	itemID := vars["id"]
+	itemID := chi.URLParam(r, "id")
 
 	mediaInfo, err := h.mediaMgr.GetMediaInfo(itemID)
 	if err != nil {
@@ -35,8 +34,7 @@ func (h *MediaHandler) GetItem(w http.ResponseWriter, r *http.Request) {
 
 // GetStream handles GET /Items/{id}/Stream
 func (h *MediaHandler) GetStream(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	itemID := vars["id"]
+	itemID := chi.URLParam(r, "id")
 
 	mediaSource, err := h.mediaMgr.GetMediaSource(itemID)
 	if err != nil {
@@ -51,8 +49,7 @@ func (h *MediaHandler) GetStream(w http.ResponseWriter, r *http.Request) {
 
 // GetSubtitles handles GET /Items/{id}/Subtitles
 func (h *MediaHandler) GetSubtitles(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	itemID := vars["id"]
+	itemID := chi.URLParam(r, "id")
 
 	mediaInfo, err := h.mediaMgr.GetMediaInfo(itemID)
 	if err != nil {
@@ -66,9 +63,8 @@ func (h *MediaHandler) GetSubtitles(w http.ResponseWriter, r *http.Request) {
 
 // GetSubtitleStream handles GET /Items/{id}/Subtitles/{index}/Stream
 func (h *MediaHandler) GetSubtitleStream(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	itemID := vars["id"]
-	index := vars["index"]
+	itemID := chi.URLParam(r, "id")
+	index := chi.URLParam(r, "index")
 
 	_ = itemID
 	_ = index
@@ -79,8 +75,7 @@ func (h *MediaHandler) GetSubtitleStream(w http.ResponseWriter, r *http.Request)
 
 // GetAudioStream handles GET /Items/{id}/Audio
 func (h *MediaHandler) GetAudioStream(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	itemID := vars["id"]
+	itemID := chi.URLParam(r, "id")
 
 	mediaSource, err := h.mediaMgr.GetMediaSource(itemID)
 	if err != nil {

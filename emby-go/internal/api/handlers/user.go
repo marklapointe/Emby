@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/emby/emby-go/internal/service/user"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 )
 
 // UserHandler handles user-related API endpoints.
@@ -85,8 +85,7 @@ func (h *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 
 // GetUser handles GET /Users/{id}
 func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	user, exists := h.userMgr.GetUser(id)
 	if !exists {
@@ -100,8 +99,7 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 
 // UpdateUser handles PUT /Users/{id}
 func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	var req struct {
 		Name     string `json:"Name"`
@@ -124,8 +122,7 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 // DeleteUser handles DELETE /Users/{id}
 func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	if err := h.userMgr.DeleteUser(id); err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -137,8 +134,7 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 // ChangePassword handles POST /Users/{id}/Password
 func (h *UserHandler) ChangePassword(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	var req struct {
 		NewPassword string `json:"NewPassword"`
@@ -161,9 +157,8 @@ func (h *UserHandler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 
 // GetUserImage handles GET /Users/{id}/Images/{type}
 func (h *UserHandler) GetUserImage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
-	imageType := vars["type"]
+	id := chi.URLParam(r, "id")
+	imageType := chi.URLParam(r, "type")
 
 	_ = id
 	_ = imageType
@@ -175,8 +170,7 @@ func (h *UserHandler) GetUserImage(w http.ResponseWriter, r *http.Request) {
 
 // GetUserConfiguration handles GET /Users/{id}/Configuration
 func (h *UserHandler) GetUserConfiguration(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	user, exists := h.userMgr.GetUser(id)
 	if !exists {
@@ -190,8 +184,7 @@ func (h *UserHandler) GetUserConfiguration(w http.ResponseWriter, r *http.Reques
 
 // UpdateUserConfiguration handles PUT /Users/{id}/Configuration
 func (h *UserHandler) UpdateUserConfiguration(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	var config user.UserConfiguration
 	if err := json.NewDecoder(r.Body).Decode(&config); err != nil {
@@ -208,8 +201,7 @@ func (h *UserHandler) UpdateUserConfiguration(w http.ResponseWriter, r *http.Req
 
 // GetUserPolicy handles GET /Users/{id}/Policy
 func (h *UserHandler) GetUserPolicy(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	user, exists := h.userMgr.GetUser(id)
 	if !exists {
@@ -223,8 +215,7 @@ func (h *UserHandler) GetUserPolicy(w http.ResponseWriter, r *http.Request) {
 
 // UpdateUserPolicy handles PUT /Users/{id}/Policy
 func (h *UserHandler) UpdateUserPolicy(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	var policy user.UserPolicy
 	if err := json.NewDecoder(r.Body).Decode(&policy); err != nil {
@@ -241,8 +232,7 @@ func (h *UserHandler) UpdateUserPolicy(w http.ResponseWriter, r *http.Request) {
 
 // GetUsersByDevice handles GET /Users/Device/{deviceId}
 func (h *UserHandler) GetUsersByDevice(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	deviceId := vars["deviceId"]
+	deviceId := chi.URLParam(r, "deviceId")
 
 	_ = deviceId
 
@@ -255,8 +245,7 @@ func (h *UserHandler) GetUsersByDevice(w http.ResponseWriter, r *http.Request) {
 
 // GetUsersByLibraryFolder handles GET /Users/LibraryFolders/{folderId}
 func (h *UserHandler) GetUsersByLibraryFolder(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	folderId := vars["folderId"]
+	folderId := chi.URLParam(r, "folderId")
 
 	_ = folderId
 

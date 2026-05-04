@@ -7,7 +7,7 @@ import (
 
 	"github.com/emby/emby-go/internal/config"
 	"github.com/emby/emby-go/internal/repository"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 )
 
 // LiveTVHandler handles Live TV-related API endpoints.
@@ -75,8 +75,7 @@ func (h *LiveTVHandler) GetPrograms(w http.ResponseWriter, r *http.Request) {
 
 // GetProgram handles GET /LiveTv/Programs/{id}
 func (h *LiveTVHandler) GetProgram(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	programId := vars["id"]
+	programId := chi.URLParam(r, "id")
 
 	program, err := h.repo.GetProgram(programId)
 	if err != nil {
@@ -104,8 +103,7 @@ func (h *LiveTVHandler) GetRecordings(w http.ResponseWriter, r *http.Request) {
 
 // GetRecording handles GET /LiveTv/Recordings/{id}
 func (h *LiveTVHandler) GetRecording(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	recordingId := vars["id"]
+	recordingId := chi.URLParam(r, "id")
 
 	recording, err := h.repo.GetRecording(recordingId)
 	if err != nil {

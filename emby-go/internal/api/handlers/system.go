@@ -9,7 +9,7 @@ import (
 	"github.com/emby/emby-go/internal/config"
 	"github.com/emby/emby-go/internal/database"
 	"github.com/emby/emby-go/internal/service/scheduled"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 )
 
 // SystemHandler handles system-related API endpoints.
@@ -119,9 +119,8 @@ func (h *SystemHandler) Restart(w http.ResponseWriter, r *http.Request) {
 
 // GetPackageInfo handles GET /System/PackageInfo/{os}/{arch}
 func (h *SystemHandler) GetPackageInfo(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	os := vars["os"]
-	arch := vars["arch"]
+	os := chi.URLParam(r, "os")
+	arch := chi.URLParam(r, "arch")
 
 	_ = os
 	_ = arch
@@ -186,8 +185,7 @@ func (h *SystemHandler) GetScheduledTasks(w http.ResponseWriter, r *http.Request
 
 // ExecuteScheduledTask handles POST /ScheduledTasks/Execute/{id}
 func (h *SystemHandler) ExecuteScheduledTask(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	taskId := vars["id"]
+	taskId := chi.URLParam(r, "id")
 
 	err := h.scheduledSvc.ExecuteTask(taskId)
 	if err != nil {

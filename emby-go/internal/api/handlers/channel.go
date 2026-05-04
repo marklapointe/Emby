@@ -6,7 +6,7 @@ import (
 
 	"github.com/emby/emby-go/internal/config"
 	"github.com/emby/emby-go/internal/repository"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 )
 
 // ChannelHandler handles channel-related API endpoints.
@@ -41,8 +41,7 @@ func (h *ChannelHandler) GetChannels(w http.ResponseWriter, r *http.Request) {
 
 // GetChannel handles GET /Channels/{id}
 func (h *ChannelHandler) GetChannel(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	channelId := vars["id"]
+	channelId := chi.URLParam(r, "id")
 
 	channel, err := h.repo.GetChannel(channelId)
 	if err != nil {
@@ -56,8 +55,7 @@ func (h *ChannelHandler) GetChannel(w http.ResponseWriter, r *http.Request) {
 
 // GetChannelFolders handles GET /Channels/{id}/Folders
 func (h *ChannelHandler) GetChannelFolders(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	channelId := vars["id"]
+	channelId := chi.URLParam(r, "id")
 
 	folders, err := h.repo.GetChannelFolders(channelId)
 	if err != nil {
@@ -71,8 +69,7 @@ func (h *ChannelHandler) GetChannelFolders(w http.ResponseWriter, r *http.Reques
 
 // GetChannelItems handles GET /Channels/{id}/Items
 func (h *ChannelHandler) GetChannelItems(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	channelId := vars["id"]
+	channelId := chi.URLParam(r, "id")
 	userId := r.URL.Query().Get("UserId")
 
 	items, err := h.repo.GetChannelItems(channelId, userId)
@@ -87,9 +84,8 @@ func (h *ChannelHandler) GetChannelItems(w http.ResponseWriter, r *http.Request)
 
 // GetChannelImage handles GET /Channels/{id}/Images/{type}
 func (h *ChannelHandler) GetChannelImage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	channelId := vars["id"]
-	imageType := vars["type"]
+	channelId := chi.URLParam(r, "id")
+	imageType := chi.URLParam(r, "type")
 
 	_ = channelId
 	_ = imageType
@@ -100,8 +96,7 @@ func (h *ChannelHandler) GetChannelImage(w http.ResponseWriter, r *http.Request)
 
 // GetChannelLogoImage handles GET /Channels/{id}/LogoImage
 func (h *ChannelHandler) GetChannelLogoImage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	channelId := vars["id"]
+	channelId := chi.URLParam(r, "id")
 
 	_ = channelId
 
@@ -111,8 +106,7 @@ func (h *ChannelHandler) GetChannelLogoImage(w http.ResponseWriter, r *http.Requ
 
 // GetChannelBannerImage handles GET /Channels/{id}/BannerImage
 func (h *ChannelHandler) GetChannelBannerImage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	channelId := vars["id"]
+	channelId := chi.URLParam(r, "id")
 
 	_ = channelId
 
@@ -122,8 +116,7 @@ func (h *ChannelHandler) GetChannelBannerImage(w http.ResponseWriter, r *http.Re
 
 // GetChannelBackdropImage handles GET /Channels/{id}/BackdropImage
 func (h *ChannelHandler) GetChannelBackdropImage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	channelId := vars["id"]
+	channelId := chi.URLParam(r, "id")
 
 	_ = channelId
 
@@ -133,8 +126,7 @@ func (h *ChannelHandler) GetChannelBackdropImage(w http.ResponseWriter, r *http.
 
 // GetChannelThumbImage handles GET /Channels/{id}/ThumbImage
 func (h *ChannelHandler) GetChannelThumbImage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	channelId := vars["id"]
+	channelId := chi.URLParam(r, "id")
 
 	_ = channelId
 

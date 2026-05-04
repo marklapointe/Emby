@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/emby/emby-go/internal/service/transcoding"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 )
 
 // PlaybackHandler handles playback-related API endpoints.
@@ -21,8 +21,7 @@ func NewPlaybackHandler(transcoder *transcoding.Manager) *PlaybackHandler {
 
 // GetTranscodeURL handles GET /Videos/{id}/stream
 func (h *PlaybackHandler) GetTranscodeURL(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	videoID := vars["id"]
+	videoID := chi.URLParam(r, "id")
 
 	profile := r.URL.Query().Get("profile")
 	if profile == "" {
@@ -41,8 +40,7 @@ func (h *PlaybackHandler) GetTranscodeURL(w http.ResponseWriter, r *http.Request
 
 // GetStream handles GET /Videos/{id}/stream with direct stream support.
 func (h *PlaybackHandler) GetStream(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	videoID := vars["id"]
+	videoID := chi.URLParam(r, "id")
 
 	// Get stream parameters from query
 	mediaSourceID := r.URL.Query().Get("MediaSourceId")
@@ -82,9 +80,8 @@ func (h *PlaybackHandler) GetStream(w http.ResponseWriter, r *http.Request) {
 
 // GetSubtitleStream handles GET /Videos/{id}/Subtitles/{subtitleIndex}/Stream
 func (h *PlaybackHandler) GetSubtitleStream(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	videoID := vars["id"]
-	subtitleIndex := vars["subtitleIndex"]
+	videoID := chi.URLParam(r, "id")
+	subtitleIndex := chi.URLParam(r, "subtitleIndex")
 
 	// Get subtitle format from query
 	format := r.URL.Query().Get("format")
@@ -105,8 +102,7 @@ func (h *PlaybackHandler) GetSubtitleStream(w http.ResponseWriter, r *http.Reque
 
 // GetAudioStream handles GET /Videos/{id}/audio
 func (h *PlaybackHandler) GetAudioStream(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	videoID := vars["id"]
+	videoID := chi.URLParam(r, "id")
 
 	// Get audio stream parameters
 	mediaSourceID := r.URL.Query().Get("MediaSourceId")
@@ -138,8 +134,7 @@ func (h *PlaybackHandler) GetAudioStream(w http.ResponseWriter, r *http.Request)
 
 // PostPlaybackProgress handles POST /Sessions/{id}/Playing/Progress
 func (h *PlaybackHandler) PostPlaybackProgress(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	sessionID := vars["id"]
+	sessionID := chi.URLParam(r, "id")
 
 	var progress struct {
 		PositionTicks   int64 `json:"PositionTicks"`
@@ -164,8 +159,7 @@ func (h *PlaybackHandler) PostPlaybackProgress(w http.ResponseWriter, r *http.Re
 
 // PostPlaybackStopped handles POST /Sessions/{id}/Playing/Stopped
 func (h *PlaybackHandler) PostPlaybackStopped(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	sessionID := vars["id"]
+	sessionID := chi.URLParam(r, "id")
 
 	// Stop playback for session
 	// This would integrate with the session manager

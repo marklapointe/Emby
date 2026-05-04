@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/emby/emby-go/internal/service/image"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 )
 
 // ImageHandler handles image-related API endpoints.
@@ -21,9 +21,8 @@ func NewImageHandler(imageMgr *image.Manager) *ImageHandler {
 
 // GetItemImage handles GET /Items/{id}/Images/{type}
 func (h *ImageHandler) GetItemImage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	itemID := vars["id"]
-	imageType := vars["type"]
+	itemID := chi.URLParam(r, "id")
+	imageType := chi.URLParam(r, "type")
 
 	// Get image parameters
 	quality := r.URL.Query().Get("quality")
@@ -45,9 +44,8 @@ func (h *ImageHandler) GetItemImage(w http.ResponseWriter, r *http.Request) {
 
 // GetItemImageBlurHash handles GET /Items/{id}/Images/{type}/BlurHash
 func (h *ImageHandler) GetItemImageBlurHash(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	itemID := vars["id"]
-	imageType := vars["type"]
+	itemID := chi.URLParam(r, "id")
+	imageType := chi.URLParam(r, "type")
 
 	blurHash, err := h.imageMgr.GetImageBlurHash(itemID, image.ImageType(imageType))
 	if err != nil {
@@ -61,9 +59,8 @@ func (h *ImageHandler) GetItemImageBlurHash(w http.ResponseWriter, r *http.Reque
 
 // GetItemImageByIndex handles GET /Items/{id}/Images/{type}/{index}
 func (h *ImageHandler) GetItemImageByIndex(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	itemID := vars["id"]
-	imageType := vars["type"]
+	itemID := chi.URLParam(r, "id")
+	imageType := chi.URLParam(r, "type")
 
 	img, contentType, err := h.imageMgr.GetItemImageByIndex(itemID, image.ImageType(imageType), 0, 0, 0, 0)
 	if err != nil {
@@ -77,10 +74,9 @@ func (h *ImageHandler) GetItemImageByIndex(w http.ResponseWriter, r *http.Reques
 
 // GetItemImageTag handles GET /Items/{id}/Images/{type}/Tag/{tag}
 func (h *ImageHandler) GetItemImageTag(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	itemID := vars["id"]
-	imageType := vars["type"]
-	tag := vars["tag"]
+	itemID := chi.URLParam(r, "id")
+	imageType := chi.URLParam(r, "type")
+	tag := chi.URLParam(r, "tag")
 
 	img, contentType, err := h.imageMgr.GetItemImageByTag(itemID, image.ImageType(imageType), tag)
 	if err != nil {
@@ -95,9 +91,8 @@ func (h *ImageHandler) GetItemImageTag(w http.ResponseWriter, r *http.Request) {
 
 // GetItemImageCrop handles GET /Items/{id}/Images/{type}/Crop
 func (h *ImageHandler) GetItemImageCrop(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	itemID := vars["id"]
-	imageType := vars["type"]
+	itemID := chi.URLParam(r, "id")
+	imageType := chi.URLParam(r, "type")
 
 	width, _ := strconv.Atoi(r.URL.Query().Get("width"))
 	height, _ := strconv.Atoi(r.URL.Query().Get("height"))
@@ -115,9 +110,8 @@ func (h *ImageHandler) GetItemImageCrop(w http.ResponseWriter, r *http.Request) 
 
 // GetItemImageResize handles GET /Items/{id}/Images/{type}/Resize
 func (h *ImageHandler) GetItemImageResize(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	itemID := vars["id"]
-	imageType := vars["type"]
+	itemID := chi.URLParam(r, "id")
+	imageType := chi.URLParam(r, "type")
 
 	width, _ := strconv.Atoi(r.URL.Query().Get("width"))
 	height, _ := strconv.Atoi(r.URL.Query().Get("height"))
@@ -135,9 +129,8 @@ func (h *ImageHandler) GetItemImageResize(w http.ResponseWriter, r *http.Request
 
 // GetItemImageRotation handles GET /Items/{id}/Images/{type}/Rotate
 func (h *ImageHandler) GetItemImageRotation(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	itemID := vars["id"]
-	imageType := vars["type"]
+	itemID := chi.URLParam(r, "id")
+	imageType := chi.URLParam(r, "type")
 
 	angle, _ := strconv.Atoi(r.URL.Query().Get("angle"))
 

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/emby/emby-go/internal/config"
 )
@@ -16,10 +17,18 @@ type Manager struct {
 // NewManager creates a new database manager with the given config.
 func NewManager(cfg *config.DatabaseConfig) (*Manager, error) {
 	// Ensure the directory exists
-	dir := cfg.Path
-	if dir != "" {
+	dir := filepath.Dir(cfg.Path)
+	if dir != "" && dir != "." {
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			return nil, fmt.Errorf("create database dir: %w", err)
+		}
+	}
+
+	// Remove any existing directory with the same name as the database file
+	// (fixes previous bug where MkdirAll created a directory instead of a file)
+	if info, err := os.Stat(cfg.Path); err == nil && info.IsDir() {
+		if err := os.RemoveAll(cfg.Path); err != nil {
+			return nil, fmt.Errorf("remove stale database directory: %w", err)
 		}
 	}
 

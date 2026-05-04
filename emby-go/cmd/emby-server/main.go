@@ -10,22 +10,15 @@ import (
 	"time"
 
 	"github.com/emby/emby-go/internal/api"
-	"github.com/emby/emby-go/internal/api/handlers"
+	"github.com/emby/emby-go/internal/api/middleware"
 	"github.com/emby/emby-go/internal/config"
 	"github.com/emby/emby-go/internal/database"
 	"github.com/emby/emby-go/internal/logging"
 	"github.com/emby/emby-go/internal/repository"
 	"github.com/emby/emby-go/internal/server"
-	"github.com/emby/emby-go/internal/service/device"
-	"github.com/emby/emby-go/internal/service/image"
 	"github.com/emby/emby-go/internal/service/library"
-	"github.com/emby/emby-go/internal/service/media"
-	"github.com/emby/emby-go/internal/service/metadata"
-	"github.com/emby/emby-go/internal/service/notification"
 	"github.com/emby/emby-go/internal/service/scheduled"
-	"github.com/emby/emby-go/internal/service/session"
-	"github.com/emby/emby-go/internal/service/transcoding"
-	"github.com/emby/emby-go/internal/service/user"
+	cmid "github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
 )
 
@@ -66,54 +59,27 @@ func main() {
 		logger.Fatal("Failed to create schema", zap.Error(err))
 	}
 
-	// Initialize services
-	_ = user.NewManager(dbManager, logger)
-	_ = library.NewManager(cfg, logger, dbManager)
-	_ = media.NewManager(cfg, logger)
-	_ = session.NewManager(cfg, logger)
-	_ = device.NewManager(logger)
-	_ = image.NewManager(logger)
-	_ = metadata.NewManager(logger)
-	_ = notification.NewManager()
-	scheduledSvc := scheduled.NewManager(logger)
-	_ = transcoding.NewManager(cfg, logger)
-	_ = media.NewStreamManager(cfg.Stream.MaxConcurrentStreams, logger)
-
-	// Initialize library scanner
-	scanner := library.NewScanner(cfg, logger, itemRepo)
-	scanner.StartScheduledScans(scheduledSvc)
-
-	// Initialize HTTP server
+	// Initialize HTTP server first
 	httpServer := server.NewHTTPServer(cfg, logger)
 
-	// Initialize API router
+	// Add middleware to the HTTP server's chi router
+	httpServer.Router().Use(cmid.RequestID)
+	httpServer.Router().Use(cmid.RealIP)
+	httpServer.Router().Use(cmid.Recoverer)
+	httpServer.Router().Use(cmid.Timeout(60 * time.Second))
+	httpServer.Router().Use(cmid.Logger)
+	httpServer.Router().Use(cmid.AllowContentType("application/json"))
+	httpServer.Router().Use(middleware.CORSMiddleware())
+	httpServer.Router().Use(middleware.RequestLogger(logger))
+
+	// Initialize API router and register routes on the HTTP server's chi router
 	apiRouter := api.NewRouter(cfg, logger, dbManager)
-	apiRouter.RegisterAll()
+	apiRouter.RegisterRoutes(httpServer.Router())
 
-	// Register handlers
-	libHandler := handlers.NewLibraryHandler(library.NewScanner(cfg, logger, itemRepo))
-	mediaHandler := handlers.NewMediaHandler(media.NewManager(cfg, logger))
-	sessionHandler := handlers.NewSessionHandler(session.NewManager(cfg, logger))
-	userHandler := handlers.NewUserHandler(user.NewManager(dbManager, logger))
-
-	// Register routes
-	r := httpServer.Router()
-	r.Get("/Library/Root", libHandler.GetLibraryRoot)
-	r.Get("/Library/Items", libHandler.GetItems)
-	r.Post("/Library/Root/Scan", libHandler.ScanLibrary)
-	r.Get("/Items/{id}", mediaHandler.GetItem)
-	r.Get("/Items/{id}/Subtitles", mediaHandler.GetSubtitles)
-	r.Get("/Sessions", sessionHandler.GetSessions)
-	r.Get("/Sessions/{id}", sessionHandler.GetSession)
-	r.Post("/Sessions/{id}/SendKey", sessionHandler.SendKey)
-	r.Get("/Users", userHandler.GetUsers)
-	r.Get("/Users/{id}", userHandler.GetUser)
-	r.Post("/Users/Login", userHandler.Login)
-	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"status":"ok"}`))
-	})
+	// Initialize library scanner with scheduled tasks
+	scheduledSvc := scheduled.NewManager(logger)
+	scanner := library.NewScanner(cfg, logger, itemRepo)
+	scanner.StartScheduledScans(scheduledSvc)
 
 	// Setup graceful shutdown
 	ctx, cancel := context.WithCancel(context.Background())
@@ -133,6 +99,11 @@ func main() {
 			logger.Fatal("HTTP server error", zap.Error(err))
 		}
 	}()
+
+	logger.Info("Emby Server Go started",
+		zap.String("host", cfg.Server.Host),
+		zap.Int("port", cfg.Server.Port),
+	)
 
 	// Wait for shutdown signal
 	<-ctx.Done()

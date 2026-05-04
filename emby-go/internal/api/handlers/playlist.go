@@ -6,7 +6,7 @@ import (
 
 	"github.com/emby/emby-go/internal/config"
 	"github.com/emby/emby-go/internal/repository"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 )
 
 // PlaylistHandler handles playlist-related API endpoints.
@@ -41,8 +41,7 @@ func (h *PlaylistHandler) GetPlaylists(w http.ResponseWriter, r *http.Request) {
 
 // GetPlaylist handles GET /Playlists/{id}
 func (h *PlaylistHandler) GetPlaylist(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	playlistId := vars["id"]
+	playlistId := chi.URLParam(r, "id")
 
 	playlist, err := h.repo.GetPlaylist(playlistId)
 	if err != nil {
@@ -70,8 +69,7 @@ func (h *PlaylistHandler) CreatePlaylist(w http.ResponseWriter, r *http.Request)
 
 // UpdatePlaylist handles PUT /Playlists/{id}
 func (h *PlaylistHandler) UpdatePlaylist(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	playlistId := vars["id"]
+	playlistId := chi.URLParam(r, "id")
 
 	var req map[string]interface{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -88,8 +86,7 @@ func (h *PlaylistHandler) UpdatePlaylist(w http.ResponseWriter, r *http.Request)
 
 // DeletePlaylist handles DELETE /Playlists/{id}
 func (h *PlaylistHandler) DeletePlaylist(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	playlistId := vars["id"]
+	playlistId := chi.URLParam(r, "id")
 
 	_ = playlistId
 
@@ -99,8 +96,7 @@ func (h *PlaylistHandler) DeletePlaylist(w http.ResponseWriter, r *http.Request)
 
 // GetPlaylistItems handles GET /Playlists/{id}/Items
 func (h *PlaylistHandler) GetPlaylistItems(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	playlistId := vars["id"]
+	playlistId := chi.URLParam(r, "id")
 
 	items, err := h.repo.GetPlaylistItems(playlistId)
 	if err != nil {
@@ -114,8 +110,7 @@ func (h *PlaylistHandler) GetPlaylistItems(w http.ResponseWriter, r *http.Reques
 
 // AddToPlaylist handles POST /Playlists/{id}/Items
 func (h *PlaylistHandler) AddToPlaylist(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	playlistId := vars["id"]
+	playlistId := chi.URLParam(r, "id")
 
 	var req map[string]interface{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -132,8 +127,7 @@ func (h *PlaylistHandler) AddToPlaylist(w http.ResponseWriter, r *http.Request) 
 
 // RemoveFromPlaylist handles DELETE /Playlists/{id}/Items
 func (h *PlaylistHandler) RemoveFromPlaylist(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	playlistId := vars["id"]
+	playlistId := chi.URLParam(r, "id")
 
 	var req map[string]interface{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

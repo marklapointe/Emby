@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/emby/emby-go/internal/service/library"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 )
 
 // LibraryHandler handles library-related API endpoints.
@@ -210,8 +210,7 @@ func (h *LibraryHandler) CreateMediaFolder(w http.ResponseWriter, r *http.Reques
 
 // GetMediaFolder handles GET /Library/MediaFolders/{id}
 func (h *LibraryHandler) GetMediaFolder(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	folder := map[string]interface{}{
 		"Name":   id,
@@ -226,8 +225,7 @@ func (h *LibraryHandler) GetMediaFolder(w http.ResponseWriter, r *http.Request) 
 
 // DeleteMediaFolder handles DELETE /Library/MediaFolders/{id}
 func (h *LibraryHandler) DeleteMediaFolder(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	// Remove path from scanner
 	h.scanner.RemovePath("/media/" + id)
@@ -237,8 +235,7 @@ func (h *LibraryHandler) DeleteMediaFolder(w http.ResponseWriter, r *http.Reques
 
 // GetFolderItems handles GET /Library/MediaFolders/{id}/Items
 func (h *LibraryHandler) GetFolderItems(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	// Get query parameters
 	mediaType := r.URL.Query().Get("MediaType")
@@ -304,8 +301,7 @@ func (h *LibraryHandler) GetVirtualFolders(w http.ResponseWriter, r *http.Reques
 
 // GetVirtualFolderItems handles GET /Library/VirtualFolders/{id}/Items
 func (h *LibraryHandler) GetVirtualFolderItems(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := chi.URLParam(r, "id")
 
 	_ = id
 

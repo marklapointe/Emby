@@ -6,7 +6,7 @@ import (
 
 	"github.com/emby/emby-go/internal/config"
 	"github.com/emby/emby-go/internal/repository"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 )
 
 // DisplayPreferencesHandler handles display preferences-related API endpoints.
@@ -41,8 +41,7 @@ func (h *DisplayPreferencesHandler) GetDisplayPreferences(w http.ResponseWriter,
 
 // GetDisplayPreferencesByItem handles GET /DisplayPreferences/{itemId}
 func (h *DisplayPreferencesHandler) GetDisplayPreferencesByItem(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	itemId := vars["itemId"]
+	itemId := chi.URLParam(r, "itemId")
 	userId := r.URL.Query().Get("UserId")
 
 	prefs, err := h.repo.GetDisplayPreferencesByItem(itemId, userId)
