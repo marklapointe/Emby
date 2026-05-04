@@ -1,179 +1,187 @@
 # Component: emby-go
 
-**Path:** \`emby-go/\`
+**Path:** `emby-go/`
 **Type:** Directory | Module
 **Language:** Go
-**Maps to:** \`.discovery/360-emby-go.md\`
+**Maps to:** Migration target from C# to Go
 
-## Decomposition
+## Overview
 
-### main.go (Entry Point)
+emby-go is the Go (Golang) implementation of Emby Server functionality, migrated from the original C# codebase. This module provides HTTP API server, services, and data management in Go.
 
-#### Package
-\`package main\`
+## Architecture
 
-#### Imports
-```go
-import (
-    "context"
-    "log"
-    "os"
-    "os/signal"
-    "syscall"
-)
+```mermaid
+graph TB
+    subgraph "emby-go Architecture"
+        A["cmd/emby-server/main.go"] --> B["internal/server/http.go"]
+        B --> C["internal/api/router.go"]
+        C --> D["internal/api/handlers/*.go"]
+        C --> E["internal/api/middleware/*.go"]
+        D --> F["internal/service/*/"]
+        F --> G["internal/repository/"]
+        G --> H["internal/database/"]
+        F --> I["internal/model/"]
+    end
 ```
 
-#### Key Functions
-```go
-func main()
-func run(ctx context.Context) error
+## Go Module Structure
+
+```
+emby-go/
+├── cmd/emby-server/          # Entry point
+│   └── main.go               # Server initialization
+├── internal/
+│   ├── api/                  # API layer
+│   │   ├── router.go        # Route registration (chi/v5)
+│   │   ├── handlers/         # 28 HTTP handlers
+│   │   │   ├── activity.go, branding.go, channel.go
+│   │   │   ├── config.go, displayprefs.go, environment.go
+│   │   │   ├── filter.go, games.go, image.go
+│   │   │   ├── library.go, localization.go, livetv.go
+│   │   │   ├── media.go, movies.go, notification.go
+│   │   │   ├── package.go, playback.go, playlist.go
+│   │   │   ├── scheduledtask.go, search.go
+│   │   │   ├── session.go, startup.go, system.go
+│   │   │   ├── transcoding.go, tvshows.go, user.go
+│   │   └── middleware/       # Auth, CORS middleware
+│   ├── config/               # Configuration management
+│   ├── database/             # SQLite connection
+│   ├── logging/              # Zap logger setup
+│   ├── model/                # Data models (User, Item, Session, etc.)
+│   ├── plugin/               # Plugin system
+│   ├── repository/           # Data access layer
+│   ├── server/               # HTTP server with chi
+│   │   └── ws/              # WebSocket support
+│   └── service/              # Business logic
+│       ├── auth/             # Authentication
+│       ├── device/           # Device management
+│       ├── image/            # Image processing
+│       ├── library/          # Library scanning
+│       ├── media/            # Media playback
+│       ├── metadata/          # Metadata management
+│       ├── notification/      # Notifications
+│       ├── scheduled/         # Scheduled tasks
+│       ├── session/          # Session management
+│       ├── transcoding/       # Transcoding
+│       └── user/             # User management
+├── configs/                  # Config files
+├── docs/                     # Documentation
+├── migrations/                # DB migrations
+└── packaging/                 # Build scripts
 ```
 
-### internal/server/server.go (HTTP Server)
+## Key Components
 
-#### Package
-\`package server\`
-
-#### Imports
+### HTTP Server (internal/server/http.go)
 ```go
-import (
-    "context"
-    "net/http"
-    "github.com/MediaBrowser/emby-go/internal/api"
-    "github.com/MediaBrowser/emby-go/internal/config"
-)
+type HTTPServer struct {
+    config *config.Config
+    logger *zap.Logger
+    router *chi.Mux
+    server *http.Server
+}
+
+func NewHTTPServer(cfg *config.Config, logger *zap.Logger) *HTTPServer
+func (s *HTTPServer) Router() *chi.Mux
+func (s *HTTPServer) Start() error
+func (s *HTTPServer) Shutdown(ctx context.Context) error
 ```
 
-#### Key Functions
-```go
-func NewServer(cfg *config.Config) *Server
-func (s *Server) Start(ctx context.Context) error
-func (s *Server) Shutdown(ctx context.Context) error
-```
-
-### internal/api/api.go (API Router)
-
-#### Package
-\`package api\`
-
-#### Key Types
+### API Router (internal/api/router.go)
 ```go
 type Router struct {
-    mux *http.ServeMux
-    handlers map[string]http.Handler
+    config      *config.Config
+    logger      *zap.Logger
+    dbManager   *database.Manager
+    userSvc     *user.Manager
+    librarySvc  *library.Manager
+    mediaSvc    *media.Manager
+    sessionSvc  *session.Manager
+    deviceSvc   *device.Manager
+    imageSvc    *image.Manager
+    notificationSvc *notification.Manager
+    scheduledSvc    *scheduled.Manager
+    transcodingSvc   *transcoding.Manager
+}
+
+func NewRouter(cfg *config.Config, logger *zap.Logger, dbManager *database.Manager) *Router
+func (r *Router) RegisterRoutes(router *chi.Mux)
+```
+
+### Main Entry (cmd/emby-server/main.go)
+```go
+func main() {
+    // Load configuration
+    cfg, err := config.LoadConfig("")
+    
+    // Initialize logger
+    logger, _ := logging.NewLogger(cfg.Logging.Level, cfg.Logging.Format)
+    
+    // Initialize database
+    dbManager, _ := database.NewManager(&cfg.Database)
+    
+    // Initialize HTTP server with chi router
+    httpServer := server.NewHTTPServer(cfg, logger)
+    
+    // Add middleware
+    httpServer.Router().Use(cmid.RequestID)
+    httpServer.Router().Use(cmid.Recoverer)
+    httpServer.Router().Use(middleware.CORSMiddleware())
+    
+    // Register API routes on HTTP server's router
+    apiRouter := api.NewRouter(cfg, logger, dbManager)
+    apiRouter.RegisterRoutes(httpServer.Router())
+    
+    // Start server
+    httpServer.Start()
 }
 ```
 
-#### Key Functions
+## Dependencies
+
 ```go
-func NewRouter() *Router
-func (r *Router) Handle(pattern string, handler http.Handler)
-func (r *Router) ServeHTTP(w http.ResponseWriter, r *http.Request)
+module github.com/emby/emby-go
+
+go 1.22.0
+
+require (
+    github.com/disintegration/imaging v1.6.2
+    github.com/go-chi/chi/v5 v5.2.5
+    github.com/gorilla/websocket v1.5.3
+    go.uber.org/zap v1.28.0
+    gopkg.in/yaml.v3 v3.0.1
+    modernc.org/sqlite v1.34.0
+)
 ```
 
-### internal/service/library/library.go (Library Service)
+## Statistics
 
-#### Package
-\`package library\`
+| Metric | Count |
+|--------|-------|
+| Total Go Files | ~95 |
+| API Handlers | 28 |
+| Services | 11 |
+| Models | 5+ |
+| Routes | ~100+ |
 
-#### Key Types
-```go
-type LibraryService struct {
-    repo Repository
-}
-```
+## Status
 
-#### Key Functions
-```go
-func NewLibraryService(repo Repository) *LibraryService
-func (s *LibraryService) GetItems(ctx context.Context, query *Query) (*Result, error)
-func (s *LibraryService) GetItem(ctx context.Context, id string) (*Item, error)
-```
+- **HTTP Server**: Complete (chi/v5)
+- **API Router**: Complete (routes register on HTTP server)
+- **Services**: Partial (core services implemented)
+- **Database**: Complete (SQLite with migrations)
+- **DLNA/UPnP**: REMOVED (per architecture decision)
+- **WebSocket**: Partial (stub implementation)
 
-### internal/model/*.go (Data Models)
+## Mapped C# Components
 
-#### Key Types
-```go
-type Item struct {
-    ID          string
-    Name        string
-    Type        string
-    Path        string
-    MediaSources []MediaSource
-}
-
-type MediaSource struct {
-    ID       string
-    Path     string
-    Duration int
-}
-```
-
-## Description
-
-emby-go contains Go language bindings and utilities for Emby Server. It provides Go packages for interacting with the Emby API and server functionality. Contains 95 Go files.
-
-## Directories
-
-- `bin/` — Build output binaries
-- `cmd/` — Command-line tools
-- `cmd/emby-server/` — Emby server command
-- `configs/` — Configuration files
-- `docs/` — Documentation files
-- `internal/` — Internal packages (68 Go files)
-- `migrations/` — Database migrations
-- `packaging/` — Packaging scripts
-- `pkg/` — Public packages
-- `tests/` — Test files
-
-## Internal Packages
-
-- `internal/api/` — 30 Go files
-- `internal/api/handlers/` — 27 Go files
-- `internal/api/middleware/` — 2 Go files
-- `internal/config/` — 2 Go files
-- `internal/database/` — 1 Go files
-- `internal/dlna/` — 2 Go files
-- `internal/dlna/xml/` — 1 Go files
-- `internal/licensing/` — License management
-- `internal/logging/` — 1 Go files
-- `internal/model/` — 5 Go files
-- `internal/plugin/` — 1 Go files
-- `internal/provider/` — Media provider services
-- `internal/provider/images/` — Image provider
-- `internal/provider/metadata/` — Metadata provider
-- `internal/repository/` — 3 Go files
-- `internal/server/` — 2 Go files
-- `internal/server/ws/` — 1 Go files
-- `internal/service/` — 21 Go files
-- `internal/service/auth/` — 1 Go files
-- `internal/service/device/` — 1 Go files
-- `internal/service/image/` — 2 Go files
-- `internal/service/library/` — 4 Go files
-- `internal/service/media/` — 2 Go files
-- `internal/service/metadata/` — 3 Go files
-- `internal/service/notification/` — 1 Go files
-- `internal/service/scheduled/` — 1 Go files
-- `internal/service/session/` — 3 Go files
-- `internal/service/transcoding/` — 1 Go files
-- `internal/service/user/` — 2 Go files
-- `internal/util/` — Utility packages
-- `internal/util/fs/` — Filesystem utilities
-- `internal/util/hash/` — Hash utilities
-- `internal/util/mime/` — MIME type utilities
-
-## Test Directories
-
-- `tests/` — 3 Go files
-- `tests/e2e/` — 1 Go files
-- `tests/integration/` — 1 Go files
-- `tests/performance/` — 1 Go files
-
-## Root Files
-
-
-## Project Files
-
-- `go.mod` — emby-go/go.mod
-- `go.sum` — emby-go/go.sum
-- `Makefile` — emby-go/Makefile
+| C# Module | Go Equivalent | Status |
+|-----------|--------------|--------|
+| SocketHttpListener | internal/server/ | ✓ |
+| MediaBrowser.Api | internal/api/ | ✓ |
+| Emby.Server.Implementations | internal/service/ | Partial |
+| MediaBrowser.Providers | internal/service/metadata/ | Partial |
+| Emby.Dlna | N/A | REMOVED |
+| Mono.Nat | N/A | Not Started |
+| RSSDP | N/A | Not Started |
