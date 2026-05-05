@@ -10,6 +10,22 @@ This document provides an index of all migration plans for the Emby C# to Go con
 |----------|-------------|--------|
 | [000-migration-master-plan.md](./000-migration-master-plan.md) | Master migration plan with overview and phases | Active |
 | [csharp-to-go-migration-plan.md](./csharp-to-go-migration-plan.md) | Detailed original migration plan with tasks | Reference |
+| [TASKS.md](./TASKS.md) | **Master task list with status tracking** | **Active** |
+
+---
+
+## Quick Status
+
+| Metric | Value |
+|--------|-------|
+| **Overall Progress** | ~45% |
+| **Go Files** | 70 |
+| **C# Files** | 1019 |
+| **Routes Registered** | 70 |
+| **Routes in Handlers** | ~100+ |
+| **Services Complete** | 5 |
+| **Services Partial** | 6 |
+| **Tests** | 7 files |
 
 ---
 
@@ -46,20 +62,20 @@ This document provides an index of all migration plans for the Emby C# to Go con
 
 ```mermaid
 pie title Migration Progress by Components
-    "Completed" : 3
-    "Partial" : 3
-    "Not Started" : 0
+    "Completed" : 5
+    "Partial" : 4
+    "Not Started" : 2
 ```
 
 ### Component Coverage
 
 | Component | Files | Status | Coverage |
 |-----------|-------|--------|----------|
-| HTTP Server | 25 | ✓ | 100% |
-| API Layer | 150+ | ⚠️ | ~80% |
-| Server Core | 800+ | ⚠️ | ~15% |
-| Providers | 200+ | ⚠️ | ~10% |
-| DLNA | 90+ | ⚠️ | ~10% |
+| HTTP Server | 25 | ✅ | 100% |
+| API Layer | 150+ | 🔄 | ~45% (70 registered, 100+ stubs) |
+| Server Core | 800+ | 🔄 | ~35% |
+| Providers | 200+ | ⏳ | ~5% |
+| DLNA | 90+ | ❌ | SKIPPED (security) |
 
 ---
 
@@ -67,17 +83,17 @@ pie title Migration Progress by Components
 
 ### Immediate Priorities
 
-1. **Complete API Layer** - Verify all 150+ endpoints
-2. **Implement LiveTV API** - 15+ endpoints missing
-3. **Implement DLNA ContentDirectory** - Full UPnP support
-4. **Implement Metadata Providers** - NFO, external providers
+1. **Register remaining handlers** - Channel, LiveTV, Movies, TV Shows, System (12 handlers, ~100 routes)
+2. **Complete library service** - Scanner, metadata extraction with FFprobe
+3. **Complete media service** - Stream management, subtitles
+4. **Implement metadata providers** - NFO parsing, remote providers
 
 ### Secondary Priorities
 
-1. BDInfo/DvdLib parsers
-2. Mono.Nat implementation
-3. RSSDP implementation
-4. WebDashboard migration
+1. Complete image processing (BlurHash, transformations)
+2. Add LiveTV/Channels services
+3. Add scheduled background tasks
+4. Docker/systemd deployment
 
 ---
 
@@ -88,6 +104,6 @@ pie title Migration Progress by Components
 
 ---
 
-**Document Version:** 1.0  
+**Document Version:** 1.1  
 **Last Updated:** 2026-05-04  
-**Total Plans:** 6
+**Total Plans:** 7 (including TASKS.md)
