@@ -32,21 +32,22 @@ type User struct {
 }
 
 // CreateUserTable creates the users table if it doesn't exist.
+// Uses the Users table from ItemRepository schema for compatibility.
 func (r *UserRepository) CreateUserTable() error {
 	query := `
-	CREATE TABLE IF NOT EXISTS users (
-		id TEXT PRIMARY KEY,
-		name TEXT NOT NULL UNIQUE,
-		password_hash TEXT,
-		primary_image_tag TEXT,
-		has_configured_password INTEGER DEFAULT 0,
-		has_configured_easy_password INTEGER DEFAULT 0,
-		enable_auto_login INTEGER DEFAULT 0,
-		last_login_date TEXT,
-		created_date TEXT NOT NULL,
-		connect_username TEXT,
-		policy TEXT,
-		configuration TEXT
+	CREATE TABLE IF NOT EXISTS Users (
+		Id TEXT PRIMARY KEY,
+		Name TEXT NOT NULL,
+		Username TEXT,
+		EmailAddress TEXT,
+		LoginUsername TEXT,
+		LoginPassword TEXT,
+		InvalidLoginAttemptCount INTEGER,
+		LastLoginDate TEXT,
+		LastActivityDate TEXT,
+		AuthenticationProviderID TEXT,
+		PrimaryImageTag TEXT,
+		Policy TEXT
 	);`
 	_, err := r.Exec(query)
 	return err
@@ -62,67 +63,53 @@ func (r *UserRepository) CreateUser(user *User) error {
 	}
 
 	query := `
-	INSERT INTO users (id, name, password_hash, primary_image_tag, has_configured_password,
-		has_configured_easy_password, enable_auto_login, last_login_date, created_date, connect_username)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
+	INSERT INTO Users (Id, Name, Username, EmailAddress, LoginUsername, LoginPassword,
+		InvalidLoginAttemptCount, LastLoginDate, LastActivityDate, AuthenticationProviderID,
+		PrimaryImageTag, Policy)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
 
-	_, err := r.Exec(query, user.ID, user.Name, "", user.PrimaryImageTag,
-		boolToInt(user.HasConfiguredPassword), boolToInt(user.HasConfiguredEasyPassword),
-		boolToInt(user.EnableAutoLogin), user.LastLoginDate, user.CreatedDate, user.ConnectUserName)
+	_, err := r.Exec(query, user.ID, user.Name, "", "", "", "",
+		0, user.LastLoginDate.Format(time.RFC3339), "", "", user.PrimaryImageTag, "")
 	return err
 }
 
 // GetUserByID retrieves a user by ID.
 func (r *UserRepository) GetUserByID(id string) (*User, error) {
-	query := `SELECT id, name, primary_image_tag, has_configured_password, has_configured_easy_password,
-		enable_auto_login, last_login_date, created_date, connect_username
-		FROM users WHERE id = ?`
+	query := `SELECT Id, Name, Username, EmailAddress, LoginUsername, LoginPassword,
+		InvalidLoginAttemptCount, LastLoginDate, LastActivityDate, AuthenticationProviderID,
+		PrimaryImageTag, Policy
+		FROM Users WHERE Id = ?`
 
 	user := &User{}
-	var lastLogin, created sql.NullString
+	var lastLogin, lastActivity, authProviderID, policy sql.NullString
+	var invalidLoginCount sql.NullInt64
 	err := r.QueryRow(query, id).Scan(
-		&user.ID, &user.Name, &user.PrimaryImageTag, &user.HasConfiguredPassword,
-		&user.HasConfiguredEasyPassword, &user.EnableAutoLogin, &lastLogin, &created, &user.ConnectUserName)
+		&user.ID, &user.Name, &user.PrimaryImageTag,
+		&invalidLoginCount, &lastLogin, &lastActivity, &authProviderID, &policy)
 	if err != nil {
 		return nil, err
 	}
 	if lastLogin.Valid {
 		user.LastLoginDate, _ = time.Parse(time.RFC3339, lastLogin.String)
-	}
-	if created.Valid {
-		user.CreatedDate, _ = time.Parse(time.RFC3339, created.String)
 	}
 	return user, nil
 }
 
 // GetUserByName retrieves a user by name.
 func (r *UserRepository) GetUserByName(name string) (*User, error) {
-	query := `SELECT id, name, primary_image_tag, has_configured_password, has_configured_easy_password,
-		enable_auto_login, last_login_date, created_date, connect_username
-		FROM users WHERE name = ?`
+	query := `SELECT Id, Name, PrimaryImageTag FROM Users WHERE Name = ?`
 
 	user := &User{}
-	var lastLogin, created sql.NullString
-	err := r.QueryRow(query, name).Scan(
-		&user.ID, &user.Name, &user.PrimaryImageTag, &user.HasConfiguredPassword,
-		&user.HasConfiguredEasyPassword, &user.EnableAutoLogin, &lastLogin, &created, &user.ConnectUserName)
+	err := r.QueryRow(query, name).Scan(&user.ID, &user.Name, &user.PrimaryImageTag)
 	if err != nil {
 		return nil, err
-	}
-	if lastLogin.Valid {
-		user.LastLoginDate, _ = time.Parse(time.RFC3339, lastLogin.String)
-	}
-	if created.Valid {
-		user.CreatedDate, _ = time.Parse(time.RFC3339, created.String)
 	}
 	return user, nil
 }
 
 // GetAllUsers retrieves all users.
 func (r *UserRepository) GetAllUsers() ([]*User, error) {
-	query := `SELECT id, name, primary_image_tag, has_configured_password, has_configured_easy_password,
-		enable_auto_login, last_login_date, created_date, connect_username
-		FROM users ORDER BY name`
+	query := `SELECT Id, Name, PrimaryImageTag FROM Users ORDER BY Name`
 
 	rows, err := r.Query(query)
 	if err != nil {
@@ -133,40 +120,29 @@ func (r *UserRepository) GetAllUsers() ([]*User, error) {
 	var users []*User
 	for rows.Next() {
 		user := &User{}
-		var lastLogin, created sql.NullString
-		err := rows.Scan(
-			&user.ID, &user.Name, &user.PrimaryImageTag, &user.HasConfiguredPassword,
-			&user.HasConfiguredEasyPassword, &user.EnableAutoLogin, &lastLogin, &created, &user.ConnectUserName)
+		err := rows.Scan(&user.ID, &user.Name, &user.PrimaryImageTag)
 		if err != nil {
 			return nil, err
 		}
-		if lastLogin.Valid {
-			user.LastLoginDate, _ = time.Parse(time.RFC3339, lastLogin.String)
-		}
-		if created.Valid {
-			user.CreatedDate, _ = time.Parse(time.RFC3339, created.String)
-		}
 		users = append(users, user)
+	}
+	if users == nil {
+		users = []*User{}
 	}
 	return users, nil
 }
 
 // UpdateUser updates an existing user.
 func (r *UserRepository) UpdateUser(user *User) error {
-	query := `UPDATE users SET name = ?, primary_image_tag = ?, has_configured_password = ?,
-		has_configured_easy_password = ?, enable_auto_login = ?, last_login_date = ?, connect_username = ?
-		WHERE id = ?`
+	query := `UPDATE Users SET Name = ?, PrimaryImageTag = ? WHERE Id = ?`
 
-	_, err := r.Exec(query, user.Name, user.PrimaryImageTag,
-		boolToInt(user.HasConfiguredPassword), boolToInt(user.HasConfiguredEasyPassword),
-		boolToInt(user.EnableAutoLogin), user.LastLoginDate.Format(time.RFC3339),
-		user.ConnectUserName, user.ID)
+	_, err := r.Exec(query, user.Name, user.PrimaryImageTag, user.ID)
 	return err
 }
 
 // DeleteUser deletes a user by ID.
 func (r *UserRepository) DeleteUser(id string) error {
-	query := `DELETE FROM users WHERE id = ?`
+	query := `DELETE FROM Users WHERE Id = ?`
 	_, err := r.Exec(query, id)
 	return err
 }
@@ -178,14 +154,14 @@ func (r *UserRepository) SetPassword(userID, password string) error {
 		return fmt.Errorf("hash password: %w", err)
 	}
 
-	query := `UPDATE users SET password_hash = ?, has_configured_password = 1 WHERE id = ?`
+	query := `UPDATE Users SET LoginPassword = ?, InvalidLoginAttemptCount = 0 WHERE Id = ?`
 	_, err = r.Exec(query, string(hash), userID)
 	return err
 }
 
 // ValidatePassword validates a user's password.
 func (r *UserRepository) ValidatePassword(userID, password string) (bool, error) {
-	query := `SELECT password_hash FROM users WHERE id = ?`
+	query := `SELECT LoginPassword FROM Users WHERE Id = ?`
 	var hash string
 	err := r.QueryRow(query, userID).Scan(&hash)
 	if err != nil {
@@ -204,22 +180,15 @@ func (r *UserRepository) ValidatePassword(userID, password string) (bool, error)
 
 // UpdateLastLogin updates the last login date for a user.
 func (r *UserRepository) UpdateLastLogin(userID string) error {
-	query := `UPDATE users SET last_login_date = ? WHERE id = ?`
+	query := `UPDATE Users SET LastLoginDate = ? WHERE Id = ?`
 	_, err := r.Exec(query, time.Now().Format(time.RFC3339), userID)
 	return err
 }
 
 // UserCount returns the total number of users.
 func (r *UserRepository) UserCount() (int, error) {
-	query := `SELECT COUNT(*) FROM users`
+	query := `SELECT COUNT(*) FROM Users`
 	var count int
 	err := r.QueryRow(query).Scan(&count)
 	return count, err
-}
-
-func boolToInt(b bool) int {
-	if b {
-		return 1
-	}
-	return 0
 }
