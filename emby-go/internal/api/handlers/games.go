@@ -4,27 +4,47 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/emby/emby-go/internal/config"
 	"github.com/emby/emby-go/internal/repository"
 	"github.com/go-chi/chi/v5"
 )
 
 // GamesHandler handles games-related API endpoints.
 type GamesHandler struct {
-	config *config.Config
-	repo   *repository.ItemRepository
+	repo *repository.ItemRepository
 }
 
 // NewGamesHandler creates a new games handler.
-func NewGamesHandler(cfg *config.Config, repo *repository.ItemRepository) *GamesHandler {
+func NewGamesHandler(repo *repository.ItemRepository) *GamesHandler {
 	return &GamesHandler{
-		config: cfg,
-		repo:   repo,
+		repo: repo,
 	}
 }
 
-// GetGames handles GET /Videos/Games
+// GetGames handles GET /Games
 func (h *GamesHandler) GetGames(w http.ResponseWriter, r *http.Request) {
+	items, err := h.repo.SearchItems("Game", 50, 0)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"Items": items})
+}
+
+// GetGame handles GET /Games/{id}
+func (h *GamesHandler) GetGame(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	item, err := h.repo.GetItem(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(item)
+}
+
+// GetVideoGames handles GET /Videos/Games
+func (h *GamesHandler) GetVideoGames(w http.ResponseWriter, r *http.Request) {
 	userId := r.URL.Query().Get("UserId")
 	isFavorite := r.URL.Query().Get("IsFavorite")
 	_ = isFavorite
@@ -39,8 +59,8 @@ func (h *GamesHandler) GetGames(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(games)
 }
 
-// GetGame handles GET /Videos/Games/{id}
-func (h *GamesHandler) GetGame(w http.ResponseWriter, r *http.Request) {
+// GetVideoGame handles GET /Videos/Games/{id}
+func (h *GamesHandler) GetVideoGame(w http.ResponseWriter, r *http.Request) {
 	gameId := chi.URLParam(r, "id")
 
 	game, err := h.repo.GetGame(gameId)

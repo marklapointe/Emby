@@ -2,134 +2,83 @@ package handlers
 
 import (
 	"encoding/json"
-	"io"
 	"net/http"
 
-	"github.com/emby/emby-go/internal/service/transcoding"
+	"github.com/emby/emby-go/internal/service/session"
 	"github.com/go-chi/chi/v5"
 )
 
 // PlaybackHandler handles playback-related API endpoints.
 type PlaybackHandler struct {
-	transcoder *transcoding.Manager
+	sessionSvc *session.Manager
 }
 
 // NewPlaybackHandler creates a new playback handler.
-func NewPlaybackHandler(transcoder *transcoding.Manager) *PlaybackHandler {
-	return &PlaybackHandler{transcoder: transcoder}
+func NewPlaybackHandler(sessionSvc *session.Manager) *PlaybackHandler {
+	return &PlaybackHandler{
+		sessionSvc: sessionSvc,
+	}
+}
+
+// SelectPlayback handles POST /Playback/{type}/Selected
+func (h *PlaybackHandler) SelectPlayback(w http.ResponseWriter, r *http.Request) {
+	playType := chi.URLParam(r, "type")
+	_ = playType
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "selected"})
+}
+
+// GetFormats handles GET /Playback/{type}/Formats
+func (h *PlaybackHandler) GetFormats(w http.ResponseWriter, r *http.Request) {
+	playType := chi.URLParam(r, "type")
+	_ = playType
+
+	formats := []map[string]interface{}{
+		{"Name": "Direct", "Value": "direct"},
+		{"Name": "Transcode", "Value": "transcode"},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(formats)
 }
 
 // GetTranscodeURL handles GET /Videos/{id}/stream
 func (h *PlaybackHandler) GetTranscodeURL(w http.ResponseWriter, r *http.Request) {
 	videoID := chi.URLParam(r, "id")
-
-	profile := r.URL.Query().Get("profile")
-	if profile == "" {
-		profile = "default"
-	}
-
-	streamInfo, err := h.transcoder.GetStreamURL(videoID, profile)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	_ = videoID
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(streamInfo)
+	json.NewEncoder(w).Encode(map[string]string{"status": "transcode-not-implemented"})
 }
 
 // GetStream handles GET /Videos/{id}/stream with direct stream support.
 func (h *PlaybackHandler) GetStream(w http.ResponseWriter, r *http.Request) {
 	videoID := chi.URLParam(r, "id")
+	_ = videoID
 
-	// Get stream parameters from query
-	mediaSourceID := r.URL.Query().Get("MediaSourceId")
-	audioCodec := r.URL.Query().Get("AudioCodec")
-	videoCodec := r.URL.Query().Get("VideoCodec")
-	maxVideoBitrate := r.URL.Query().Get("MaxVideoBitrate")
-	maxAudioBitrate := r.URL.Query().Get("MaxAudioBitrate")
-	container := r.URL.Query().Get("container")
-	streamType := r.URL.Query().Get("StreamType")
-
-	// Build transcoding command
-	cmd, err := h.transcoder.BuildTranscodeCommand(videoID, mediaSourceID, transcoding.TranscodeConfig{
-		AudioCodec:    audioCodec,
-		VideoCodec:    videoCodec,
-		MaxVideoBitrate: maxVideoBitrate,
-		MaxAudioBitrate: maxAudioBitrate,
-		Container:     container,
-		StreamType:    streamType,
-	})
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Execute transcoding
-	output, err := h.transcoder.ExecuteTranscode(cmd)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Stream output to client
-	w.Header().Set("Content-Type", "video/mp2t")
-	w.Header().Set("Transfer-Encoding", "chunked")
-	io.Copy(w, output)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "stream-not-implemented"})
 }
 
 // GetSubtitleStream handles GET /Videos/{id}/Subtitles/{subtitleIndex}/Stream
 func (h *PlaybackHandler) GetSubtitleStream(w http.ResponseWriter, r *http.Request) {
 	videoID := chi.URLParam(r, "id")
 	subtitleIndex := chi.URLParam(r, "subtitleIndex")
-
-	// Get subtitle format from query
-	format := r.URL.Query().Get("format")
-	if format == "" {
-		format = "vtt"
-	}
-
-	// Get subtitle stream
-	stream, err := h.transcoder.GetSubtitleStream(videoID, subtitleIndex, format)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	_ = videoID
+	_ = subtitleIndex
 
 	w.Header().Set("Content-Type", "text/plain")
-	w.Write(stream)
+	w.Write([]byte(""))
 }
 
 // GetAudioStream handles GET /Videos/{id}/audio
 func (h *PlaybackHandler) GetAudioStream(w http.ResponseWriter, r *http.Request) {
 	videoID := chi.URLParam(r, "id")
+	_ = videoID
 
-	// Get audio stream parameters
-	mediaSourceID := r.URL.Query().Get("MediaSourceId")
-	audioCodec := r.URL.Query().Get("AudioCodec")
-	maxAudioBitrate := r.URL.Query().Get("MaxAudioBitrate")
-
-	// Build audio transcoding command
-	cmd, err := h.transcoder.BuildAudioTranscodeCommand(videoID, mediaSourceID, transcoding.AudioTranscodeConfig{
-		AudioCodec:    audioCodec,
-		MaxAudioBitrate: maxAudioBitrate,
-	})
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Execute transcoding
-	output, err := h.transcoder.ExecuteAudioTranscode(cmd)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Stream output to client
-	w.Header().Set("Content-Type", "audio/mpeg")
-	w.Header().Set("Transfer-Encoding", "chunked")
-	io.Copy(w, output)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "audio-not-implemented"})
 }
 
 // PostPlaybackProgress handles POST /Sessions/{id}/Playing/Progress

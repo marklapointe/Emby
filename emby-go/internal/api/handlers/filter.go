@@ -4,22 +4,52 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/emby/emby-go/internal/config"
 	"github.com/emby/emby-go/internal/repository"
 )
 
 // FilterHandler handles filter-related API endpoints.
 type FilterHandler struct {
-	config *config.Config
-	repo   *repository.ItemRepository
+	repo *repository.ItemRepository
 }
 
 // NewFilterHandler creates a new filter handler.
-func NewFilterHandler(cfg *config.Config, repo *repository.ItemRepository) *FilterHandler {
+func NewFilterHandler(repo *repository.ItemRepository) *FilterHandler {
 	return &FilterHandler{
-		config: cfg,
-		repo:   repo,
+		repo: repo,
 	}
+}
+
+// GetGenres handles GET /Genres
+func (h *FilterHandler) GetGenres(w http.ResponseWriter, r *http.Request) {
+	genres, err := h.repo.GetGenres()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(genres)
+}
+
+// GetStudios handles GET /Studios
+func (h *FilterHandler) GetStudios(w http.ResponseWriter, r *http.Request) {
+	studios, err := h.repo.GetStudios()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(studios)
+}
+
+// GetYears handles GET /Years
+func (h *FilterHandler) GetYears(w http.ResponseWriter, r *http.Request) {
+	years, err := h.repo.GetYears()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(years)
 }
 
 // GetFilters handles GET /Filters
@@ -39,8 +69,8 @@ func (h *FilterHandler) GetFilters(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(filters)
 }
 
-// GetGenres handles GET /Filters/Genres
-func (h *FilterHandler) GetGenres(w http.ResponseWriter, r *http.Request) {
+// GetFilterGenres handles GET /Filters/Genres
+func (h *FilterHandler) GetFilterGenres(w http.ResponseWriter, r *http.Request) {
 	userId := r.URL.Query().Get("UserId")
 	_ = userId
 
@@ -54,8 +84,8 @@ func (h *FilterHandler) GetGenres(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(genres)
 }
 
-// GetStudios handles GET /Filters/Studios
-func (h *FilterHandler) GetStudios(w http.ResponseWriter, r *http.Request) {
+// GetFilterStudios handles GET /Filters/Studios
+func (h *FilterHandler) GetFilterStudios(w http.ResponseWriter, r *http.Request) {
 	userId := r.URL.Query().Get("UserId")
 	_ = userId
 
@@ -69,8 +99,8 @@ func (h *FilterHandler) GetStudios(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(studios)
 }
 
-// GetYears handles GET /Filters/Years
-func (h *FilterHandler) GetYears(w http.ResponseWriter, r *http.Request) {
+// GetFilterYears handles GET /Filters/Years
+func (h *FilterHandler) GetFilterYears(w http.ResponseWriter, r *http.Request) {
 	userId := r.URL.Query().Get("UserId")
 	_ = userId
 

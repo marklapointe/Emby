@@ -15,6 +15,7 @@ type Config struct {
 	Library  LibraryConfig  `yaml:"library"`
 	Logging  LoggingConfig  `yaml:"logging"`
 	Stream   StreamConfig   `yaml:"stream_pooling"`
+	Wizard   WizardConfig   `yaml:"wizard"`
 }
 
 // ServerConfig holds HTTP server settings.
@@ -24,6 +25,8 @@ type ServerConfig struct {
 	MaxHeaderBytes int    `yaml:"max_header_bytes"`
 	ReadTimeout    int    `yaml:"read_timeout"`
 	WriteTimeout   int    `yaml:"write_timeout"`
+	PublicPort     int    `yaml:"public_port"`
+	PublicHTTPSPort int    `yaml:"public_https_port"`
 }
 
 // DatabaseConfig holds SQLite database settings.
@@ -52,22 +55,30 @@ type LoggingConfig struct {
 
 // StreamConfig holds stream pooling settings.
 type StreamConfig struct {
-	Enabled              bool          `yaml:"enabled"`
-	MaxConcurrentStreams int           `yaml:"max_concurrent_streams"`
-	IdleTimeout          string        `yaml:"idle_timeout"`
-	HealthCheckInterval  string        `yaml:"health_check_interval"`
-	MetricsEnabled       bool          `yaml:"metrics_enabled"`
+	Enabled              bool     `yaml:"enabled"`
+	MaxConcurrentStreams int      `yaml:"max_concurrent_streams"`
+	IdleTimeout          string   `yaml:"idle_timeout"`
+	HealthCheckInterval  string   `yaml:"health_check_interval"`
+	MetricsEnabled       bool     `yaml:"metrics_enabled"`
+}
+
+// WizardConfig holds startup wizard settings.
+type WizardConfig struct {
+	IsCompleted bool   `yaml:"is_completed"`
+	ServerName string `yaml:"server_name"`
 }
 
 // DefaultConfig returns a Config with sensible defaults.
 func DefaultConfig() *Config {
 	return &Config{
 		Server: ServerConfig{
-			Host:           "0.0.0.0",
-			Port:           8096,
-			MaxHeaderBytes: 1 << 20, // 1 MB
-			ReadTimeout:    30,
-			WriteTimeout:   30,
+			Host:            "0.0.0.0",
+			Port:            8096,
+			MaxHeaderBytes:  1 << 20, // 1 MB
+			ReadTimeout:     30,
+			WriteTimeout:    30,
+			PublicPort:      8096,
+			PublicHTTPSPort: 8920,
 		},
 		Database: DatabaseConfig{
 			Path:              "data/emby-server.db",
@@ -93,6 +104,10 @@ func DefaultConfig() *Config {
 			IdleTimeout:          "5m",
 			HealthCheckInterval:  "30s",
 			MetricsEnabled:       true,
+		},
+		Wizard: WizardConfig{
+			IsCompleted: false,
+			ServerName: "Emby Server",
 		},
 	}
 }

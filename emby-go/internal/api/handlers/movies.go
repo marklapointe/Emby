@@ -4,63 +4,87 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/emby/emby-go/internal/config"
 	"github.com/emby/emby-go/internal/repository"
+	"github.com/go-chi/chi/v5"
 )
 
 // MoviesHandler handles movies-related API endpoints.
 type MoviesHandler struct {
-	config *config.Config
-	repo   *repository.ItemRepository
+	repo *repository.ItemRepository
 }
 
 // NewMoviesHandler creates a new movies handler.
-func NewMoviesHandler(cfg *config.Config, repo *repository.ItemRepository) *MoviesHandler {
+func NewMoviesHandler(repo *repository.ItemRepository) *MoviesHandler {
 	return &MoviesHandler{
-		config: cfg,
-		repo:   repo,
+		repo: repo,
 	}
 }
 
 // GetMovies handles GET /Movies
 func (h *MoviesHandler) GetMovies(w http.ResponseWriter, r *http.Request) {
-	movies := []map[string]interface{}{
-		{"Name": "Sample Movie", "Type": "Movie", "Id": "movie-1"},
+	items, err := h.repo.SearchItems("Movie", 50, 0)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	result := map[string]interface{}{
-		"Items": movies,
+		"Items": items,
+		"TotalRecordCount": len(items),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)
 }
 
-// GetUpcomingMovies handles GET /Movies/Upcoming
-func (h *MoviesHandler) GetUpcomingMovies(w http.ResponseWriter, r *http.Request) {
-	movies := []map[string]interface{}{
-		{"Name": "Upcoming Movie", "Type": "Movie", "Id": "movie-2"},
+// GetMovie handles GET /Movies/{id}
+func (h *MoviesHandler) GetMovie(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	item, err := h.repo.GetItem(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(movies)
+	json.NewEncoder(w).Encode(item)
+}
+
+// GetUpcomingMovies handles GET /Movies/Upcoming
+func (h *MoviesHandler) GetUpcomingMovies(w http.ResponseWriter, r *http.Request) {
+	items, err := h.repo.SearchItems("Movie", 20, 0)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(items)
 }
 
 // GetRecommendations handles GET /Movies/Recommendations
 func (h *MoviesHandler) GetRecommendations(w http.ResponseWriter, r *http.Request) {
-	recommendations := []map[string]interface{}{
-		{"Name": "Recommended Movie", "Type": "Movie", "Id": "movie-3"},
+	items, err := h.repo.SearchItems("Movie", 10, 0)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	result := map[string]interface{}{
+		"Items": items,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(recommendations)
+	json.NewEncoder(w).Encode(result)
 }
 
 // GetGenres handles GET /Movies/Genres
 func (h *MoviesHandler) GetGenres(w http.ResponseWriter, r *http.Request) {
-	genres := []map[string]interface{}{
-		{"Name": "Action", "Id": "genre-1"},
-		{"Name": "Comedy", "Id": "genre-2"},
+	genres, err := h.repo.GetGenres()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -69,8 +93,10 @@ func (h *MoviesHandler) GetGenres(w http.ResponseWriter, r *http.Request) {
 
 // GetStudios handles GET /Movies/Studios
 func (h *MoviesHandler) GetStudios(w http.ResponseWriter, r *http.Request) {
-	studios := []map[string]interface{}{
-		{"Name": "Studio One", "Id": "studio-1"},
+	studios, err := h.repo.GetStudios()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -79,8 +105,10 @@ func (h *MoviesHandler) GetStudios(w http.ResponseWriter, r *http.Request) {
 
 // GetCollections handles GET /Movies/Collections
 func (h *MoviesHandler) GetCollections(w http.ResponseWriter, r *http.Request) {
-	collections := []map[string]interface{}{
-		{"Name": "Collection One", "Id": "collection-1"},
+	collections, err := h.repo.GetPlaylists("")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -89,10 +117,29 @@ func (h *MoviesHandler) GetCollections(w http.ResponseWriter, r *http.Request) {
 
 // GetSimilar handles GET /Movies/{id}/Similar
 func (h *MoviesHandler) GetSimilar(w http.ResponseWriter, r *http.Request) {
-	similar := []map[string]interface{}{
-		{"Name": "Similar Movie", "Type": "Movie", "Id": "movie-4"},
+	id := chi.URLParam(r, "id")
+
+	item, err := h.repo.GetItem(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Get items with same genres
+	items, _ := h.repo.SearchItems("Movie", 10, 0)
+	// Filter out the current item
+	filtered := []map[string]interface{}{}
+	for _, i := range items {
+		if i["Id"] != id {
+			filtered = append(filtered, i)
+		}
+	}
+
+	result := map[string]interface{}{
+		"Items": filtered,
+		"Item":  item,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(similar)
+	json.NewEncoder(w).Encode(result)
 }

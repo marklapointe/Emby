@@ -5,22 +5,22 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/emby/emby-go/internal/config"
 	"github.com/emby/emby-go/internal/repository"
 	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 )
 
 // LiveTVHandler handles Live TV-related API endpoints.
 type LiveTVHandler struct {
-	config *config.Config
 	repo   *repository.ItemRepository
+	logger *zap.Logger
 }
 
 // NewLiveTVHandler creates a new Live TV handler.
-func NewLiveTVHandler(cfg *config.Config, repo *repository.ItemRepository) *LiveTVHandler {
+func NewLiveTVHandler(repo *repository.ItemRepository, logger *zap.Logger) *LiveTVHandler {
 	return &LiveTVHandler{
-		config: cfg,
 		repo:   repo,
+		logger: logger,
 	}
 }
 

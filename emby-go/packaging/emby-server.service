@@ -1,0 +1,29 @@
+[Unit]
+Description=Emby Server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=emby
+Group=emby
+ExecStart=/usr/local/bin/emby-server --config /config --data /data --cache /cache
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/config /data /cache /media /metadata
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictNamespaces=true
+
+[Install]
+WantedBy=multi-user.target

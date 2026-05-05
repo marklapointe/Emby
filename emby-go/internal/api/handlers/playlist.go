@@ -4,22 +4,19 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/emby/emby-go/internal/config"
 	"github.com/emby/emby-go/internal/repository"
 	"github.com/go-chi/chi/v5"
 )
 
 // PlaylistHandler handles playlist-related API endpoints.
 type PlaylistHandler struct {
-	config *config.Config
-	repo   *repository.ItemRepository
+	repo *repository.ItemRepository
 }
 
 // NewPlaylistHandler creates a new playlist handler.
-func NewPlaylistHandler(cfg *config.Config, repo *repository.ItemRepository) *PlaylistHandler {
+func NewPlaylistHandler(repo *repository.ItemRepository) *PlaylistHandler {
 	return &PlaylistHandler{
-		config: cfg,
-		repo:   repo,
+		repo: repo,
 	}
 }
 

@@ -3,23 +3,14 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-
-	"github.com/emby/emby-go/internal/config"
-	"github.com/emby/emby-go/internal/repository"
 )
 
 // ActivityHandler handles activity-related API endpoints.
-type ActivityHandler struct {
-	config *config.Config
-	repo   *repository.ItemRepository
-}
+type ActivityHandler struct{}
 
 // NewActivityHandler creates a new activity handler.
-func NewActivityHandler(cfg *config.Config, repo *repository.ItemRepository) *ActivityHandler {
-	return &ActivityHandler{
-		config: cfg,
-		repo:   repo,
-	}
+func NewActivityHandler() *ActivityHandler {
+	return &ActivityHandler{}
 }
 
 // GetActivities handles GET /Activities

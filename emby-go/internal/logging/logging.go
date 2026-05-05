@@ -42,3 +42,8 @@ func NewLogger(level, format string) (*zap.Logger, error) {
 
 	return zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel)), nil
 }
+
+// NewSilentLogger returns a logger that discards all output (useful for testing).
+func NewSilentLogger() *zap.Logger {
+	return zap.NewNop()
+}

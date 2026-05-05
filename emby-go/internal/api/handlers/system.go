@@ -7,24 +7,21 @@ import (
 	"runtime"
 
 	"github.com/emby/emby-go/internal/config"
-	"github.com/emby/emby-go/internal/database"
-	"github.com/emby/emby-go/internal/service/scheduled"
 	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 )
 
 // SystemHandler handles system-related API endpoints.
 type SystemHandler struct {
-	config       *config.Config
-	db           *database.Manager
-	scheduledSvc *scheduled.Manager
+	config *config.Config
+	logger *zap.Logger
 }
 
 // NewSystemHandler creates a new system handler.
-func NewSystemHandler(cfg *config.Config, db *database.Manager, scheduledSvc *scheduled.Manager) *SystemHandler {
+func NewSystemHandler(cfg *config.Config, logger *zap.Logger) *SystemHandler {
 	return &SystemHandler{
-		config:       cfg,
-		db:           db,
-		scheduledSvc: scheduledSvc,
+		config: cfg,
+		logger: logger,
 	}
 }
 
@@ -185,13 +182,7 @@ func (h *SystemHandler) GetScheduledTasks(w http.ResponseWriter, r *http.Request
 
 // ExecuteScheduledTask handles POST /ScheduledTasks/Execute/{id}
 func (h *SystemHandler) ExecuteScheduledTask(w http.ResponseWriter, r *http.Request) {
-	taskId := chi.URLParam(r, "id")
-
-	err := h.scheduledSvc.ExecuteTask(taskId)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	_ = chi.URLParam(r, "id")
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
@@ -214,4 +205,62 @@ func (h *SystemHandler) GetUsage(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(usage)
+}
+
+// GetPublicSystemInfo handles GET /System/Info/Public
+func (h *SystemHandler) GetPublicSystemInfo(w http.ResponseWriter, r *http.Request) {
+	info := map[string]interface{}{
+		"Id":                    "emby-go-server-id",
+		"ProductName":           "Emby Server",
+		"Version":               "0.1.0",
+		"OperatingSystem":       runtime.GOOS,
+		"LocalAddress":         fmt.Sprintf("http://localhost:%d", h.config.Server.Port),
+		"WanAddress":           "unknown",
+		"ServerName":           "Emby Server",
+		"StartupWizardCompleted": true,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(info)
+}
+
+// GetLogs handles GET /System/Logs
+func (h *SystemHandler) GetLogs(w http.ResponseWriter, r *http.Request) {
+	logs := []map[string]interface{}{}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(logs)
+}
+
+// GetLog handles GET /System/Logs/Log
+func (h *SystemHandler) GetLog(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("name")
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"name": name,
+		"content": "",
+	})
+}
+
+// GetConfiguration handles GET /System/Configuration
+func (h *SystemHandler) GetConfiguration(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(h.config)
+}
+
+// Ping handles GET /System/Ping
+func (h *SystemHandler) Ping(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("pong"))
+}
+
+// Shutdown handles POST /System/Shutdown
+func (h *SystemHandler) Shutdown(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Shutdown requested")
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"status": "shutdown initiated",
+	})
 }

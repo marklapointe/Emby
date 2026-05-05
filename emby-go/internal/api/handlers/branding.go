@@ -5,21 +5,48 @@ import (
 	"net/http"
 
 	"github.com/emby/emby-go/internal/config"
-	"github.com/emby/emby-go/internal/repository"
+	"github.com/go-chi/chi/v5"
 )
 
 // BrandingHandler handles branding-related API endpoints.
 type BrandingHandler struct {
 	config *config.Config
-	repo   *repository.ItemRepository
 }
 
 // NewBrandingHandler creates a new branding handler.
-func NewBrandingHandler(cfg *config.Config, repo *repository.ItemRepository) *BrandingHandler {
+func NewBrandingHandler(cfg *config.Config) *BrandingHandler {
 	return &BrandingHandler{
 		config: cfg,
-		repo:   repo,
 	}
+}
+
+// GetCss handles GET /Branding/Css
+func (h *BrandingHandler) GetCss(w http.ResponseWriter, r *http.Request) {
+	css := `
+:root {
+  --brand-color: #33b5e5;
+}
+`
+	w.Header().Set("Content-Type", "text/css")
+	w.Write([]byte(css))
+}
+
+// GetJson handles GET /Branding/Json
+func (h *BrandingHandler) GetJson(w http.ResponseWriter, r *http.Request) {
+	branding := map[string]interface{}{
+		"LoginDisclaimer": "Welcome to Emby Server",
+		"DefaultThemeColor": "#33b5e5",
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(branding)
+}
+
+// GetImage handles GET /Branding/Images/{name}
+func (h *BrandingHandler) GetImage(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+	_ = name
+	w.Header().Set("Content-Type", "image/png")
+	w.Write([]byte{})
 }
 
 // GetBrandingOptions handles GET /branding

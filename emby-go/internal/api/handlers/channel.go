@@ -4,22 +4,19 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/emby/emby-go/internal/config"
 	"github.com/emby/emby-go/internal/repository"
 	"github.com/go-chi/chi/v5"
 )
 
 // ChannelHandler handles channel-related API endpoints.
 type ChannelHandler struct {
-	config *config.Config
-	repo   *repository.ItemRepository
+	repo *repository.ItemRepository
 }
 
 // NewChannelHandler creates a new channel handler.
-func NewChannelHandler(cfg *config.Config, repo *repository.ItemRepository) *ChannelHandler {
+func NewChannelHandler(repo *repository.ItemRepository) *ChannelHandler {
 	return &ChannelHandler{
-		config: cfg,
-		repo:   repo,
+		repo: repo,
 	}
 }
 

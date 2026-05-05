@@ -4,22 +4,50 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/emby/emby-go/internal/config"
-	"github.com/emby/emby-go/internal/repository"
+	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 )
 
 // LocalizationHandler handles localization-related API endpoints.
 type LocalizationHandler struct {
-	config *config.Config
-	repo   *repository.ItemRepository
+	logger *zap.Logger
 }
 
 // NewLocalizationHandler creates a new localization handler.
-func NewLocalizationHandler(cfg *config.Config, repo *repository.ItemRepository) *LocalizationHandler {
+func NewLocalizationHandler(logger *zap.Logger) *LocalizationHandler {
 	return &LocalizationHandler{
-		config: cfg,
-		repo:   repo,
+		logger: logger,
 	}
+}
+
+// GetLocalization handles GET /Localization/{culture}
+func (h *LocalizationHandler) GetLocalization(w http.ResponseWriter, r *http.Request) {
+	culture := chi.URLParam(r, "culture")
+
+	localization := map[string]interface{}{
+		"culture": culture,
+		"strings": map[string]string{
+			"Welcome": "Welcome",
+			"Login":  "Login",
+			"Logout": "Logout",
+		},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(localization)
+}
+
+// GetOptions handles GET /Localization/Options
+func (h *LocalizationHandler) GetOptions(w http.ResponseWriter, r *http.Request) {
+	options := []map[string]interface{}{
+		{"Name": "English", "Value": "en-US"},
+		{"Name": "German", "Value": "de-DE"},
+		{"Name": "French", "Value": "fr-FR"},
+		{"Name": "Spanish", "Value": "es-ES"},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(options)
 }
 
 // GetLocalizationEntries handles GET /Localization/entries

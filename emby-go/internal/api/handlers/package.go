@@ -4,22 +4,15 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/emby/emby-go/internal/config"
-	"github.com/emby/emby-go/internal/repository"
+	"github.com/go-chi/chi/v5"
 )
 
 // PackageHandler handles package-related API endpoints.
-type PackageHandler struct {
-	config *config.Config
-	repo   *repository.ItemRepository
-}
+type PackageHandler struct{}
 
 // NewPackageHandler creates a new package handler.
-func NewPackageHandler(cfg *config.Config, repo *repository.ItemRepository) *PackageHandler {
-	return &PackageHandler{
-		config: cfg,
-		repo:   repo,
-	}
+func NewPackageHandler() *PackageHandler {
+	return &PackageHandler{}
 }
 
 // GetPackages handles GET /Packages
@@ -36,15 +29,14 @@ func (h *PackageHandler) GetPackages(w http.ResponseWriter, r *http.Request) {
 			"DownloadUrl": "https://emby.media",
 		},
 	}
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(packages)
 }
 
-// GetPackage handles GET /Packages/{id}
+// GetPackage handles GET /Packages/{name}
 func (h *PackageHandler) GetPackage(w http.ResponseWriter, r *http.Request) {
-	_ = r.URL.Query().Get("id")
-
+	name := chi.URLParam(r, "name")
+	_ = name
 	packageInfo := map[string]interface{}{
 		"Name":        "Emby Server",
 		"Version":     "0.1.0",
@@ -55,9 +47,28 @@ func (h *PackageHandler) GetPackage(w http.ResponseWriter, r *http.Request) {
 		"ReleaseDate": "2026-04-29",
 		"DownloadUrl": "https://emby.media",
 	}
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(packageInfo)
+}
+
+// Install handles POST /Packages/Install
+func (h *PackageHandler) Install(w http.ResponseWriter, r *http.Request) {
+	var req map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	_ = req
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "installing"})
+}
+
+// Uninstall handles POST /Packages/{name}/Uninstall
+func (h *PackageHandler) Uninstall(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+	_ = name
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "uninstalling"})
 }
 
 // GetPackageInfo handles GET /System/PackageInfo/{os}/{arch}

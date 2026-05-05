@@ -67,6 +67,9 @@ type Manager struct {
 
 // NewManager creates a new device manager.
 func NewManager(logger *zap.Logger) *Manager {
+	if logger == nil {
+		logger = zap.NewNop()
+	}
 	return &Manager{
 		devices: make(map[string]*Device),
 		logger:  logger,

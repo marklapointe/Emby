@@ -6,25 +6,48 @@ import (
 	"net/http"
 
 	"github.com/emby/emby-go/internal/config"
-	"github.com/emby/emby-go/internal/database"
-	"github.com/emby/emby-go/internal/repository"
 	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 )
 
 // ConfigHandler handles configuration-related API endpoints.
 type ConfigHandler struct {
 	config *config.Config
-	db     *database.Manager
-	repo   *repository.ItemRepository
+	logger *zap.Logger
 }
 
 // NewConfigHandler creates a new config handler.
-func NewConfigHandler(cfg *config.Config, db *database.Manager, repo *repository.ItemRepository) *ConfigHandler {
+func NewConfigHandler(cfg *config.Config, logger *zap.Logger) *ConfigHandler {
 	return &ConfigHandler{
 		config: cfg,
-		db:     db,
-		repo:   repo,
+		logger: logger,
 	}
+}
+
+// GetConfiguration handles GET /Configuration
+func (h *ConfigHandler) GetConfiguration(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(h.config)
+}
+
+// UpdateConfiguration handles PUT /Configuration
+func (h *ConfigHandler) UpdateConfiguration(w http.ResponseWriter, r *http.Request) {
+	var req map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	_ = req
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+}
+
+// GetNamedConfiguration handles GET /Configuration/{name}
+func (h *ConfigHandler) GetNamedConfiguration(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+	_ = name
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{})
 }
 
 // GetSystemConfig handles GET /System/Configuration

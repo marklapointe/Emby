@@ -5,41 +5,82 @@ import (
 	"net/http"
 	"os"
 	"runtime"
-
-	"github.com/emby/emby-go/internal/config"
-	"github.com/emby/emby-go/internal/repository"
 )
 
 // EnvironmentHandler handles environment-related API endpoints.
-type EnvironmentHandler struct {
-	config *config.Config
-	repo   *repository.ItemRepository
-}
+type EnvironmentHandler struct{}
 
 // NewEnvironmentHandler creates a new environment handler.
-func NewEnvironmentHandler(cfg *config.Config, repo *repository.ItemRepository) *EnvironmentHandler {
-	return &EnvironmentHandler{
-		config: cfg,
-		repo:   repo,
+func NewEnvironmentHandler() *EnvironmentHandler {
+	return &EnvironmentHandler{}
+}
+
+// GetDrives handles GET /Environment/Drives
+func (h *EnvironmentHandler) GetDrives(w http.ResponseWriter, r *http.Request) {
+	drives := []map[string]interface{}{}
+
+	if entries, err := os.ReadDir("/"); err == nil {
+		for _, entry := range entries {
+			if entry.IsDir() {
+				drives = append(drives, map[string]interface{}{
+					"Name": entry.Name(),
+					"Path": "/" + entry.Name(),
+				})
+			}
+		}
 	}
+
+	if len(drives) == 0 {
+		drives = append(drives, map[string]interface{}{
+			"Name": "/",
+			"Path": "/",
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(drives)
+}
+
+// GetNetworkShares handles GET /Environment/NetworkShares
+func (h *EnvironmentHandler) GetNetworkShares(w http.ResponseWriter, r *http.Request) {
+	shares := []map[string]interface{}{}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(shares)
+}
+
+// GetParentPath handles GET /Environment/ParentPath
+func (h *EnvironmentHandler) GetParentPath(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Query().Get("path")
+
+	parent := "/"
+	if len(path) > 1 {
+		parent = path[:len(path)-1]
+		for len(parent) > 1 && parent[len(parent)-1] != '/' {
+			parent = parent[:len(parent)-1]
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"path": parent})
 }
 
 // GetEnvironmentInfo handles GET /Environment
 func (h *EnvironmentHandler) GetEnvironmentInfo(w http.ResponseWriter, r *http.Request) {
 	info := map[string]interface{}{
-		"OperatingSystem":    runtime.GOOS,
-		"OperatingSystemVersion": "unknown",
+		"OperatingSystem":             runtime.GOOS,
+		"OperatingSystemVersion":      "unknown",
 		"OperatingSystemArchitecture": runtime.GOARCH,
-		"ProcessorCount":     runtime.NumCPU(),
-		"HasIPv6":            true,
-		"HasHttp2":           true,
-		"FileProtocol":       "file",
-		"PackageOperatingSystem": runtime.GOOS,
-		"SystemTimeZone":     getTimeZone(),
-		"LocalAddress":       "http://localhost:" + string(rune(h.config.Server.Port)),
-		"PublicAddress":      "http://localhost:" + string(rune(h.config.Server.Port)),
-		"ServerName":         "Emby Server",
-		"Version":            "0.1.0",
+		"ProcessorCount":            runtime.NumCPU(),
+		"HasIPv6":                   true,
+		"HasHttp2":                  true,
+		"FileProtocol":              "file",
+		"PackageOperatingSystem":     runtime.GOOS,
+		"SystemTimeZone":            getTimeZone(),
+		"LocalAddress":              "http://localhost:8092",
+		"PublicAddress":            "http://localhost:8092",
+		"ServerName":               "Emby Server",
+		"Version":                  "0.1.0",
 	}
 
 	w.Header().Set("Content-Type", "application/json")

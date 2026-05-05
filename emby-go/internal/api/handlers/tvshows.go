@@ -4,28 +4,59 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/emby/emby-go/internal/config"
 	"github.com/emby/emby-go/internal/repository"
+	"github.com/go-chi/chi/v5"
 )
 
 // TvShowsHandler handles TV shows-related API endpoints.
 type TvShowsHandler struct {
-	config *config.Config
-	repo   *repository.ItemRepository
+	repo *repository.ItemRepository
 }
 
-// NewTvShowsHandler creates a new TV shows handler.
-func NewTvShowsHandler(cfg *config.Config, repo *repository.ItemRepository) *TvShowsHandler {
+// NewTVShowsHandler creates a new TV shows handler.
+func NewTVShowsHandler(repo *repository.ItemRepository) *TvShowsHandler {
 	return &TvShowsHandler{
-		config: cfg,
-		repo:   repo,
+		repo: repo,
 	}
+}
+
+// GetTVShows handles GET /TvShows
+func (h *TvShowsHandler) GetTVShows(w http.ResponseWriter, r *http.Request) {
+	items, err := h.repo.SearchItems("Series", 50, 0)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	result := map[string]interface{}{
+		"Items": items,
+		"TotalRecordCount": len(items),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+// GetTVShow handles GET /TvShows/{id}
+func (h *TvShowsHandler) GetTVShow(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	item, err := h.repo.GetItem(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(item)
 }
 
 // GetNextUp handles GET /Shows/NextUp
 func (h *TvShowsHandler) GetNextUp(w http.ResponseWriter, r *http.Request) {
-	episodes := []map[string]interface{}{
-		{"Name": "Next Episode", "Type": "Episode", "Id": "ep-1"},
+	episodes, err := h.repo.SearchItems("Episode", 20, 0)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	result := map[string]interface{}{
@@ -37,66 +68,84 @@ func (h *TvShowsHandler) GetNextUp(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(result)
 }
 
-// GetShows handles GET /Shows
-func (h *TvShowsHandler) GetShows(w http.ResponseWriter, r *http.Request) {
-	shows := []map[string]interface{}{
-		{"Name": "TV Show", "Type": "Series", "Id": "show-1"},
-	}
-
-	result := map[string]interface{}{
-		"Items": shows,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
-}
-
-// GetSeasons handles GET /Shows/{seriesId}/Seasons
+// GetSeasons handles GET /TvShows/{id}/Seasons
 func (h *TvShowsHandler) GetSeasons(w http.ResponseWriter, r *http.Request) {
-	seasons := []map[string]interface{}{
-		{"Name": "Season 1", "Id": "season-1"},
+	seriesId := chi.URLParam(r, "id")
+
+	items, err := h.repo.SearchItems("Season", 50, 0)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Filter seasons by series
+	var seasons []map[string]interface{}
+	for _, item := range items {
+		if parentId, ok := item["ParentId"].(string); ok && parentId == seriesId {
+			seasons = append(seasons, item)
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(seasons)
 }
 
-// GetEpisodes handles GET /Shows/{seriesId}/Seasons/{seasonId}/Episodes
+// GetEpisodes handles GET /TvShows/{id}/Episodes
 func (h *TvShowsHandler) GetEpisodes(w http.ResponseWriter, r *http.Request) {
-	episodes := []map[string]interface{}{
-		{"Name": "Episode 1", "Id": "ep-1"},
+	seriesId := chi.URLParam(r, "id")
+
+	items, err := h.repo.SearchItems("Episode", 100, 0)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Filter episodes by series
+	var episodes []map[string]interface{}
+	for _, item := range items {
+		if parentId, ok := item["ParentId"].(string); ok && parentId == seriesId {
+			episodes = append(episodes, item)
+		}
+	}
+
+	result := map[string]interface{}{
+		"Items": episodes,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(episodes)
+	json.NewEncoder(w).Encode(result)
 }
 
-// GetStudioShows handles GET /Shows/WithStudio
-func (h *TvShowsHandler) GetStudioShows(w http.ResponseWriter, r *http.Request) {
-	shows := []map[string]interface{}{
-		{"Name": "Studio Show", "Type": "Series", "Id": "show-2"},
+// GetSimilar handles GET /TvShows/{id}/Similar
+func (h *TvShowsHandler) GetSimilar(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	items, err := h.repo.SearchItems("Series", 10, 0)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Filter out current item
+	var similar []map[string]interface{}
+	for _, item := range items {
+		if itemId, ok := item["Id"].(string); ok && itemId != id {
+			similar = append(similar, item)
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(shows)
+	json.NewEncoder(w).Encode(map[string]interface{}{"Items": similar})
 }
 
-// GetGenres handles GET /Shows/Genres
+// GetGenres handles GET /TvShows/Genres
 func (h *TvShowsHandler) GetGenres(w http.ResponseWriter, r *http.Request) {
-	genres := []map[string]interface{}{
-		{"Name": "Drama", "Id": "genre-3"},
+	genres, err := h.repo.GetGenres()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(genres)
-}
-
-// GetRecommendations handles GET /Shows/Recommendations
-func (h *TvShowsHandler) GetRecommendations(w http.ResponseWriter, r *http.Request) {
-	recommendations := []map[string]interface{}{
-		{"Name": "Recommended Show", "Type": "Series", "Id": "show-3"},
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(recommendations)
 }

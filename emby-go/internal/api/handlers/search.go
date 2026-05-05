@@ -4,26 +4,59 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/emby/emby-go/internal/config"
 	"github.com/emby/emby-go/internal/repository"
 )
 
 // SearchHandler handles search-related API endpoints.
 type SearchHandler struct {
-	config *config.Config
-	repo   *repository.ItemRepository
+	repo *repository.ItemRepository
 }
 
 // NewSearchHandler creates a new search handler.
-func NewSearchHandler(cfg *config.Config, repo *repository.ItemRepository) *SearchHandler {
+func NewSearchHandler(repo *repository.ItemRepository) *SearchHandler {
 	return &SearchHandler{
-		config: cfg,
-		repo:   repo,
+		repo: repo,
 	}
 }
 
-// SearchItems handles GET /Items/Search
+// GetHints handles GET /Search/Hints
+func (h *SearchHandler) GetHints(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query().Get("query")
+
+	items, err := h.repo.SearchItems(query, 10, 0)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	hints := map[string]interface{}{
+		"SearchHints": items,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(hints)
+}
+
+// SearchItems handles GET /Search/Items
 func (h *SearchHandler) SearchItems(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query().Get("query")
+
+	items, err := h.repo.SearchItems(query, 50, 0)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	result := map[string]interface{}{
+		"Items": items,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+// SearchItemsByTerm handles GET /Items/Search
+func (h *SearchHandler) SearchItemsByTerm(w http.ResponseWriter, r *http.Request) {
 	searchTerm := r.URL.Query().Get("SearchTerm")
 	mediaType := r.URL.Query().Get("MediaType")
 
