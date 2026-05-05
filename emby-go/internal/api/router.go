@@ -17,6 +17,7 @@ import (
 	"github.com/emby/emby-go/internal/service/session"
 	"github.com/emby/emby-go/internal/service/transcoding"
 	"github.com/emby/emby-go/internal/service/user"
+	"github.com/emby/emby-go/internal/server"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
@@ -114,9 +115,9 @@ func (r *Router) RegisterRoutes(router *chi.Mux) {
 		http.Redirect(w, r, "/web/", http.StatusFound)
 	})
 
-	// Serve static files from /web/ path
-	webFS := http.Dir("web")
-	router.Handle("/web/*", http.StripPrefix("/web/", http.FileServer(webFS)))
+	// Serve static files from /web/ path with HTML modification
+	staticHandler := server.NewStaticHandler("web", "0.1.0")
+	router.Handle("/web/*", http.StripPrefix("/web/", staticHandler))
 	router.Handle("/web", http.RedirectHandler("/web/", http.StatusFound))
 
 	// Register health endpoint
