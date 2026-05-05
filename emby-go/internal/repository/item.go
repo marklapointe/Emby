@@ -165,6 +165,88 @@ func (r *ItemRepository) CreateSchema() error {
 	return err
 }
 
+// GetItemsByParent returns items with a given parent ID.
+func (r *ItemRepository) GetItemsByParent(parentID string, mediaType string, limit, offset int) ([]map[string]interface{}, error) {
+	query := `
+		SELECT Id, Name, Overview, ContentType, MediaType, Path,
+		       ProductionYear, CommunityRating, IsMovie, IsSeries,
+		       RunTimeTicks, PrimaryImageURL
+		FROM Items
+		WHERE ParentID = ?
+	`
+	args := []interface{}{parentID}
+
+	if mediaType != "" {
+		query += " AND MediaType = ?"
+		args = append(args, mediaType)
+	}
+
+	query += " ORDER BY Name LIMIT ? OFFSET ?"
+	args = append(args, limit, offset)
+
+	rows, err := r.Query(query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("query items by parent: %w", err)
+	}
+	defer rows.Close()
+
+	var items []map[string]interface{}
+	for rows.Next() {
+		var id, name, overview, contentType, mediaType, path, primaryImage sql.NullString
+		var productionYear, runTimeTicks sql.NullInt64
+		var communityRating sql.NullFloat64
+		var isMovie, isSeries sql.NullInt64
+
+		err := rows.Scan(&id, &name, &overview, &contentType, &mediaType, &path,
+			&productionYear, &communityRating, &isMovie, &isSeries, &runTimeTicks, &primaryImage)
+		if err != nil {
+			return nil, fmt.Errorf("scan item: %w", err)
+		}
+
+		item := make(map[string]interface{})
+		item["Id"] = id.String
+		item["Name"] = name.String
+		if overview.Valid {
+			item["Overview"] = overview.String
+		}
+		if contentType.Valid {
+			item["ContentType"] = contentType.String
+		}
+		if mediaType.Valid {
+			item["MediaType"] = mediaType.String
+		}
+		if path.Valid {
+			item["Path"] = path.String
+		}
+		if productionYear.Valid {
+			item["ProductionYear"] = int(productionYear.Int64)
+		}
+		if communityRating.Valid {
+			item["CommunityRating"] = communityRating.Float64
+		}
+		if isMovie.Valid {
+			item["IsMovie"] = isMovie.Int64 == 1
+		}
+		if isSeries.Valid {
+			item["IsSeries"] = isSeries.Int64 == 1
+		}
+		if runTimeTicks.Valid {
+			item["RunTimeTicks"] = runTimeTicks.Int64
+		}
+		if primaryImage.Valid {
+			item["PrimaryImageUrl"] = primaryImage.String
+		}
+
+		items = append(items, item)
+	}
+
+	if items == nil {
+		items = []map[string]interface{}{}
+	}
+
+	return items, rows.Err()
+}
+
 // InsertItem inserts a media item into the database.
 func (r *ItemRepository) InsertItem(id, name, path, locationType string) error {
 	query := `

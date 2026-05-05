@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/emby/emby-go/internal/repository"
 	"github.com/emby/emby-go/internal/service/library"
 	"github.com/go-chi/chi/v5"
 )
@@ -12,11 +13,12 @@ import (
 // LibraryHandler handles library-related API endpoints.
 type LibraryHandler struct {
 	scanner *library.Scanner
+	repo    *repository.ItemRepository
 }
 
 // NewLibraryHandler creates a new library handler.
-func NewLibraryHandler(scanner *library.Scanner) *LibraryHandler {
-	return &LibraryHandler{scanner: scanner}
+func NewLibraryHandler(scanner *library.Scanner, repo *repository.ItemRepository) *LibraryHandler {
+	return &LibraryHandler{scanner: scanner, repo: repo}
 }
 
 // GetLibraryRoot handles GET /Library/Root
@@ -41,129 +43,57 @@ func (h *LibraryHandler) GetLibraryRoot(w http.ResponseWriter, r *http.Request) 
 
 // GetItems handles GET /Library/Items
 func (h *LibraryHandler) GetItems(w http.ResponseWriter, r *http.Request) {
-	// Get query parameters
 	ids := r.URL.Query().Get("Ids")
 	mediaType := r.URL.Query().Get("MediaType")
 	folderID := r.URL.Query().Get("FolderId")
 	userId := r.URL.Query().Get("UserId")
 	sortBy := r.URL.Query().Get("SortBy")
-	sortOrder := r.URL.Query().Get("SortOrder")
 	startIndex, _ := strconv.Atoi(r.URL.Query().Get("StartIndex"))
 	limit, _ := strconv.Atoi(r.URL.Query().Get("Limit"))
-	isFavorite := r.URL.Query().Get("IsFavorite")
-	isUnaired := r.URL.Query().Get("IsUnaired")
-	isNextUp := r.URL.Query().Get("IsNextUp")
-	minPremiereDate := r.URL.Query().Get("MinPremiereDate")
-	maxPremiereDate := r.URL.Query().Get("MaxPremiereDate")
-	minDateCreated := r.URL.Query().Get("MinDateCreated")
-	genre := r.URL.Query().Get("Genre")
-	artist := r.URL.Query().Get("Artist")
-	albumArtist := r.URL.Query().Get("AlbumArtist")
-	albumID := r.URL.Query().Get("AlbumId")
-	seasonID := r.URL.Query().Get("SeasonId")
-	seriesID := r.URL.Query().Get("SeriesId")
-	isMovie := r.URL.Query().Get("IsMovie")
-	isSeries := r.URL.Query().Get("IsSeries")
-	isNews := r.URL.Query().Get("IsNews")
-	isKids := r.URL.Query().Get("IsKids")
-	isSports := r.URL.Query().Get("IsSports")
-	isBoxSet := r.URL.Query().Get("IsBoxSet")
-	person := r.URL.Query().Get("Person")
-	years := r.URL.Query().Get("Years")
-	genreIDs := r.URL.Query().Get("GenreIds")
-	officialRatings := r.URL.Query().Get("OfficialRatings")
-	enableTotalCount := r.URL.Query().Get("EnableTotalItemCount")
-	imageTypeLimit := r.URL.Query().Get("ImageTypeLimit")
-	enableImageTypes := r.URL.Query().Get("EnableImageTypes")
-	enableImages := r.URL.Query().Get("EnableImages")
-	enableUserData := r.URL.Query().Get("EnableUserData")
-	fields := r.URL.Query().Get("Fields")
-	excludeImageTypes := r.URL.Query().Get("ExcludeImageTypes")
-	excludeLocationTypes := r.URL.Query().Get("ExcludeLocationTypes")
-	excludeIsFolder := r.URL.Query().Get("ExcludeIsFolder")
-	recursive := r.URL.Query().Get("Recursive")
-	seasonIDParam := r.URL.Query().Get("SeasonId")
-	seriesIDParam := r.URL.Query().Get("SeriesId")
-	videoTypes := r.URL.Query().Get("VideoTypes")
-	mediaTypes := r.URL.Query().Get("MediaTypes")
-	groups := r.URL.Query().Get("Groups")
-	enableUserDataParam := r.URL.Query().Get("EnableUserData")
-	enableImagesParam := r.URL.Query().Get("EnableImages")
-	enableImageTypesParam := r.URL.Query().Get("EnableImageTypes")
-	imageTypeLimitParam := r.URL.Query().Get("ImageTypeLimit")
-	fieldsParam := r.URL.Query().Get("Fields")
-	excludeImageTypesParam := r.URL.Query().Get("ExcludeImageTypes")
-	excludeLocationTypesParam := r.URL.Query().Get("ExcludeLocationTypes")
-	excludeIsFolderParam := r.URL.Query().Get("ExcludeIsFolder")
-	recursiveParam := r.URL.Query().Get("Recursive")
-	videoTypesParam := r.URL.Query().Get("VideoTypes")
-	mediaTypesParam := r.URL.Query().Get("MediaTypes")
-	groupsParam := r.URL.Query().Get("Groups")
+	if limit <= 0 || limit > 100 {
+		limit = 50
+	}
 
-	_ = ids
+	var items []map[string]interface{}
+	var totalCount int
+
+	if ids != "" {
+		item, err := h.repo.GetItem(ids)
+		if err == nil && item != nil {
+			items = []map[string]interface{}{item}
+			totalCount = 1
+		}
+	} else if h.repo != nil {
+		if searchQuery := r.URL.Query().Get("SearchTerm"); searchQuery != "" {
+			var err error
+			items, err = h.repo.SearchItems(searchQuery, limit, startIndex)
+			if err != nil {
+				items = []map[string]interface{}{}
+			}
+			totalCount = len(items)
+		} else {
+			counts, err := h.repo.GetTotalItemCounts()
+			if err == nil {
+				for _, c := range counts {
+					totalCount += c
+				}
+			}
+			items = []map[string]interface{}{}
+		}
+	} else {
+		items = []map[string]interface{}{}
+	}
+
 	_ = mediaType
 	_ = folderID
 	_ = userId
 	_ = sortBy
-	_ = sortOrder
-	_ = startIndex
-	_ = limit
-	_ = isFavorite
-	_ = isUnaired
-	_ = isNextUp
-	_ = minPremiereDate
-	_ = maxPremiereDate
-	_ = minDateCreated
-	_ = genre
-	_ = artist
-	_ = albumArtist
-	_ = albumID
-	_ = seasonID
-	_ = seriesID
-	_ = isMovie
-	_ = isSeries
-	_ = isNews
-	_ = isKids
-	_ = isSports
-	_ = isBoxSet
-	_ = person
-	_ = years
-	_ = genreIDs
-	_ = officialRatings
-	_ = enableTotalCount
-	_ = imageTypeLimit
-	_ = enableImageTypes
-	_ = enableImages
-	_ = enableUserData
-	_ = fields
-	_ = excludeImageTypes
-	_ = excludeLocationTypes
-	_ = excludeIsFolder
-	_ = recursive
-	_ = seasonIDParam
-	_ = seriesIDParam
-	_ = videoTypes
-	_ = mediaTypes
-	_ = groups
-	_ = enableUserDataParam
-	_ = enableImagesParam
-	_ = enableImageTypesParam
-	_ = imageTypeLimitParam
-	_ = fieldsParam
-	_ = excludeImageTypesParam
-	_ = excludeLocationTypesParam
-	_ = excludeIsFolderParam
-	_ = recursiveParam
-	_ = videoTypesParam
-	_ = mediaTypesParam
-	_ = groupsParam
 
-	// Return empty results for now
 	result := map[string]interface{}{
-		"Items":        []map[string]interface{}{},
-		"TotalCount":   0,
-		"StartIndex":   0,
-		"HasMoreItems": false,
+		"Items":        items,
+		"TotalCount":   totalCount,
+		"StartIndex":   startIndex,
+		"HasMoreItems": startIndex+len(items) < totalCount,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -237,41 +167,28 @@ func (h *LibraryHandler) DeleteMediaFolder(w http.ResponseWriter, r *http.Reques
 func (h *LibraryHandler) GetFolderItems(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	// Get query parameters
-	mediaType := r.URL.Query().Get("MediaType")
-	userId := r.URL.Query().Get("UserId")
-	sortBy := r.URL.Query().Get("SortBy")
-	sortOrder := r.URL.Query().Get("SortOrder")
 	startIndex, _ := strconv.Atoi(r.URL.Query().Get("StartIndex"))
 	limit, _ := strconv.Atoi(r.URL.Query().Get("Limit"))
-	isFavorite := r.URL.Query().Get("IsFavorite")
-	enableTotalCount := r.URL.Query().Get("EnableTotalItemCount")
-	enableImages := r.URL.Query().Get("EnableImages")
-	enableUserData := r.URL.Query().Get("EnableUserData")
-	fields := r.URL.Query().Get("Fields")
-	recursive := r.URL.Query().Get("Recursive")
-	mediaTypes := r.URL.Query().Get("MediaTypes")
+	if limit <= 0 || limit > 100 {
+		limit = 50
+	}
+	mediaType := r.URL.Query().Get("MediaType")
 
-	_ = mediaType
-	_ = userId
-	_ = sortBy
-	_ = sortOrder
-	_ = startIndex
-	_ = limit
-	_ = isFavorite
-	_ = enableTotalCount
-	_ = enableImages
-	_ = enableUserData
-	_ = id
-	_ = fields
-	_ = recursive
-	_ = mediaTypes
+	var items []map[string]interface{}
+	if h.repo != nil {
+		var err error
+		items, err = h.repo.GetItemsByParent(id, mediaType, limit, startIndex)
+		if err != nil {
+			items = []map[string]interface{}{}
+		}
+	} else {
+		items = []map[string]interface{}{}
+	}
 
-	// Return empty results for now
 	result := map[string]interface{}{
-		"Items":        []map[string]interface{}{},
-		"TotalCount":   0,
-		"StartIndex":   0,
+		"Items":        items,
+		"TotalCount":   len(items),
+		"StartIndex":   startIndex,
 		"HasMoreItems": false,
 	}
 
@@ -281,8 +198,14 @@ func (h *LibraryHandler) GetFolderItems(w http.ResponseWriter, r *http.Request) 
 
 // ScanLibrary handles POST /Library/Folders/FullScan
 func (h *LibraryHandler) ScanLibrary(w http.ResponseWriter, r *http.Request) {
-	// Trigger library scan
-	_ = h.scanner
+	if h.scanner == nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	go func() {
+		_, _ = h.scanner.ScanLibrary(r.Context())
+	}()
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -303,12 +226,27 @@ func (h *LibraryHandler) GetVirtualFolders(w http.ResponseWriter, r *http.Reques
 func (h *LibraryHandler) GetVirtualFolderItems(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	_ = id
+	startIndex, _ := strconv.Atoi(r.URL.Query().Get("StartIndex"))
+	limit, _ := strconv.Atoi(r.URL.Query().Get("Limit"))
+	if limit <= 0 || limit > 100 {
+		limit = 50
+	}
+
+	var items []map[string]interface{}
+	if h.repo != nil {
+		var err error
+		items, err = h.repo.GetItemsByParent(id, "", limit, startIndex)
+		if err != nil {
+			items = []map[string]interface{}{}
+		}
+	} else {
+		items = []map[string]interface{}{}
+	}
 
 	result := map[string]interface{}{
-		"Items":        []map[string]interface{}{},
-		"TotalCount":   0,
-		"StartIndex":   0,
+		"Items":        items,
+		"TotalCount":   len(items),
+		"StartIndex":   startIndex,
 		"HasMoreItems": false,
 	}
 

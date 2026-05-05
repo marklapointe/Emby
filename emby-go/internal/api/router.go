@@ -129,7 +129,7 @@ func (r *Router) RegisterRoutes(router *chi.Mux) {
 
 // registerLibraryRoutes registers library-related routes.
 func (r *Router) registerLibraryRoutes(router *chi.Mux) {
-	libHandler := handlers.NewLibraryHandler(library.NewScanner(r.config, r.logger, nil))
+	libHandler := handlers.NewLibraryHandler(library.NewScanner(r.config, r.logger, r.itemRepo), r.itemRepo)
 
 	r.registerRoute(router, http.MethodGet, "/Library/Root", libHandler.GetLibraryRoot)
 	r.registerRoute(router, http.MethodGet, "/Library/Items", libHandler.GetItems)
