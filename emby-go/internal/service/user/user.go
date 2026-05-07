@@ -171,6 +171,39 @@ func (m *Manager) GetAllUsers() []*User {
 	return users
 }
 
+// EnsureDefaultUser creates a default user if no users exist.
+// This matches the C# server behavior where at least one user must exist.
+func (m *Manager) EnsureDefaultUser() error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if len(m.users) > 0 {
+		return nil
+	}
+
+	defaultName := "MyEmbyUser"
+
+	user := &User{
+		ID:          fmt.Sprintf("user-%d", time.Now().UnixNano()),
+		Name:        defaultName,
+		Password:    "",
+		Configuration: &model.UserConfiguration{},
+		Policy: &model.UserPolicy{
+			IsAdministrator:      true,
+			EnableMediaDeletion: true,
+		},
+		CreatedDate: time.Now(),
+	}
+
+	m.users[user.ID] = user
+
+	if m.logger != nil {
+		m.logger.Info("default user created", zap.String("id", user.ID), zap.String("name", user.Name))
+	}
+
+	return nil
+}
+
 // UpdateUser updates a user's information.
 func (m *Manager) UpdateUser(id string, name, email *string, password *string) error {
 	m.mu.Lock()

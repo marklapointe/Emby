@@ -10,15 +10,31 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// LibraryHandler handles library-related API endpoints.
+type VirtualFolder struct {
+	Name          string `json:"Name"`
+	CollectionType string `json:"CollectionType"`
+	Id           string `json:"Id"`
+	ItemId       string `json:"ItemId"`
+	Locations    []string `json:"Locations"`
+	LibraryOptions struct {
+		SkipMetadataScan      bool `json:"SkipMetadataScan"`
+		EnableRealtimeMonitor bool `json:"EnableRealtimeMonitor"`
+	} `json:"LibraryOptions,omitempty"`
+}
+
 type LibraryHandler struct {
-	scanner *library.Scanner
-	repo    *repository.ItemRepository
+	scanner       *library.Scanner
+	repo          *repository.ItemRepository
+	virtualFolders []VirtualFolder
 }
 
 // NewLibraryHandler creates a new library handler.
 func NewLibraryHandler(scanner *library.Scanner, repo *repository.ItemRepository) *LibraryHandler {
-	return &LibraryHandler{scanner: scanner, repo: repo}
+	return &LibraryHandler{
+		scanner:        scanner,
+		repo:           repo,
+		virtualFolders: []VirtualFolder{},
+	}
 }
 
 // GetLibraryRoot handles GET /Library/Root
@@ -210,16 +226,173 @@ func (h *LibraryHandler) ScanLibrary(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// GetVirtualFolder handles GET /Library/VirtualFolders
+// GetVirtualFolders handles GET /Library/VirtualFolders
 func (h *LibraryHandler) GetVirtualFolders(w http.ResponseWriter, r *http.Request) {
-	folders := []map[string]interface{}{
-		{"Name": "Movies", "CollectionType": "movies", "Id": "movies"},
-		{"Name": "TV Shows", "CollectionType": "tvshows", "Id": "tvshows"},
-		{"Name": "Music", "CollectionType": "music", "Id": "music"},
+	if len(h.virtualFolders) == 0 {
+		h.virtualFolders = []VirtualFolder{
+			{Name: "Movies", CollectionType: "movies", Id: "movies", ItemId: "movies", Locations: []string{}},
+			{Name: "TV Shows", CollectionType: "tvshows", Id: "tvshows", ItemId: "tvshows", Locations: []string{}},
+			{Name: "Music", CollectionType: "music", Id: "music", ItemId: "music", Locations: []string{}},
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(folders)
+	json.NewEncoder(w).Encode(h.virtualFolders)
+}
+
+func (h *LibraryHandler) AddVirtualFolder(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("name")
+	collectionType := r.URL.Query().Get("collectionType")
+	refreshLibraryStr := r.URL.Query().Get("refreshLibrary")
+	refreshLibrary := refreshLibraryStr == "true"
+
+	var libraryOpts struct {
+		SkipMetadataScan      bool `json:"SkipMetadataScan"`
+		EnableRealtimeMonitor bool `json:"EnableRealtimeMonitor"`
+	}
+
+	var body struct {
+		LibraryOptions *struct {
+			SkipMetadataScan      bool `json:"SkipMetadataScan"`
+			EnableRealtimeMonitor bool `json:"EnableRealtimeMonitor"`
+		} `json:"LibraryOptions,omitempty"`
+	}
+
+	json.NewDecoder(r.Body).Decode(&body)
+	if body.LibraryOptions != nil {
+		libraryOpts.SkipMetadataScan = body.LibraryOptions.SkipMetadataScan
+		libraryOpts.EnableRealtimeMonitor = body.LibraryOptions.EnableRealtimeMonitor
+	}
+
+	if name == "" && collectionType == "" {
+		http.Error(w, "name or collectionType is required", http.StatusBadRequest)
+		return
+	}
+
+	id := name
+	if id == "" {
+		id = collectionType
+	}
+
+	vf := VirtualFolder{
+		Name:           name,
+		CollectionType: collectionType,
+		Id:             id,
+		ItemId:         id,
+		Locations:      []string{},
+	}
+	if libraryOpts.SkipMetadataScan || libraryOpts.EnableRealtimeMonitor {
+		vf.LibraryOptions.SkipMetadataScan = libraryOpts.SkipMetadataScan
+		vf.LibraryOptions.EnableRealtimeMonitor = libraryOpts.EnableRealtimeMonitor
+	}
+
+	h.virtualFolders = append(h.virtualFolders, vf)
+
+	if refreshLibrary && h.scanner != nil {
+		go func() {
+			h.scanner.ScanLibrary(r.Context())
+		}()
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *LibraryHandler) AddMediaPath(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Name     string `json:"Name"`
+		PathInfo struct {
+			Path         string `json:"Path"`
+			NetworkPath  string `json:"NetworkPath,omitempty"`
+		} `json:"PathInfo"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"Name": req.Name,
+		"Path": req.PathInfo.Path,
+	})
+}
+
+func (h *LibraryHandler) RenameVirtualFolder(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("name")
+	newName := r.URL.Query().Get("newName")
+
+	if name == "" || newName == "" {
+		http.Error(w, "name and newName are required", http.StatusBadRequest)
+		return
+	}
+
+	for i, vf := range h.virtualFolders {
+		if vf.Name == name {
+			h.virtualFolders[i].Name = newName
+			h.virtualFolders[i].Id = newName
+			h.virtualFolders[i].ItemId = newName
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+	}
+
+	http.Error(w, "virtual folder not found", http.StatusNotFound)
+}
+
+func (h *LibraryHandler) UpdateVirtualFolderOptions(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Id           string `json:"Id"`
+		LibraryOptions struct {
+			SkipMetadataScan bool `json:"SkipMetadataScan"`
+			EnableRealtimeMonitor bool `json:"EnableRealtimeMonitor"`
+		} `json:"LibraryOptions"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"Id": req.Id,
+	})
+}
+
+// GetAvailableOptions handles GET /Libraries/AvailableOptions
+func (h *LibraryHandler) GetAvailableOptions(w http.ResponseWriter, r *http.Request) {
+	result := map[string]interface{}{
+		"MetadataSavers":    []map[string]string{},
+		"MetadataReaders":   []map[string]string{},
+		"SubtitleFetchers": []map[string]string{},
+		"TypeOptions": []map[string]interface{}{
+			{
+				"Type":                 "movies",
+				"MetadataFetchers":     []map[string]string{},
+				"ImageFetchers":        []map[string]string{},
+				"SupportedImageTypes":   []string{"Primary", "Banner", "Logo", "Thumb", "Backdrop", "Art"},
+				"DefaultImageOptions":   []map[string]string{},
+			},
+			{
+				"Type":                 "tvshows",
+				"MetadataFetchers":     []map[string]string{},
+				"ImageFetchers":        []map[string]string{},
+				"SupportedImageTypes":   []string{"Primary", "Banner", "Logo", "Thumb", "Backdrop", "Art"},
+				"DefaultImageOptions":   []map[string]string{},
+			},
+			{
+				"Type":                 "music",
+				"MetadataFetchers":     []map[string]string{},
+				"ImageFetchers":        []map[string]string{},
+				"SupportedImageTypes":   []string{"Primary", "Banner", "Logo", "Thumb", "Backdrop", "Art"},
+				"DefaultImageOptions":   []map[string]string{},
+			},
+		},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
 }
 
 // GetVirtualFolderItems handles GET /Library/VirtualFolders/{id}/Items

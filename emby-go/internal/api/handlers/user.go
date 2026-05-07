@@ -31,7 +31,7 @@ func (h *UserHandler) GetPublicUsers(w http.ResponseWriter, r *http.Request) {
 	users := h.userMgr.GetAllUsers()
 
 	// Filter to public users only
-	var publicUsers []*user.User
+	publicUsers := []*user.User{}
 	for _, u := range users {
 		if u.Policy != nil && !u.Policy.IsHidden {
 			publicUsers = append(publicUsers, u)

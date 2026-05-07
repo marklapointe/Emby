@@ -6,22 +6,26 @@ import (
 	"net/http"
 	"runtime"
 
+	"github.com/emby/emby-go/internal/version"
 	"github.com/emby/emby-go/internal/config"
+	"github.com/emby/emby-go/internal/repository"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
 
 // SystemHandler handles system-related API endpoints.
 type SystemHandler struct {
-	config *config.Config
-	logger *zap.Logger
+	config     *config.Config
+	configRepo *repository.ConfigRepository
+	logger     *zap.Logger
 }
 
 // NewSystemHandler creates a new system handler.
-func NewSystemHandler(cfg *config.Config, logger *zap.Logger) *SystemHandler {
+func NewSystemHandler(cfg *config.Config, configRepo *repository.ConfigRepository, logger *zap.Logger) *SystemHandler {
 	return &SystemHandler{
-		config: cfg,
-		logger: logger,
+		config:     cfg,
+		configRepo: configRepo,
+		logger:     logger,
 	}
 }
 
@@ -30,14 +34,14 @@ func (h *SystemHandler) GetInfo(w http.ResponseWriter, r *http.Request) {
 	info := map[string]interface{}{
 		"Id":                    "emby-go-server-id",
 		"ProductName":           "Emby Server",
-		"Version":               "0.1.0",
+		"Version":               version.Version,
 		"OperatingSystem":       runtime.GOOS,
 		"OperatingSystemVersion": "unknown",
 		"OperatingSystemArchitecture": runtime.GOARCH,
 		"OsPackageFamily":     runtime.GOOS,
 		"CanSystemRestart":    true,
 		"WanAccess":           true,
-		"StartupWizardCompleted": true,
+		"StartupWizardCompleted": false,
 		"ConfigDir":           "data",
 		"CacheDir":            "data/cache",
 		"LogDir":              h.config.Logging.Level,
@@ -68,8 +72,8 @@ func (h *SystemHandler) GetInfo(w http.ResponseWriter, r *http.Request) {
 		"EnableHttps":         false,
 		"HttpsPort":           8920,
 		"VersionInfo": map[string]interface{}{
-			"AssemblyVersion": "0.1.0.0",
-			"FileVersion":     "0.1.0.0",
+			"AssemblyVersion": version.Version,
+			"FileVersion":     version.Version,
 		},
 	}
 
@@ -128,7 +132,7 @@ func (h *SystemHandler) GetPackageInfo(w http.ResponseWriter, r *http.Request) {
 		"Overview":        "A media server for organizing and streaming media",
 		"ProductId":       "emby-go-server",
 		"ProductName":     "Emby Server",
-		"Version":         "0.1.0",
+		"Version":         "4.8.1.0",
 		"TargetRelease":   "stable",
 			"ReleaseDate":     "2026-04-29",
 		"DownloadUrl":     "https://emby.media",
@@ -209,15 +213,22 @@ func (h *SystemHandler) GetUsage(w http.ResponseWriter, r *http.Request) {
 
 // GetPublicSystemInfo handles GET /System/Info/Public
 func (h *SystemHandler) GetPublicSystemInfo(w http.ResponseWriter, r *http.Request) {
+	wizardCompleted := false
+	if h.configRepo != nil {
+		if cfg, err := h.configRepo.GetConfig(); err == nil {
+			wizardCompleted = cfg.IsStartupWizardCompleted
+		}
+	}
+
 	info := map[string]interface{}{
 		"Id":                    "emby-go-server-id",
 		"ProductName":           "Emby Server",
-		"Version":               "0.1.0",
+		"Version":               version.Version,
 		"OperatingSystem":       runtime.GOOS,
 		"LocalAddress":         fmt.Sprintf("http://localhost:%d", h.config.Server.Port),
 		"WanAddress":           "unknown",
 		"ServerName":           "Emby Server",
-		"StartupWizardCompleted": true,
+		"StartupWizardCompleted": wizardCompleted,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

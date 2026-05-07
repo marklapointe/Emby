@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -9,20 +10,39 @@ import (
 )
 
 type StaticHandler struct {
-	fs       http.FileSystem
-	basePath string
-	version  string
+	fs                  http.FileSystem
+	basePath            string
+	version             string
+	isWizardCompleted    func() bool
 }
 
-func NewStaticHandler(basePath, version string) *StaticHandler {
+func NewStaticHandler(basePath, version string, isWizardCompleted func() bool) *StaticHandler {
 	return &StaticHandler{
-		fs:       http.Dir(basePath),
-		basePath: basePath,
-		version:  version,
+		fs:                  http.Dir(basePath),
+		basePath:            basePath,
+		version:             version,
+		isWizardCompleted:   isWizardCompleted,
 	}
 }
 
 func (h *StaticHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	urlPath := r.URL.Path
+	query := r.URL.RawQuery
+	isWizardRequest := strings.Contains(query, "wizard")
+	isAjaxRequest := h.isAjaxRequest(r)
+
+	wizardCompleted := h.isWizardCompleted()
+	isCore := h.isCoreHtml(urlPath)
+	isBower := strings.Contains(urlPath, "bower_components")
+
+	fmt.Printf("DEBUG: path=%q query=%q wizardCompleted=%v isCore=%v isAjax=%v isWizard=%v isBower=%v\n",
+		urlPath, query, wizardCompleted, isCore, isAjaxRequest, isWizardRequest, isBower)
+
+	if !wizardCompleted && !isWizardRequest && isCore && !isBower && !isAjaxRequest {
+		http.Redirect(w, r, "/web/index.html?start=wizard#!/wizardstart.html", 302)
+		return
+	}
+
 	f, err := h.fs.Open(r.URL.Path)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -95,6 +115,32 @@ func (h *StaticHandler) modifyHTML(filePath string, html string) string {
 	}
 
 	return html
+}
+
+func (h *StaticHandler) isCoreHtml(path string) bool {
+	corePages := []string{"index.html", "dashboard.html", "login.html", "home.html"}
+	path = strings.ToLower(path)
+	if path == "" {
+		path = "/"
+	}
+	for _, page := range corePages {
+		if strings.HasSuffix(path, page) || path == "/" || path == "/web" || strings.HasPrefix(path, "/web/") {
+			return true
+		}
+	}
+	return false
+}
+
+func (h *StaticHandler) isAjaxRequest(r *http.Request) bool {
+	xhr := r.Header.Get("X-Requested-With")
+	if xhr == "XMLHttpRequest" {
+		return true
+	}
+	accept := r.Header.Get("Accept")
+	if accept != "" && strings.Contains(accept, "application/json") {
+		return true
+	}
+	return false
 }
 
 func mimeType(ext string) string {

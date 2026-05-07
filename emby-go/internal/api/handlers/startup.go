@@ -2,8 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
 
+	"github.com/emby/emby-go/internal/version"
 	"github.com/emby/emby-go/internal/model"
 	"github.com/emby/emby-go/internal/repository"
 	"go.uber.org/zap"
@@ -115,11 +118,28 @@ func (h *StartupHandler) GetStartupConfig(w http.ResponseWriter, r *http.Request
 // PostStartupConfig handles POST /Startup/Configuration
 // Updates the startup configuration
 func (h *StartupHandler) PostStartupConfig(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("DEBUG PostStartupConfig: method=%s contentType=%s\n", r.Method, r.Header.Get("Content-Type"))
+
 	var req model.StartupConfiguration
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.logger.Warn("failed to decode request", zap.Error(err))
-		http.Error(w, "invalid request body", http.StatusBadRequest)
-		return
+
+	contentType := r.Header.Get("Content-Type")
+	if strings.Contains(contentType, "application/json") {
+		fmt.Println("DEBUG: handling as JSON")
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			h.logger.Warn("failed to decode json request", zap.Error(err))
+			http.Error(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+	} else {
+		fmt.Println("DEBUG: handling as form")
+		if err := r.ParseForm(); err != nil {
+			h.logger.Warn("failed to parse form request", zap.Error(err))
+			http.Error(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+		req.UICulture = r.Form.Get("UICulture")
+		req.MetadataCountryCode = r.Form.Get("MetadataCountryCode")
+		req.PreferredMetadataLanguage = r.Form.Get("PreferredMetadataLanguage")
 	}
 
 	config, err := h.configRepo.GetConfig()
@@ -179,10 +199,22 @@ func (h *StartupHandler) GetStartupUser(w http.ResponseWriter, r *http.Request) 
 // Creates or updates the initial user during wizard
 func (h *StartupHandler) PostUser(w http.ResponseWriter, r *http.Request) {
 	var req model.StartupUser
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.logger.Warn("failed to decode request", zap.Error(err))
-		http.Error(w, "invalid request body", http.StatusBadRequest)
-		return
+
+	contentType := r.Header.Get("Content-Type")
+	if strings.Contains(contentType, "application/json") {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			h.logger.Warn("failed to decode json request", zap.Error(err))
+			http.Error(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+	} else {
+		if err := r.ParseForm(); err != nil {
+			h.logger.Warn("failed to parse form request", zap.Error(err))
+			http.Error(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+		req.Name = r.Form.Get("Name")
+		req.ConnectUserName = r.Form.Get("ConnectUserName")
 	}
 
 	users, err := h.userRepo.GetAllUsers()
@@ -326,7 +358,7 @@ func (h *StartupHandler) GetStartupDashboardInfo(w http.ResponseWriter, r *http.
 
 	info := map[string]interface{}{
 		"ServerName":                    config.ServerName,
-		"Version":                       "0.1.0",
+		"Version":                       version.Version,
 		"OperatingSystem":                "Linux",
 		"OperatingSystemVersion":         "unknown",
 		"OperatingSystemArchitecture":    "x64",
@@ -351,7 +383,7 @@ func (h *StartupHandler) GetSystemInfoPublic(w http.ResponseWriter, r *http.Requ
 
 	info := map[string]interface{}{
 		"ServerName":        config.ServerName,
-		"Version":           "0.1.0",
+		"Version":           version.Version,
 		"OperatingSystem":   "Linux",
 		"Id":                "emby-go-server-id",
 		"LocalAddress":      "http://localhost:8096",

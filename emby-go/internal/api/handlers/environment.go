@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+
+	"github.com/emby/emby-go/internal/version"
 )
 
 // EnvironmentHandler handles environment-related API endpoints.
@@ -41,6 +43,13 @@ func (h *EnvironmentHandler) GetDrives(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(drives)
 }
 
+// GetDefaultDirectoryBrowser handles GET /Environment/DefaultDirectoryBrowser
+func (h *EnvironmentHandler) GetDefaultDirectoryBrowser(w http.ResponseWriter, r *http.Request) {
+	path := map[string]string{"path": "/"}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(path)
+}
+
 // GetNetworkShares handles GET /Environment/NetworkShares
 func (h *EnvironmentHandler) GetNetworkShares(w http.ResponseWriter, r *http.Request) {
 	shares := []map[string]interface{}{}
@@ -65,6 +74,32 @@ func (h *EnvironmentHandler) GetParentPath(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(map[string]string{"path": parent})
 }
 
+// GetDirectoryContents handles GET /Environment/DirectoryContents
+func (h *EnvironmentHandler) GetDirectoryContents(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Query().Get("path")
+	if path == "" {
+		path = "/"
+	}
+
+	entries := []map[string]interface{}{}
+
+	if dirEntries, err := os.ReadDir(path); err == nil {
+		for _, entry := range dirEntries {
+			entries = append(entries, map[string]interface{}{
+				"Name":         entry.Name(),
+				"Path":         path + "/" + entry.Name(),
+				"IsDirectory":  entry.IsDir(),
+				"Size":        0,
+				"DateCreated": nil,
+				"DateModified": nil,
+			})
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(entries)
+}
+
 // GetEnvironmentInfo handles GET /Environment
 func (h *EnvironmentHandler) GetEnvironmentInfo(w http.ResponseWriter, r *http.Request) {
 	info := map[string]interface{}{
@@ -80,7 +115,7 @@ func (h *EnvironmentHandler) GetEnvironmentInfo(w http.ResponseWriter, r *http.R
 		"LocalAddress":              "http://localhost:8092",
 		"PublicAddress":            "http://localhost:8092",
 		"ServerName":               "Emby Server",
-		"Version":                  "0.1.0",
+		"Version":                  version.Version,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -171,6 +206,27 @@ func (h *EnvironmentHandler) GetEnvironmentDiskInfo(w http.ResponseWriter, r *ht
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(diskInfo)
+}
+
+func (h *EnvironmentHandler) ValidatePath(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Query().Get("Path")
+	if path == "" {
+		path = r.FormValue("Path")
+	}
+	if path == "" {
+		http.Error(w, "Invalid path", http.StatusBadRequest)
+		return
+	}
+
+	_, err := os.Stat(path)
+	valid := err == nil
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"Path":   path,
+		"Valid":  valid,
+		"Error":  "",
+	})
 }
 
 // isSensitive checks if an environment variable is sensitive.

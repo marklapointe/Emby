@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/emby/emby-go/internal/version"
 	"github.com/emby/emby-go/internal/api"
 	"github.com/emby/emby-go/internal/api/middleware"
 	"github.com/emby/emby-go/internal/config"
@@ -39,7 +40,7 @@ func main() {
 	defer logger.Sync()
 
 	logger.Info("Emby Server Go starting",
-		zap.String("version", "0.1.0"),
+		zap.String("version", version.Version),
 		zap.String("host", cfg.Server.Host),
 		zap.Int("port", cfg.Server.Port),
 	)
@@ -63,12 +64,13 @@ func main() {
 	httpServer := server.NewHTTPServer(cfg, logger)
 
 	// Add middleware to the HTTP server's chi router
+	httpServer.Router().Use(middleware.PathNormalizationMiddleware())
 	httpServer.Router().Use(cmid.RequestID)
 	httpServer.Router().Use(cmid.RealIP)
 	httpServer.Router().Use(cmid.Recoverer)
 	httpServer.Router().Use(cmid.Timeout(60 * time.Second))
 	httpServer.Router().Use(cmid.Logger)
-	httpServer.Router().Use(cmid.AllowContentType("application/json"))
+	httpServer.Router().Use(cmid.AllowContentType("application/json", "application/x-www-form-urlencoded"))
 	httpServer.Router().Use(middleware.CORSMiddleware())
 	httpServer.Router().Use(middleware.RequestLogger(logger))
 

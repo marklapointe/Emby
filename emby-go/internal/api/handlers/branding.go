@@ -120,3 +120,16 @@ body {
 	w.Header().Set("Content-Type", "text/css")
 	w.Write([]byte(css))
 }
+
+// GetConfiguration handles GET /branding/configuration
+func (h *BrandingHandler) GetConfiguration(w http.ResponseWriter, r *http.Request) {
+	config := map[string]interface{}{
+		"EnableBranding": true,
+		"CustomCss":      "",
+		"Skin":           "default",
+		"SkinColor":      "#0078d7",
+		"SkinBackground": "#1a1a1a",
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(config)
+}

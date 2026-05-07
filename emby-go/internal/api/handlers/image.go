@@ -19,6 +19,14 @@ func NewImageHandler(imageMgr *image.Manager) *ImageHandler {
 	return &ImageHandler{imageMgr: imageMgr}
 }
 
+// GetItemImageInfos handles GET /Items/{id}/Images
+func (h *ImageHandler) GetItemImageInfos(w http.ResponseWriter, r *http.Request) {
+	_ = chi.URLParam(r, "id")
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode([]map[string]interface{}{})
+}
+
 // GetItemImage handles GET /Items/{id}/Images/{type}
 func (h *ImageHandler) GetItemImage(w http.ResponseWriter, r *http.Request) {
 	itemID := chi.URLParam(r, "id")
@@ -142,4 +150,11 @@ func (h *ImageHandler) GetItemImageRotation(w http.ResponseWriter, r *http.Reque
 
 	w.Header().Set("Content-Type", contentType)
 	w.Write(img)
+}
+
+func (h *ImageHandler) GetRemoteImageProviders(w http.ResponseWriter, r *http.Request) {
+	_ = chi.URLParam(r, "id")
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode([]map[string]interface{}{})
 }

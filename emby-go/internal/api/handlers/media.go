@@ -23,13 +23,46 @@ func (h *MediaHandler) GetItem(w http.ResponseWriter, r *http.Request) {
 	itemID := chi.URLParam(r, "id")
 
 	mediaInfo, err := h.mediaMgr.GetMediaInfo(itemID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+	if err == nil {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(mediaInfo)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(mediaInfo)
+	virtualFolders := map[string]map[string]interface{}{
+		"movies": {
+			"Id":           "movies",
+			"Name":         "Movies",
+			"Type":         "CollectionFolder",
+			"CollectionType": "movies",
+			"ImageTags":    map[string]string{},
+			"UserData":    map[string]interface{}{},
+		},
+		"tvshows": {
+			"Id":           "tvshows",
+			"Name":         "TV Shows",
+			"Type":         "CollectionFolder",
+			"CollectionType": "tvshows",
+			"ImageTags":    map[string]string{},
+			"UserData":    map[string]interface{}{},
+		},
+		"music": {
+			"Id":           "music",
+			"Name":         "Music",
+			"Type":         "CollectionFolder",
+			"CollectionType": "music",
+			"ImageTags":    map[string]string{},
+			"UserData":    map[string]interface{}{},
+		},
+	}
+
+	if vf, ok := virtualFolders[itemID]; ok {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(vf)
+		return
+	}
+
+	http.Error(w, "Item not found", http.StatusNotFound)
 }
 
 // GetStream handles GET /Items/{id}/Stream

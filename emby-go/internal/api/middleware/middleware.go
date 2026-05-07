@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5/middleware"
@@ -146,6 +147,21 @@ func SecurityMiddleware() func(http.Handler) http.Handler {
 			w.Header().Set("Pragma", "no-cache")
 			w.Header().Set("Expires", "0")
 
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// PathNormalizationMiddleware normalizes URL paths for case-insensitive matching.
+func PathNormalizationMiddleware() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if len(r.URL.Path) >= 6 && strings.HasPrefix(r.URL.Path, "/emby") {
+				lower := strings.ToLower(r.URL.Path)
+				if lower != r.URL.Path {
+					r.URL.Path = lower
+				}
+			}
 			next.ServeHTTP(w, r)
 		})
 	}

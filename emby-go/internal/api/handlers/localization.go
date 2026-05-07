@@ -37,13 +37,192 @@ func (h *LocalizationHandler) GetLocalization(w http.ResponseWriter, r *http.Req
 	json.NewEncoder(w).Encode(localization)
 }
 
-// GetOptions handles GET /Localization/Options
+func (h *LocalizationHandler) GetCultures(w http.ResponseWriter, r *http.Request) {
+	cultures := []map[string]interface{}{
+		{"DisplayName": "English", "TwoLetterISOLanguageName": "en", "ThreeLetterISOLanguageName": "eng", "NativeName": "English"},
+		{"DisplayName": "Arabic", "TwoLetterISOLanguageName": "ar", "ThreeLetterISOLanguageName": "ara", "NativeName": "العربية"},
+		{"DisplayName": "Belarusian", "TwoLetterISOLanguageName": "be", "ThreeLetterISOLanguageName": "bel", "NativeName": "Беларуская"},
+		{"DisplayName": "Bulgarian", "TwoLetterISOLanguageName": "bg", "ThreeLetterISOLanguageName": "bul", "NativeName": "Български"},
+		{"DisplayName": "Catalan", "TwoLetterISOLanguageName": "ca", "ThreeLetterISOLanguageName": "cat", "NativeName": "Català"},
+		{"DisplayName": "Chinese (Simplified)", "TwoLetterISOLanguageName": "zh-CN", "ThreeLetterISOLanguageName": "zho", "NativeName": "简体中文"},
+		{"DisplayName": "Chinese (Traditional)", "TwoLetterISOLanguageName": "zh-TW", "ThreeLetterISOLanguageName": "zho", "NativeName": "繁體中文"},
+		{"DisplayName": "Czech", "TwoLetterISOLanguageName": "cs", "ThreeLetterISOLanguageName": "ces", "NativeName": "Čeština"},
+		{"DisplayName": "Danish", "TwoLetterISOLanguageName": "da", "ThreeLetterISOLanguageName": "dan", "NativeName": "Dansk"},
+		{"DisplayName": "Dutch", "TwoLetterISOLanguageName": "nl", "ThreeLetterISOLanguageName": "nld", "NativeName": "Nederlands"},
+		{"DisplayName": "Finnish", "TwoLetterISOLanguageName": "fi", "ThreeLetterISOLanguageName": "fin", "NativeName": "Suomi"},
+		{"DisplayName": "French", "TwoLetterISOLanguageName": "fr", "ThreeLetterISOLanguageName": "fra", "NativeName": "Français"},
+		{"DisplayName": "German", "TwoLetterISOLanguageName": "de", "ThreeLetterISOLanguageName": "deu", "NativeName": "Deutsch"},
+		{"DisplayName": "Greek", "TwoLetterISOLanguageName": "el", "ThreeLetterISOLanguageName": "ell", "NativeName": "Ελληνικά"},
+		{"DisplayName": "Hebrew", "TwoLetterISOLanguageName": "he", "ThreeLetterISOLanguageName": "heb", "NativeName": "עברית"},
+		{"DisplayName": "Hindi", "TwoLetterISOLanguageName": "hi", "ThreeLetterISOLanguageName": "hin", "NativeName": "हिन्दी"},
+		{"DisplayName": "Hungarian", "TwoLetterISOLanguageName": "hu", "ThreeLetterISOLanguageName": "hun", "NativeName": "Magyar"},
+		{"DisplayName": "Indonesian", "TwoLetterISOLanguageName": "id", "ThreeLetterISOLanguageName": "ind", "NativeName": "Bahasa Indonesia"},
+		{"DisplayName": "Italian", "TwoLetterISOLanguageName": "it", "ThreeLetterISOLanguageName": "ita", "NativeName": "Italiano"},
+		{"DisplayName": "Japanese", "TwoLetterISOLanguageName": "ja", "ThreeLetterISOLanguageName": "jpn", "NativeName": "日本語"},
+		{"DisplayName": "Korean", "TwoLetterISOLanguageName": "ko", "ThreeLetterISOLanguageName": "kor", "NativeName": "한국어"},
+		{"DisplayName": "Norwegian", "TwoLetterISOLanguageName": "nb", "ThreeLetterISOLanguageName": "nor", "NativeName": "Norsk"},
+		{"DisplayName": "Polish", "TwoLetterISOLanguageName": "pl", "ThreeLetterISOLanguageName": "pol", "NativeName": "Polski"},
+		{"DisplayName": "Portuguese (Brazil)", "TwoLetterISOLanguageName": "pt-BR", "ThreeLetterISOLanguageName": "por", "NativeName": "Português (Brasil)"},
+		{"DisplayName": "Portuguese (Portugal)", "TwoLetterISOLanguageName": "pt-PT", "ThreeLetterISOLanguageName": "por", "NativeName": "Português"},
+		{"DisplayName": "Romanian", "TwoLetterISOLanguageName": "ro", "ThreeLetterISOLanguageName": "ron", "NativeName": "Română"},
+		{"DisplayName": "Russian", "TwoLetterISOLanguageName": "ru", "ThreeLetterISOLanguageName": "rus", "NativeName": "Русский"},
+		{"DisplayName": "Slovak", "TwoLetterISOLanguageName": "sk", "ThreeLetterISOLanguageName": "slk", "NativeName": "Slovenčina"},
+		{"DisplayName": "Spanish", "TwoLetterISOLanguageName": "es", "ThreeLetterISOLanguageName": "spa", "NativeName": "Español"},
+		{"DisplayName": "Swedish", "TwoLetterISOLanguageName": "sv", "ThreeLetterISOLanguageName": "swe", "NativeName": "Svenska"},
+		{"DisplayName": "Thai", "TwoLetterISOLanguageName": "th", "ThreeLetterISOLanguageName": "tha", "NativeName": "ไทย"},
+		{"DisplayName": "Turkish", "TwoLetterISOLanguageName": "tr", "ThreeLetterISOLanguageName": "tur", "NativeName": "Türkçe"},
+		{"DisplayName": "Ukrainian", "TwoLetterISOLanguageName": "uk", "ThreeLetterISOLanguageName": "ukr", "NativeName": "Українська"},
+		{"DisplayName": "Vietnamese", "TwoLetterISOLanguageName": "vi", "ThreeLetterISOLanguageName": "vie", "NativeName": "Tiếng Việt"},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(cultures)
+}
+
+func (h *LocalizationHandler) GetCountries(w http.ResponseWriter, r *http.Request) {
+	countries := []map[string]interface{}{
+		{"DisplayName": "Afghanistan", "TwoLetterISORegionName": "AF", "ThreeLetterISORegionName": "AFG"},
+		{"DisplayName": "Albania", "TwoLetterISORegionName": "AL", "ThreeLetterISORegionName": "ALB"},
+		{"DisplayName": "Algeria", "TwoLetterISORegionName": "DZ", "ThreeLetterISORegionName": "DZA"},
+		{"DisplayName": "Argentina", "TwoLetterISORegionName": "AR", "ThreeLetterISORegionName": "ARG"},
+		{"DisplayName": "Australia", "TwoLetterISORegionName": "AU", "ThreeLetterISORegionName": "AUS"},
+		{"DisplayName": "Austria", "TwoLetterISORegionName": "AT", "ThreeLetterISORegionName": "AUT"},
+		{"DisplayName": "Bangladesh", "TwoLetterISORegionName": "BD", "ThreeLetterISORegionName": "BGD"},
+		{"DisplayName": "Belgium", "TwoLetterISORegionName": "BE", "ThreeLetterISORegionName": "BEL"},
+		{"DisplayName": "Brazil", "TwoLetterISORegionName": "BR", "ThreeLetterISORegionName": "BRA"},
+		{"DisplayName": "Canada", "TwoLetterISORegionName": "CA", "ThreeLetterISORegionName": "CAN"},
+		{"DisplayName": "Chile", "TwoLetterISORegionName": "CL", "ThreeLetterISORegionName": "CHL"},
+		{"DisplayName": "China", "TwoLetterISORegionName": "CN", "ThreeLetterISORegionName": "CHN"},
+		{"DisplayName": "Colombia", "TwoLetterISORegionName": "CO", "ThreeLetterISORegionName": "COL"},
+		{"DisplayName": "Croatia", "TwoLetterISORegionName": "HR", "ThreeLetterISORegionName": "HRV"},
+		{"DisplayName": "Czech Republic", "TwoLetterISORegionName": "CZ", "ThreeLetterISORegionName": "CZE"},
+		{"DisplayName": "Denmark", "TwoLetterISORegionName": "DK", "ThreeLetterISORegionName": "DNK"},
+		{"DisplayName": "Egypt", "TwoLetterISORegionName": "EG", "ThreeLetterISORegionName": "EGY"},
+		{"DisplayName": "Finland", "TwoLetterISORegionName": "FI", "ThreeLetterISORegionName": "FIN"},
+		{"DisplayName": "France", "TwoLetterISORegionName": "FR", "ThreeLetterISORegionName": "FRA"},
+		{"DisplayName": "Germany", "TwoLetterISORegionName": "DE", "ThreeLetterISORegionName": "DEU"},
+		{"DisplayName": "Greece", "TwoLetterISORegionName": "GR", "ThreeLetterISORegionName": "GRC"},
+		{"DisplayName": "Hong Kong", "TwoLetterISORegionName": "HK", "ThreeLetterISORegionName": "HKG"},
+		{"DisplayName": "Hungary", "TwoLetterISORegionName": "HU", "ThreeLetterISORegionName": "HUN"},
+		{"DisplayName": "India", "TwoLetterISORegionName": "IN", "ThreeLetterISORegionName": "IND"},
+		{"DisplayName": "Indonesia", "TwoLetterISORegionName": "ID", "ThreeLetterISORegionName": "IDN"},
+		{"DisplayName": "Ireland", "TwoLetterISORegionName": "IE", "ThreeLetterISORegionName": "IRL"},
+		{"DisplayName": "Israel", "TwoLetterISORegionName": "IL", "ThreeLetterISORegionName": "ISR"},
+		{"DisplayName": "Italy", "TwoLetterISORegionName": "IT", "ThreeLetterISORegionName": "ITA"},
+		{"DisplayName": "Japan", "TwoLetterISORegionName": "JP", "ThreeLetterISORegionName": "JPN"},
+		{"DisplayName": "Malaysia", "TwoLetterISORegionName": "MY", "ThreeLetterISORegionName": "MYS"},
+		{"DisplayName": "Mexico", "TwoLetterISORegionName": "MX", "ThreeLetterISORegionName": "MEX"},
+		{"DisplayName": "Netherlands", "TwoLetterISORegionName": "NL", "ThreeLetterISORegionName": "NLD"},
+		{"DisplayName": "New Zealand", "TwoLetterISORegionName": "NZ", "ThreeLetterISORegionName": "NZL"},
+		{"DisplayName": "Nigeria", "TwoLetterISORegionName": "NG", "ThreeLetterISORegionName": "NGA"},
+		{"DisplayName": "Norway", "TwoLetterISORegionName": "NO", "ThreeLetterISORegionName": "NOR"},
+		{"DisplayName": "Pakistan", "TwoLetterISORegionName": "PK", "ThreeLetterISORegionName": "PAK"},
+		{"DisplayName": "Philippines", "TwoLetterISORegionName": "PH", "ThreeLetterISORegionName": "PHL"},
+		{"DisplayName": "Poland", "TwoLetterISORegionName": "PL", "ThreeLetterISORegionName": "POL"},
+		{"DisplayName": "Portugal", "TwoLetterISORegionName": "PT", "ThreeLetterISORegionName": "PRT"},
+		{"DisplayName": "Romania", "TwoLetterISORegionName": "RO", "ThreeLetterISORegionName": "ROU"},
+		{"DisplayName": "Russia", "TwoLetterISORegionName": "RU", "ThreeLetterISORegionName": "RUS"},
+		{"DisplayName": "Saudi Arabia", "TwoLetterISORegionName": "SA", "ThreeLetterISORegionName": "SAU"},
+		{"DisplayName": "Singapore", "TwoLetterISORegionName": "SG", "ThreeLetterISORegionName": "SGP"},
+		{"DisplayName": "Slovakia", "TwoLetterISORegionName": "SK", "ThreeLetterISORegionName": "SVK"},
+		{"DisplayName": "South Africa", "TwoLetterISORegionName": "ZA", "ThreeLetterISORegionName": "ZAF"},
+		{"DisplayName": "South Korea", "TwoLetterISORegionName": "KR", "ThreeLetterISORegionName": "KOR"},
+		{"DisplayName": "Spain", "TwoLetterISORegionName": "ES", "ThreeLetterISORegionName": "ESP"},
+		{"DisplayName": "Sweden", "TwoLetterISORegionName": "SE", "ThreeLetterISORegionName": "SWE"},
+		{"DisplayName": "Switzerland", "TwoLetterISORegionName": "CH", "ThreeLetterISORegionName": "CHE"},
+		{"DisplayName": "Taiwan", "TwoLetterISORegionName": "TW", "ThreeLetterISORegionName": "TWN"},
+		{"DisplayName": "Thailand", "TwoLetterISORegionName": "TH", "ThreeLetterISORegionName": "THA"},
+		{"DisplayName": "Turkey", "TwoLetterISORegionName": "TR", "ThreeLetterISORegionName": "TUR"},
+		{"DisplayName": "Ukraine", "TwoLetterISORegionName": "UA", "ThreeLetterISORegionName": "UKR"},
+		{"DisplayName": "United Arab Emirates", "TwoLetterISORegionName": "AE", "ThreeLetterISORegionName": "ARE"},
+		{"DisplayName": "United Kingdom", "TwoLetterISORegionName": "GB", "ThreeLetterISORegionName": "GBR"},
+		{"DisplayName": "United States", "TwoLetterISORegionName": "US", "ThreeLetterISORegionName": "USA"},
+		{"DisplayName": "Vietnam", "TwoLetterISORegionName": "VN", "ThreeLetterISORegionName": "VNM"},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(countries)
+}
+
+func (h *LocalizationHandler) GetParentalRatings(w http.ResponseWriter, r *http.Request) {
+	ratings := []map[string]interface{}{
+		{"Name": "Australia", "Categories": []map[string]interface{}{
+			{"Name": "G", "MaxLevel": 1, "Name2": "G"},
+			{"Name": "PG", "MaxLevel": 2, "Name2": "Parental Guidance"},
+			{"Name": "M", "MaxLevel": 3, "Name2": "M"},
+			{"Name": "MA15+", "MaxLevel": 4, "Name2": "MA15+"},
+			{"Name": "R18+", "MaxLevel": 5, "Name2": "R18+"},
+		}},
+		{"Name": "Canada", "Categories": []map[string]interface{}{
+			{"Name": "G", "MaxLevel": 1, "Name2": "General"},
+			{"Name": "PG", "MaxLevel": 2, "Name2": "Parental Guidance"},
+			{"Name": "14+", "MaxLevel": 3, "Name2": "14+"},
+			{"Name": "18+", "MaxLevel": 4, "Name2": "18+"},
+			{"Name": "R", "MaxLevel": 5, "Name2": "Restricted"},
+		}},
+		{"Name": "Germany", "Categories": []map[string]interface{}{
+			{"Name": "FSK 0", "MaxLevel": 1, "Name2": "Freigegeben ohne Altersbeschränkung"},
+			{"Name": "FSK 6", "MaxLevel": 2, "Name2": "Freigegeben ab 6 Jahren"},
+			{"Name": "FSK 12", "MaxLevel": 3, "Name2": "Freigegeben ab 12 Jahren"},
+			{"Name": "FSK 16", "MaxLevel": 4, "Name2": "Freigegeben ab 16 Jahren"},
+			{"Name": "FSK 18", "MaxLevel": 5, "Name2": "Keine Freigabe unter 18 Jahren"},
+		}},
+		{"Name": "United Kingdom", "Categories": []map[string]interface{}{
+			{"Name": "U", "MaxLevel": 1, "Name2": "Universal"},
+			{"Name": "PG", "MaxLevel": 2, "Name2": "Parental Guidance"},
+			{"Name": "12A", "MaxLevel": 3, "Name2": "12A"},
+			{"Name": "15", "MaxLevel": 4, "Name2": "15"},
+			{"Name": "18", "MaxLevel": 5, "Name2": "18"},
+		}},
+		{"Name": "United States", "Categories": []map[string]interface{}{
+			{"Name": "G", "MaxLevel": 1, "Name2": "General Audiences"},
+			{"Name": "PG", "MaxLevel": 2, "Name2": "Parental Guidance Suggested"},
+			{"Name": "PG-13", "MaxLevel": 3, "Name2": "Parents Strongly Cautioned"},
+			{"Name": "R", "MaxLevel": 4, "Name2": "Restricted"},
+			{"Name": "NC-17", "MaxLevel": 5, "Name2": "No One 17 and Under Admitted"},
+		}},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(ratings)
+}
+
 func (h *LocalizationHandler) GetOptions(w http.ResponseWriter, r *http.Request) {
 	options := []map[string]interface{}{
-		{"Name": "English", "Value": "en-US"},
-		{"Name": "German", "Value": "de-DE"},
-		{"Name": "French", "Value": "fr-FR"},
-		{"Name": "Spanish", "Value": "es-ES"},
+		{"Name": "English", "Value": "en"},
+		{"Name": "Arabic", "Value": "ar"},
+		{"Name": "Belarusian", "Value": "be-BY"},
+		{"Name": "Bulgarian", "Value": "bg-BG"},
+		{"Name": "Catalan", "Value": "ca"},
+		{"Name": "Chinese (Simplified)", "Value": "zh-CN"},
+		{"Name": "Chinese (Traditional)", "Value": "zh-TW"},
+		{"Name": "Czech", "Value": "cs"},
+		{"Name": "Danish", "Value": "da"},
+		{"Name": "Dutch", "Value": "nl"},
+		{"Name": "Finnish", "Value": "fi"},
+		{"Name": "French", "Value": "fr"},
+		{"Name": "German", "Value": "de"},
+		{"Name": "Greek", "Value": "el"},
+		{"Name": "Hebrew", "Value": "he"},
+		{"Name": "Hindi", "Value": "hi-IN"},
+		{"Name": "Hungarian", "Value": "hu"},
+		{"Name": "Indonesian", "Value": "id"},
+		{"Name": "Italian", "Value": "it"},
+		{"Name": "Japanese", "Value": "ja"},
+		{"Name": "Korean", "Value": "ko"},
+		{"Name": "Norwegian", "Value": "nb"},
+		{"Name": "Polish", "Value": "pl"},
+		{"Name": "Portuguese (Brazil)", "Value": "pt-BR"},
+		{"Name": "Portuguese (Portugal)", "Value": "pt-PT"},
+		{"Name": "Romanian", "Value": "ro"},
+		{"Name": "Russian", "Value": "ru"},
+		{"Name": "Slovak", "Value": "sk"},
+		{"Name": "Spanish", "Value": "es"},
+		{"Name": "Swedish", "Value": "sv"},
+		{"Name": "Thai", "Value": "th"},
+		{"Name": "Turkish", "Value": "tr"},
+		{"Name": "Ukrainian", "Value": "uk"},
+		{"Name": "Vietnamese", "Value": "vi"},
 	}
 
 	w.Header().Set("Content-Type", "application/json")
