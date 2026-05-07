@@ -36,7 +36,7 @@ func (h *GamesHandler) GetGame(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	item, err := h.repo.GetItem(id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Game not found", http.StatusNotFound)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

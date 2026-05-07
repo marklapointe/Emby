@@ -42,7 +42,7 @@ func (h *ChannelHandler) GetChannel(w http.ResponseWriter, r *http.Request) {
 
 	channel, err := h.repo.GetChannel(channelId)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Channel not found", http.StatusNotFound)
 		return
 	}
 

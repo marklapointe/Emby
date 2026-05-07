@@ -42,7 +42,7 @@ func (h *PlaylistHandler) GetPlaylist(w http.ResponseWriter, r *http.Request) {
 
 	playlist, err := h.repo.GetPlaylist(playlistId)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Playlist not found", http.StatusNotFound)
 		return
 	}
 

@@ -115,6 +115,27 @@ func (r *Router) RegisterRoutes(router *chi.Mux) {
 	r.registerCollectionRoutes(embyRouter)
 	r.registerAuthRoutes(embyRouter)
 
+	// Add missing routes
+	// /emby redirects to /emby/web/
+	embyRouter.Get("/emby", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/emby/web/", http.StatusFound)
+	})
+	embyRouter.Get("/emby/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/emby/web/", http.StatusFound)
+	})
+	// /emby/health returns server health info
+	embyRouter.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"Status":"Healthy","Version":"4.8.1.0"}`))
+	})
+	// /emby/web redirects to /web/
+	embyRouter.Get("/web", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/web/", http.StatusFound)
+	})
+	embyRouter.Get("/web/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/web/", http.StatusFound)
+	})
+
 	router.Mount("/emby", embyRouter)
 
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {

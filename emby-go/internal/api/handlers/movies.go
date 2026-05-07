@@ -43,7 +43,7 @@ func (h *MoviesHandler) GetMovie(w http.ResponseWriter, r *http.Request) {
 
 	item, err := h.repo.GetItem(id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Item not found", http.StatusNotFound)
 		return
 	}
 
