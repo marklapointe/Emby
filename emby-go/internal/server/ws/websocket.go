@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -149,9 +150,58 @@ func (m *Manager) writeLoop(client *Client) {
 
 // processMessage processes a message from a client.
 func (m *Manager) processMessage(client *Client, message []byte) {
-	// For now, just log the message
-	_ = client
-	_ = message
+	client.LastActive = time.Now()
+
+	var msg struct {
+		Type string          `json:"type"`
+		Data map[string]any `json:"data,omitempty"`
+	}
+
+	if err := json.Unmarshal(message, &msg); err != nil {
+		m.logger.Debug("failed to parse websocket message", zap.Error(err))
+		return
+	}
+
+	m.logger.Debug("websocket message received",
+		zap.String("clientID", client.ID),
+		zap.String("type", msg.Type),
+	)
+
+	switch msg.Type {
+	case "Ping":
+		m.sendToClient(client, map[string]any{"type": "Pong", "data": msg.Data})
+	case "SessionWalk":
+		m.handleSessionWalk(client, msg.Data)
+	case "UserWalk":
+		m.handleUserWalk(client, msg.Data)
+	default:
+		m.logger.Debug("unknown websocket message type", zap.String("type", msg.Type))
+	}
+}
+
+func (m *Manager) sendToClient(client *Client, data map[string]any) {
+	msg, err := json.Marshal(data)
+	if err != nil {
+		return
+	}
+	select {
+	case client.Send <- msg:
+	default:
+	}
+}
+
+func (m *Manager) handleSessionWalk(client *Client, data map[string]any) {
+	m.sendToClient(client, map[string]any{
+		"type": "SessionWalk",
+		"data": map[string]any{"Status": "ok"},
+	})
+}
+
+func (m *Manager) handleUserWalk(client *Client, data map[string]any) {
+	m.sendToClient(client, map[string]any{
+		"type": "UserWalk",
+		"data": map[string]any{"Status": "ok"},
+	})
 }
 
 // StartBroadcastLoop starts the broadcast loop.

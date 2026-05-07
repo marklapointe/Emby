@@ -322,6 +322,68 @@ func (r *ItemRepository) GetItem(id string) (map[string]interface{}, error) {
 	return item, nil
 }
 
+// GetAllItems returns all media items from the database.
+func (r *ItemRepository) GetAllItems() ([]map[string]interface{}, error) {
+	sqlQuery := `
+		SELECT Id, Name, ContentType, MediaType, Path,
+		       ProductionYear, CommunityRating, IsMovie, IsSeries
+		FROM Items
+		ORDER BY Name
+	`
+
+	rows, err := r.Query(sqlQuery)
+	if err != nil {
+		return nil, fmt.Errorf("query items: %w", err)
+	}
+	defer rows.Close()
+
+	var items []map[string]interface{}
+	for rows.Next() {
+		var idVal, nameVal string
+		var contentType, mediaType, path sql.NullString
+		var productionYear sql.NullInt64
+		var communityRating sql.NullFloat64
+		var isMovie, isSeries sql.NullInt64
+
+		err := rows.Scan(&idVal, &nameVal, &contentType, &mediaType,
+			&path, &productionYear, &communityRating,
+			&isMovie, &isSeries,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("scan item: %w", err)
+		}
+
+		item := make(map[string]interface{})
+		item["Id"] = idVal
+		item["Name"] = nameVal
+		if contentType.Valid {
+			item["ContentType"] = contentType.String
+		}
+		if mediaType.Valid {
+			item["MediaType"] = mediaType.String
+		}
+		if path.Valid {
+			item["Path"] = path.String
+		}
+		if productionYear.Valid {
+			item["ProductionYear"] = productionYear.Int64
+		}
+		if communityRating.Valid {
+			item["CommunityRating"] = communityRating.Float64
+		}
+		item["IsMovie"] = isMovie.Int64 == 1
+		item["IsSeries"] = isSeries.Int64 == 1
+
+		items = append(items, item)
+	}
+
+	if items == nil {
+		items = []map[string]interface{}{}
+	}
+
+	return items, rows.Err()
+}
+
 // SearchItems searches for media items by name.
 func (r *ItemRepository) SearchItems(query string, limit, offset int) ([]map[string]interface{}, error) {
 	sqlQuery := `

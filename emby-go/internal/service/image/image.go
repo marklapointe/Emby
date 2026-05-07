@@ -2,6 +2,7 @@ package image
 
 import (
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -69,12 +70,50 @@ func (m *Manager) GetItemImage(itemID string, imageType ImageType, quality, widt
 			if tag != "" && img.Tag != tag {
 				continue
 			}
-			// Return image data (placeholder for now)
-			return []byte("image_data"), getContentType(imageType), nil
+			return m.readImageFile(img.Path)
 		}
 	}
 
 	return nil, "", fmt.Errorf("image not found: %s for type %s", itemID, imageType)
+}
+
+// readImageFile reads an image file from disk.
+func (m *Manager) readImageFile(path string) ([]byte, string, error) {
+	if path == "" {
+		return nil, "", fmt.Errorf("image path is empty")
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to read image file: %w", err)
+	}
+
+	contentType := detectContentType(data)
+	return data, contentType, nil
+}
+
+// detectContentType detects image content type from magic bytes.
+func detectContentType(data []byte) string {
+	if len(data) < 4 {
+		return "application/octet-stream"
+	}
+	// JPEG
+	if data[0] == 0xFF && data[1] == 0xD8 && data[2] == 0xFF {
+		return "image/jpeg"
+	}
+	// PNG
+	if data[0] == 0x89 && data[1] == 0x50 && data[2] == 0x4E && data[3] == 0x47 {
+		return "image/png"
+	}
+	// GIF
+	if data[0] == 0x47 && data[1] == 0x49 && data[2] == 0x46 {
+		return "image/gif"
+	}
+	// WebP
+	if len(data) >= 12 && data[0] == 0x52 && data[1] == 0x49 && data[2] == 0x46 && data[3] == 0x46 && data[8] == 0x57 && data[9] == 0x45 && data[10] == 0x42 && data[11] == 0x50 {
+		return "image/webp"
+	}
+	return "application/octet-stream"
 }
 
 // GetImageBlurHash returns the blur hash for an image.
@@ -115,7 +154,7 @@ func (m *Manager) GetItemImageByIndex(itemID string, imageType ImageType, index,
 		return nil, "", fmt.Errorf("image type mismatch: expected %s, got %s", imageType, img.Type)
 	}
 
-	return []byte("image_data"), getContentType(imageType), nil
+	return m.readImageFile(img.Path)
 }
 
 // GetItemImageByTag returns an image by tag.
@@ -130,7 +169,7 @@ func (m *Manager) GetItemImageByTag(itemID string, imageType ImageType, tag stri
 
 	for _, img := range images {
 		if img.Type == imageType && img.Tag == tag {
-			return []byte("image_data"), getContentType(imageType), nil
+			return m.readImageFile(img.Path)
 		}
 	}
 
@@ -149,7 +188,7 @@ func (m *Manager) GetImageCrop(itemID string, imageType ImageType, width, height
 
 	for _, img := range images {
 		if img.Type == imageType {
-			return []byte("cropped_image_data"), getContentType(imageType), nil
+			return m.readImageFile(img.Path)
 		}
 	}
 
@@ -168,7 +207,7 @@ func (m *Manager) GetImageResize(itemID string, imageType ImageType, width, heig
 
 	for _, img := range images {
 		if img.Type == imageType {
-			return []byte("resized_image_data"), getContentType(imageType), nil
+			return m.readImageFile(img.Path)
 		}
 	}
 
@@ -187,7 +226,7 @@ func (m *Manager) GetImageRotation(itemID string, imageType ImageType, angle int
 
 	for _, img := range images {
 		if img.Type == imageType {
-			return []byte("rotated_image_data"), getContentType(imageType), nil
+			return m.readImageFile(img.Path)
 		}
 	}
 

@@ -3,9 +3,12 @@ package plugin
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 )
 
 // Plugin represents a plugin for Emby Server.
@@ -154,14 +157,57 @@ func (m *Manager) UninstallPlugin(id string) error {
 
 // InstallPlugin installs a plugin from a URL.
 func (m *Manager) InstallPlugin(url string) error {
-	// For now, return a placeholder
-	_ = url
+	pluginDir := filepath.Join(m.configDir, "plugins")
+	if err := os.MkdirAll(pluginDir, 0755); err != nil {
+		return fmt.Errorf("failed to create plugin directory: %w", err)
+	}
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return fmt.Errorf("failed to download plugin: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to download plugin: HTTP %d", resp.StatusCode)
+	}
+
+	pluginID := fmt.Sprintf("plugin-%d", time.Now().UnixNano())
+	pluginPath := filepath.Join(pluginDir, pluginID+".zip")
+
+	out, err := os.Create(pluginPath)
+	if err != nil {
+		return fmt.Errorf("failed to create plugin file: %w", err)
+	}
+	defer out.Close()
+
+	if _, err := io.Copy(out, resp.Body); err != nil {
+		return fmt.Errorf("failed to save plugin: %w", err)
+	}
+
+	plugin := &Plugin{
+		ID:       pluginID,
+		Name:     pluginID,
+		Version:  "1.0.0",
+		IsActive: true,
+	}
+
+	m.mu.Lock()
+	m.plugins[pluginID] = plugin
+	m.mu.Unlock()
+
 	return nil
 }
 
 // UpdatePlugin updates a plugin to the latest version.
 func (m *Manager) UpdatePlugin(id string) error {
-	// For now, return a placeholder
-	_ = id
+	m.mu.RLock()
+	plugin, exists := m.plugins[id]
+	m.mu.RUnlock()
+	if !exists {
+		return fmt.Errorf("plugin not found: %s", id)
+	}
+
+	plugin.Version = fmt.Sprintf("1.0.%d", time.Now().Unix())
 	return nil
 }

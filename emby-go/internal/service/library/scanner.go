@@ -255,9 +255,18 @@ func (s *Scanner) getMediaFolderPath(mediaType string) string {
 
 // getAllItemPaths returns a map of existing item paths.
 func (s *Scanner) getAllItemPaths() (map[string]string, error) {
-	// This would query the database for all items
-	// For now, return empty map
-	return make(map[string]string), nil
+	items, err := s.repo.GetAllItems()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get items from database: %w", err)
+	}
+
+	pathMap := make(map[string]string)
+	for _, item := range items {
+		if path, ok := item["Path"].(string); ok && path != "" {
+			pathMap[path] = item["Id"].(string)
+		}
+	}
+	return pathMap, nil
 }
 
 // generateItemID creates a unique ID for a media file.

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/emby/emby-go/internal/service/user"
@@ -160,12 +161,30 @@ func (h *UserHandler) GetUserImage(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	imageType := chi.URLParam(r, "type")
 
-	_ = id
+	user, exists := h.userMgr.GetUser(id)
+	if !exists {
+		http.Error(w, "user not found", http.StatusNotFound)
+		return
+	}
+
 	_ = imageType
 
-	// Return placeholder image
-	w.Header().Set("Content-Type", "image/png")
-	w.Write([]byte("placeholder_image_data"))
+	svg := generateUserAvatarSVG(user.Name)
+	w.Header().Set("Content-Type", "image/svg+xml")
+	w.Write([]byte(svg))
+}
+
+func generateUserAvatarSVG(name string) string {
+	initial := ""
+	if len(name) > 0 {
+		initial = string([]rune(name)[0])
+	}
+	return fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+		<rect width="200" height="200" fill="#4A90D9"/>
+		<circle cx="100" cy="80" r="50" fill="#fff"/>
+		<text x="100" y="90" font-family="Arial" font-size="60" fill="#4A90D9" text-anchor="middle">%s</text>
+		<ellipse cx="100" cy="170" rx="70" ry="40" fill="#fff"/>
+	</svg>`, initial)
 }
 
 // GetUserConfiguration handles GET /Users/{id}/Configuration

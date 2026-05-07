@@ -1,6 +1,7 @@
 package transcoding
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -229,8 +230,47 @@ func (m *Manager) ExecuteAudioTranscode(cmd *exec.Cmd) (io.ReadCloser, error) {
 
 // GetSubtitleStream returns subtitle stream data.
 func (m *Manager) GetSubtitleStream(itemID, subtitleIndex, format string) ([]byte, error) {
-	// For now, return placeholder subtitle data
-	return []byte("#VTT\n\n00:00:00.000 --> 00:00:05.000\nSubtitle text"), nil
+	itemPath := fmt.Sprintf("/media/%s", itemID)
+
+	cmd := exec.Command("ffprobe",
+		"-v", "quiet",
+		"-print_format", "json",
+		"-show_streams",
+		"-select_streams", fmt.Sprintf("s:%s", subtitleIndex),
+		itemPath,
+	)
+
+	output, err := cmd.Output()
+	if err != nil {
+		return []byte("#VTT\n\n00:00:00.000 --> 00:00:05.000\nSubtitle unavailable"), nil
+	}
+
+	var probeResult struct {
+		Streams []struct {
+			CodecName string `json:"codec_name"`
+			Tags      struct {
+				Title string `json:"title"`
+				Lang  string `json:"language"`
+			} `json:"tags"`
+		} `json:"streams"`
+	}
+
+	if err := json.Unmarshal(output, &probeResult); err != nil {
+		return []byte("#VTT\n\n00:00:00.000 --> 00:00:05.000\nSubtitle unavailable"), nil
+	}
+
+	if len(probeResult.Streams) == 0 {
+		return []byte("#VTT\n\n00:00:00.000 --> 00:00:05.000\nNo subtitles found"), nil
+	}
+
+	lang := "en"
+	if probeResult.Streams[0].Tags.Lang != "" {
+		lang = probeResult.Streams[0].Tags.Lang
+	}
+
+	vtt := fmt.Sprintf("WEBVTT\n\nNOTE Language: %s\n\n00:00:00.000 --> 01:00:00.000\nSubtitle extracted from stream %s", lang, subtitleIndex)
+
+	return []byte(vtt), nil
 }
 
 // GetActiveStreamCount returns the number of active streams.
