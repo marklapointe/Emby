@@ -227,11 +227,11 @@ func TestStreamManager_NewManager(t *testing.T) {
 	if m == nil {
 		t.Fatal("NewStreamManager returned nil")
 	}
-	if m.maxStreams != 5 {
-		t.Errorf("expected maxStreams 5, got %d", m.maxStreams)
+	if m.maxSourceStreams != 5 {
+		t.Errorf("expected maxSourceStreams 5, got %d", m.maxSourceStreams)
 	}
-	if m.activeStreams == nil {
-		t.Error("activeStreams map not initialized")
+	if m.sources == nil {
+		t.Error("sources map not initialized")
 	}
 }
 
@@ -241,14 +241,15 @@ func TestStreamManager_GetMetrics(t *testing.T) {
 	if metrics == nil {
 		t.Fatal("GetMetrics returned nil")
 	}
-	if metrics.TotalStreamsCreated != 0 {
-		t.Errorf("expected 0 TotalStreamsCreated, got %d", metrics.TotalStreamsCreated)
+	if metrics.TotalSourceStreamsCreated != 0 {
+		t.Errorf("expected 0 TotalSourceStreamsCreated, got %d", metrics.TotalSourceStreamsCreated)
 	}
 }
 
 func TestStreamManager_GetStreamViewers_NotFound(t *testing.T) {
 	m := NewStreamManager(5, nil)
-	viewers := m.GetStreamViewers("non-existent", "profile")
+	profile := &TranscodingProfile{Container: "ts", VideoCodec: "h264", MaxVideoBitrate: 5000}
+	viewers := m.GetStreamViewers("non-existent", profile)
 	if viewers != 0 {
 		t.Errorf("expected 0 viewers, got %d", viewers)
 	}
@@ -261,14 +262,10 @@ func TestStreamError_Error(t *testing.T) {
 	}
 }
 
-func TestStreamManager_EvictIdleStreams(t *testing.T) {
-	m := NewStreamManager(1, nil)
-	m.evictIdleStreams()
-}
-
 func TestStreamManager_RemoveViewer_NotFound(t *testing.T) {
-	m := NewStreamManager(5, nil)
-	m.RemoveViewer("non-existent", "profile", "viewer-1")
+	m := NewStreamManager(1, nil)
+	profile := &TranscodingProfile{Container: "ts", VideoCodec: "h264", MaxVideoBitrate: 5000}
+	m.RemoveViewer("non-existent", profile, "viewer-1")
 }
 
 func TestParseInt(t *testing.T) {
@@ -348,15 +345,18 @@ func TestStreamManager_GetOrCreateStream_New(t *testing.T) {
 		VideoCodec: "h264",
 	}
 
-	stream, err := m.GetOrCreateStream(context.Background(), "content-1", profile, "viewer-1")
+	src, out, err := m.GetOrCreateStream(context.Background(), "content-1", profile, "viewer-1")
 	if err != nil {
 		t.Fatalf("GetOrCreateStream failed: %v", err)
 	}
-	if stream == nil {
-		t.Fatal("GetOrCreateStream returned nil stream")
+	if src == nil {
+		t.Fatal("GetOrCreateStream returned nil source")
 	}
-	if stream.ContentID != "content-1" {
-		t.Errorf("expected ContentID 'content-1', got '%s'", stream.ContentID)
+	if out == nil {
+		t.Fatal("GetOrCreateStream returned nil output")
+	}
+	if src.ContentID != "content-1" {
+		t.Errorf("expected ContentID 'content-1', got '%s'", src.ContentID)
 	}
 }
 
@@ -368,22 +368,26 @@ func TestStreamManager_GetOrCreateStream_Existing(t *testing.T) {
 		VideoCodec: "h264",
 	}
 
-	stream1, err := m.GetOrCreateStream(context.Background(), "content-1", profile, "viewer-1")
+	src1, out1, err := m.GetOrCreateStream(context.Background(), "content-1", profile, "viewer-1")
 	if err != nil {
 		t.Fatalf("GetOrCreateStream failed: %v", err)
 	}
 
-	stream2, err := m.GetOrCreateStream(context.Background(), "content-1", profile, "viewer-2")
+	src2, out2, err := m.GetOrCreateStream(context.Background(), "content-1", profile, "viewer-2")
 	if err != nil {
 		t.Fatalf("GetOrCreateStream failed: %v", err)
 	}
 
-	if stream1 != stream2 {
-		t.Error("GetOrCreateStream should return same stream for same content")
+	if src1 != src2 {
+		t.Error("GetOrCreateStream should return same source for same content")
 	}
 
-	if len(stream2.Viewers) != 2 {
-		t.Errorf("expected 2 viewers, got %d", len(stream2.Viewers))
+	if out1 != out2 {
+		t.Error("GetOrCreateStream should return same output for same content+profile")
+	}
+
+	if len(out2.Viewers) != 2 {
+		t.Errorf("expected 2 viewers, got %d", len(out2.Viewers))
 	}
 }
 
@@ -395,12 +399,12 @@ func TestStreamManager_GetOrCreateStream_MaxStreams(t *testing.T) {
 		VideoCodec: "h264",
 	}
 
-	_, err := m.GetOrCreateStream(context.Background(), "content-1", profile, "viewer-1")
+	_, _, err := m.GetOrCreateStream(context.Background(), "content-1", profile, "viewer-1")
 	if err != nil {
 		t.Fatalf("GetOrCreateStream failed: %v", err)
 	}
 
-	_, err = m.GetOrCreateStream(context.Background(), "content-2", profile, "viewer-2")
+	_, _, err = m.GetOrCreateStream(context.Background(), "content-2", profile, "viewer-2")
 	if err == nil {
 		t.Error("expected error when max streams exceeded")
 	}
