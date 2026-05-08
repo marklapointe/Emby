@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
+	"github.com/emby/emby-go/internal/api/handlers"
 	"github.com/emby/emby-go/internal/config"
 	"github.com/emby/emby-go/internal/database"
+	"github.com/emby/emby-go/internal/model"
 	"github.com/emby/emby-go/internal/repository"
 )
 
@@ -325,5 +328,190 @@ func TestAuthProvidersEndpoint(t *testing.T) {
 	resp := w.Result()
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("expected status 200, got %d", resp.StatusCode)
+	}
+}
+
+// Wizard flow integration tests
+
+func TestWizardIsFirstRun(t *testing.T) {
+	dbManager, err := database.NewManager(&config.DatabaseConfig{
+		Path:           ":memory:",
+		MaxOpenConns:   10,
+		MaxIdleConns:   5,
+		ConnMaxLifetime: 300,
+		EnableWAL:      true,
+	})
+	if err != nil {
+		t.Fatalf("failed to create database manager: %v", err)
+	}
+	defer dbManager.Close()
+
+	configRepo := repository.NewConfigRepository(dbManager.DB())
+	userRepo := repository.NewUserRepository(dbManager.DB())
+
+	configRepo.CreateConfigTable()
+	dbManager.DB().AutoMigrate(&model.GORMUser{})
+
+	handler := handlers.NewStartupHandler(configRepo, userRepo, nil)
+
+	req := httptest.NewRequest("GET", "/Startup/First", nil)
+	w := httptest.NewRecorder()
+
+	handler.IsFirstRun(w, req)
+
+	resp := w.Result()
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("expected status 200, got %d", resp.StatusCode)
+	}
+
+	var result map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	// First run should be true since wizard hasn't completed
+	if result["IsFirstRun"] != true {
+		t.Errorf("expected IsFirstRun to be true on fresh install, got %v", result["IsFirstRun"])
+	}
+}
+
+func TestWizardComplete(t *testing.T) {
+	dbManager, err := database.NewManager(&config.DatabaseConfig{
+		Path:           ":memory:",
+		MaxOpenConns:   10,
+		MaxIdleConns:   5,
+		ConnMaxLifetime: 300,
+		EnableWAL:      true,
+	})
+	if err != nil {
+		t.Fatalf("failed to create database manager: %v", err)
+	}
+	defer dbManager.Close()
+
+	configRepo := repository.NewConfigRepository(dbManager.DB())
+	userRepo := repository.NewUserRepository(dbManager.DB())
+
+	configRepo.CreateConfigTable()
+	dbManager.DB().AutoMigrate(&model.GORMUser{})
+
+	handler := handlers.NewStartupHandler(configRepo, userRepo, nil)
+
+	req := httptest.NewRequest("POST", "/Startup/Complete", nil)
+	w := httptest.NewRecorder()
+
+	handler.Complete(w, req)
+
+	resp := w.Result()
+	if resp.StatusCode != http.StatusNoContent {
+		t.Errorf("expected status 204, got %d", resp.StatusCode)
+	}
+
+	// Verify wizard is marked as completed
+	cfg, err := configRepo.GetConfig()
+	if err != nil {
+		t.Fatalf("failed to get config: %v", err)
+	}
+
+	if !cfg.IsStartupWizardCompleted {
+		t.Errorf("expected wizard to be completed")
+	}
+}
+
+func TestWizardGetAndPostStartupConfig(t *testing.T) {
+	dbManager, err := database.NewManager(&config.DatabaseConfig{
+		Path:           ":memory:",
+		MaxOpenConns:   10,
+		MaxIdleConns:   5,
+		ConnMaxLifetime: 300,
+		EnableWAL:      true,
+	})
+	if err != nil {
+		t.Fatalf("failed to create database manager: %v", err)
+	}
+	defer dbManager.Close()
+
+	configRepo := repository.NewConfigRepository(dbManager.DB())
+	userRepo := repository.NewUserRepository(dbManager.DB())
+
+	configRepo.CreateConfigTable()
+	dbManager.DB().AutoMigrate(&model.GORMUser{})
+
+	handler := handlers.NewStartupHandler(configRepo, userRepo, nil)
+
+	// Get initial config
+	req := httptest.NewRequest("GET", "/Startup/Configuration", nil)
+	w := httptest.NewRecorder()
+
+	handler.GetStartupConfig(w, req)
+
+	resp := w.Result()
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("expected status 200, got %d", resp.StatusCode)
+	}
+
+	// Update config
+	updateReqBody := `{"UICulture":"en-US","MetadataCountryCode":"US","PreferredMetadataLanguage":"en"}`
+	updateReq := httptest.NewRequest("POST", "/Startup/Configuration", strings.NewReader(updateReqBody))
+	updateReq.Header.Set("Content-Type", "application/json")
+
+	w = httptest.NewRecorder()
+	handler.PostStartupConfig(w, updateReq)
+
+	// Should accept the request
+	if w.Code != http.StatusNoContent && w.Code != http.StatusOK {
+		t.Errorf("expected status 204 or 200, got %d", w.Code)
+	}
+}
+
+func TestWizardFullFlow(t *testing.T) {
+	dbManager, err := database.NewManager(&config.DatabaseConfig{
+		Path:           ":memory:",
+		MaxOpenConns:   10,
+		MaxIdleConns:   5,
+		ConnMaxLifetime: 300,
+		EnableWAL:      true,
+	})
+	if err != nil {
+		t.Fatalf("failed to create database manager: %v", err)
+	}
+	defer dbManager.Close()
+
+	configRepo := repository.NewConfigRepository(dbManager.DB())
+	userRepo := repository.NewUserRepository(dbManager.DB())
+
+	configRepo.CreateConfigTable()
+	dbManager.DB().AutoMigrate(&model.GORMUser{})
+
+	handler := handlers.NewStartupHandler(configRepo, userRepo, nil)
+
+	// Step 1: Check first run - should be true
+	req := httptest.NewRequest("GET", "/Startup/First", nil)
+	w := httptest.NewRecorder()
+	handler.IsFirstRun(w, req)
+
+	var firstRunResult map[string]interface{}
+	json.NewDecoder(w.Result().Body).Decode(&firstRunResult)
+	if firstRunResult["IsFirstRun"] != true {
+		t.Fatalf("expected first run to be true initially")
+	}
+
+	// Step 2: Complete the wizard
+	req = httptest.NewRequest("POST", "/Startup/Complete", nil)
+	w = httptest.NewRecorder()
+	handler.Complete(w, req)
+
+	if w.Code != http.StatusNoContent {
+		t.Fatalf("expected status 204, got %d", w.Code)
+	}
+
+	// Step 3: Check first run again - should be false now
+	req = httptest.NewRequest("GET", "/Startup/First", nil)
+	w = httptest.NewRecorder()
+	handler.IsFirstRun(w, req)
+
+	var afterCompleteResult map[string]interface{}
+	json.NewDecoder(w.Result().Body).Decode(&afterCompleteResult)
+	if afterCompleteResult["IsFirstRun"] != false {
+		t.Errorf("expected first run to be false after completion, got %v", afterCompleteResult["IsFirstRun"])
 	}
 }
