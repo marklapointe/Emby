@@ -224,7 +224,6 @@ func TestManager_GetActiveSessionCount(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	mgr := NewManager(cfg, logger)
 
-	// Create sessions with recent activity
 	for i := 0; i < 5; i++ {
 		session := &SessionInfo{
 			ID:               fmt.Sprintf("session-%d", i),
@@ -248,5 +247,88 @@ func TestManager_GetActiveSessionCount(t *testing.T) {
 	activeCount := mgr.GetActiveSessionCount()
 	if activeCount != 5 {
 		t.Errorf("expected 5 active sessions, got %d", activeCount)
+	}
+}
+
+func TestManager_UpdateSession_WithVolume(t *testing.T) {
+	cfg := &config.Config{}
+	logger, _ := zap.NewDevelopment()
+	mgr := NewManager(cfg, logger)
+
+	session := &SessionInfo{
+		ID:               "session-vol",
+		Client:           "Emby for Android",
+		DeviceName:       "Test Device",
+		DisplayName:      "Test User",
+		MachineID:        "machine-456",
+		LastActivityTime: time.Now(),
+		PlayState: model.PlayState{
+			PositionTicks: 0,
+			VolumePercent: 80,
+			IsMuted:       false,
+			IsPaused:      false,
+		},
+	}
+	mgr.CreateSession(session)
+
+	volume := 50
+	isPaused := true
+	mgr.UpdateSession("session-vol", nil, &volume, &isPaused)
+
+	retrieved, _ := mgr.GetSession("session-vol")
+	if retrieved.PlayState.VolumePercent != 50 {
+		t.Errorf("expected volume 50, got %d", retrieved.PlayState.VolumePercent)
+	}
+	if !retrieved.PlayState.IsPaused {
+		t.Error("expected IsPaused to be true")
+	}
+}
+
+func TestManager_UpdateSession_NotFound(t *testing.T) {
+	cfg := &config.Config{}
+	logger, _ := zap.NewDevelopment()
+	mgr := NewManager(cfg, logger)
+
+	volume := 50
+	err := mgr.UpdateSession("nonexistent", nil, &volume, nil)
+	if err == nil {
+		t.Error("expected error for nonexistent session")
+	}
+}
+
+func TestManager_DeleteSession_NotFound(t *testing.T) {
+	cfg := &config.Config{}
+	logger, _ := zap.NewDevelopment()
+	mgr := NewManager(cfg, logger)
+
+	err := mgr.DeleteSession("nonexistent")
+	if err == nil {
+		t.Error("expected error for nonexistent session")
+	}
+}
+
+func TestManager_CreateSession_Duplicate(t *testing.T) {
+	cfg := &config.Config{}
+	logger, _ := zap.NewDevelopment()
+	mgr := NewManager(cfg, logger)
+
+	session := &SessionInfo{
+		ID:               "dup-session",
+		Client:           "Emby for Android",
+		DeviceName:       "Test Device",
+		DisplayName:      "Test User",
+		MachineID:        "machine-456",
+		LastActivityTime: time.Now(),
+		PlayState: model.PlayState{
+			PositionTicks: 0,
+			VolumePercent: 80,
+			IsMuted:       false,
+			IsPaused:      false,
+		},
+	}
+	mgr.CreateSession(session)
+	err := mgr.CreateSession(session)
+	if err == nil {
+		t.Error("expected error for duplicate session")
 	}
 }
