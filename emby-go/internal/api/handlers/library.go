@@ -7,6 +7,7 @@ import (
 
 	"github.com/emby/emby-go/internal/repository"
 	"github.com/emby/emby-go/internal/service/library"
+	"github.com/emby/emby-go/internal/service/metadata"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -23,16 +24,18 @@ type VirtualFolder struct {
 }
 
 type LibraryHandler struct {
-	scanner       *library.Scanner
-	repo          *repository.ItemRepository
+	scanner        *library.Scanner
+	repo           *repository.ItemRepository
+	metadataMgr    *metadata.Manager
 	virtualFolders []VirtualFolder
 }
 
 // NewLibraryHandler creates a new library handler.
-func NewLibraryHandler(scanner *library.Scanner, repo *repository.ItemRepository) *LibraryHandler {
+func NewLibraryHandler(scanner *library.Scanner, repo *repository.ItemRepository, metadataMgr *metadata.Manager) *LibraryHandler {
 	return &LibraryHandler{
 		scanner:        scanner,
 		repo:           repo,
+		metadataMgr:    metadataMgr,
 		virtualFolders: []VirtualFolder{},
 	}
 }
@@ -362,31 +365,59 @@ func (h *LibraryHandler) UpdateVirtualFolderOptions(w http.ResponseWriter, r *ht
 
 // GetAvailableOptions handles GET /Libraries/AvailableOptions
 func (h *LibraryHandler) GetAvailableOptions(w http.ResponseWriter, r *http.Request) {
+	var metadataSavers []map[string]string
+	var metadataReaders []map[string]string
+	var subtitleFetchers []map[string]string
+
+	if h.metadataMgr != nil {
+		for _, p := range h.metadataMgr.GetEnabledProviders() {
+			entry := map[string]string{"Name": p.Name, "Id": p.ID}
+			switch p.Type {
+			case "MetadataSaver":
+				metadataSavers = append(metadataSavers, entry)
+			case "MetadataReader":
+				metadataReaders = append(metadataReaders, entry)
+			case "SubtitleFetcher":
+				subtitleFetchers = append(subtitleFetchers, entry)
+			}
+		}
+	}
+
+	if metadataSavers == nil {
+		metadataSavers = []map[string]string{}
+	}
+	if metadataReaders == nil {
+		metadataReaders = []map[string]string{}
+	}
+	if subtitleFetchers == nil {
+		subtitleFetchers = []map[string]string{}
+	}
+
 	result := map[string]interface{}{
-		"MetadataSavers":    []map[string]string{},
-		"MetadataReaders":   []map[string]string{},
-		"SubtitleFetchers": []map[string]string{},
+		"MetadataSavers":    metadataSavers,
+		"MetadataReaders":   metadataReaders,
+		"SubtitleFetchers":  subtitleFetchers,
 		"TypeOptions": []map[string]interface{}{
 			{
 				"Type":                 "movies",
-				"MetadataFetchers":     []map[string]string{},
+				"MetadataFetchers":     metadataReaders,
 				"ImageFetchers":        []map[string]string{},
-				"SupportedImageTypes":   []string{"Primary", "Banner", "Logo", "Thumb", "Backdrop", "Art"},
-				"DefaultImageOptions":   []map[string]string{},
+				"SupportedImageTypes":  []string{"Primary", "Banner", "Logo", "Thumb", "Backdrop", "Art"},
+				"DefaultImageOptions":  []map[string]string{},
 			},
 			{
 				"Type":                 "tvshows",
-				"MetadataFetchers":     []map[string]string{},
+				"MetadataFetchers":     metadataReaders,
 				"ImageFetchers":        []map[string]string{},
-				"SupportedImageTypes":   []string{"Primary", "Banner", "Logo", "Thumb", "Backdrop", "Art"},
-				"DefaultImageOptions":   []map[string]string{},
+				"SupportedImageTypes":  []string{"Primary", "Banner", "Logo", "Thumb", "Backdrop", "Art"},
+				"DefaultImageOptions":  []map[string]string{},
 			},
 			{
 				"Type":                 "music",
-				"MetadataFetchers":     []map[string]string{},
+				"MetadataFetchers":     metadataReaders,
 				"ImageFetchers":        []map[string]string{},
-				"SupportedImageTypes":   []string{"Primary", "Banner", "Logo", "Thumb", "Backdrop", "Art"},
-				"DefaultImageOptions":   []map[string]string{},
+				"SupportedImageTypes":  []string{"Primary", "Banner", "Logo", "Thumb", "Backdrop", "Art"},
+				"DefaultImageOptions":  []map[string]string{},
 			},
 		},
 	}

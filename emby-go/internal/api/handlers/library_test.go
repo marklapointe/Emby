@@ -36,7 +36,7 @@ func setupTestRouter(t *testing.T) (*chi.Mux, func()) {
 
 	// Register the handlers directly without using the full router setup
 	// This allows us to test the handler behavior in isolation
-	scanner := NewLibraryHandler(nil, itemRepo)
+	scanner := NewLibraryHandler(nil, itemRepo, nil)
 	envHandler := NewEnvironmentHandler()
 
 	// Register routes with the exact paths the middleware would produce after lowercasing
@@ -51,7 +51,7 @@ func setupTestRouter(t *testing.T) (*chi.Mux, func()) {
 }
 
 func TestGetAvailableOptionsHandler(t *testing.T) {
-	handler := NewLibraryHandler(nil, nil)
+	handler := NewLibraryHandler(nil, nil, nil)
 	req := httptest.NewRequest(http.MethodGet, "/Libraries/AvailableOptions?LibraryContentType=movies&IsNewLibrary=false", nil)
 	w := httptest.NewRecorder()
 
@@ -91,7 +91,7 @@ func TestGetAvailableOptionsHandler(t *testing.T) {
 }
 
 func TestGetAvailableOptionsHandlerWithQueryParams(t *testing.T) {
-	handler := NewLibraryHandler(nil, nil)
+	handler := NewLibraryHandler(nil, nil, nil)
 
 	tests := []struct {
 		name            string
@@ -205,7 +205,7 @@ func TestDefaultDirectoryBrowserRouterIntegration(t *testing.T) {
 }
 
 func TestGetAvailableOptionsResponseStructure(t *testing.T) {
-	handler := NewLibraryHandler(nil, nil)
+	handler := NewLibraryHandler(nil, nil, nil)
 	req := httptest.NewRequest(http.MethodGet, "/Libraries/AvailableOptions", nil)
 	w := httptest.NewRecorder()
 

@@ -109,13 +109,52 @@ func (r *ItemRepository) GetItemsByParent(parentID string, mediaType string, lim
 // InsertItem inserts a media item into the database.
 func (r *ItemRepository) InsertItem(id, name, path, locationType string) error {
 	query := `
-		INSERT OR REPLACE INTO Items 
+		INSERT OR REPLACE INTO Items
 		(Id, Name, Path, LocationType, ContentType, CreatedDate, ModifiedDate)
 		VALUES (?, ?, ?, ?, ?, ?, ?)
 	`
 	now := time.Now().UTC().Format(time.RFC3339)
 	_, err := r.Exec(query, id, name, path, locationType, locationType, now, now)
-	return err
+	if err != nil {
+		return err
+	}
+
+	mediaType := mapLocationTypeToMediaType(locationType)
+	if mediaType != "" {
+		insertQuery := `INSERT INTO ItemMediaTypes (ItemId, MediaType) VALUES (?, ?)`
+		_, err = r.Exec(insertQuery, id, mediaType)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func mapLocationTypeToMediaType(locationType string) string {
+	switch locationType {
+	case "movies", "Movie", "Video":
+		return "Movie"
+	case "tvshows", "Series", "TvShows":
+		return "Series"
+	case "music", "Music", "Audio":
+		return "Audio"
+	case "photos", "Photos", "Photo":
+		return "Photo"
+	case "books", "Books", "Book":
+		return "Book"
+	case "games", "Games", "Game":
+		return "Game"
+	case "homevideos", "HomeVideos", "HomeVideo":
+		return "HomeVideo"
+	case "livetv", "LiveTV":
+		return "LiveTV"
+	default:
+		if locationType != "" {
+			return locationType
+		}
+		return ""
+	}
 }
 
 // GetItem retrieves a media item by ID.

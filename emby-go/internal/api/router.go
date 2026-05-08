@@ -15,6 +15,7 @@ import (
 	"github.com/emby/emby-go/internal/service/dlna"
 	"github.com/emby/emby-go/internal/service/image"
 	"github.com/emby/emby-go/internal/service/library"
+	"github.com/emby/emby-go/internal/service/metadata"
 	"github.com/emby/emby-go/internal/service/media"
 	"github.com/emby/emby-go/internal/service/notification"
 	"github.com/emby/emby-go/internal/service/scheduled"
@@ -35,7 +36,8 @@ type Router struct {
 	configRepo  *repository.ConfigRepository
 	userRepo    *repository.UserRepository
 	userSvc     *user.Manager
-	librarySvc  *library.Manager
+	librarySvc   *library.Manager
+	metadataSvc *metadata.Manager
 	mediaSvc    *media.Manager
 	sessionSvc  *session.Manager
 	deviceSvc   *device.Manager
@@ -70,6 +72,8 @@ func (r *Router) RegisterRoutes(router *chi.Mux) {
 	sqlDB, _ := r.dbManager.SQLDB()
 	r.userSvc = user.NewManager(r.dbManager, r.userRepo, r.logger)
 	r.librarySvc = library.NewManager(r.config, r.logger, r.dbManager)
+	r.metadataSvc = metadata.NewManager(r.logger)
+	r.registerDefaultMetadataProviders()
 	r.mediaSvc = media.NewManager(r.config, r.logger)
 	r.sessionSvc = session.NewManager(r.config, r.logger)
 	r.deviceSvc = device.NewManager(r.logger)
@@ -163,8 +167,39 @@ func (r *Router) RegisterRoutes(router *chi.Mux) {
 	})
 }
 
+func (r *Router) registerDefaultMetadataProviders() {
+	r.metadataSvc.RegisterProvider(&metadata.MetadataProvider{
+		ID:   "emby.metadata.providers.tmdb",
+		Name: "TheMovieDb",
+		Type: "MetadataSaver",
+		Enabled: true,
+		Order: 1,
+	})
+	r.metadataSvc.RegisterProvider(&metadata.MetadataProvider{
+		ID:   "emby.metadata.providers.tvdb",
+		Name: "TheTVDB",
+		Type: "MetadataSaver",
+		Enabled: true,
+		Order: 2,
+	})
+	r.metadataSvc.RegisterProvider(&metadata.MetadataProvider{
+		ID:   "emby.metadata.providers.omdb",
+		Name: "Open Movie Database",
+		Type: "MetadataReader",
+		Enabled: true,
+		Order: 3,
+	})
+	r.metadataSvc.RegisterProvider(&metadata.MetadataProvider{
+		ID:   "emby.subtitle.providers.opensubtitles",
+		Name: "OpenSubtitles",
+		Type: "SubtitleFetcher",
+		Enabled: true,
+		Order: 1,
+	})
+}
+
 func (r *Router) registerLibraryRoutes(router *chi.Mux) {
-	libHandler := handlers.NewLibraryHandler(library.NewScanner(r.config, r.logger, r.itemRepo), r.itemRepo)
+	libHandler := handlers.NewLibraryHandler(library.NewScanner(r.config, r.logger, r.itemRepo), r.itemRepo, r.metadataSvc)
 
 	r.registerRoute(router, http.MethodGet, "/library/root", libHandler.GetLibraryRoot)
 	r.registerRoute(router, http.MethodGet, "/library/items", libHandler.GetItems)
