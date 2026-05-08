@@ -67,11 +67,18 @@ func TestScanLibrary_Empty(t *testing.T) {
 	}
 
 	logger, _ := zap.NewDevelopment()
-	dbMgr, _ := database.NewManager(&config.DatabaseConfig{Path: ":memory:"})
+	dbMgr, _ := database.NewManager(&config.DatabaseConfig{
+		Path:            ":memory:",
+		MaxOpenConns:    1,
+		MaxIdleConns:    1,
+	})
 	defer dbMgr.Close()
 
 	repo := repository.NewItemRepository(dbMgr.DB())
-	repo.CreateSchema()
+	err := repo.CreateSchema()
+	if err != nil {
+		t.Fatalf("failed to create schema: %v", err)
+	}
 
 	scanner := NewScanner(cfg, logger, repo)
 

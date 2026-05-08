@@ -2,65 +2,91 @@ package repository
 
 import (
 	"database/sql"
-	"fmt"
-
-	_ "modernc.org/sqlite"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
-// BaseRepository provides common SQLite operations.
 type BaseRepository struct {
-	db *sql.DB
+	db *gorm.DB
 }
 
-// NewBaseRepository creates a new base repository with the given database connection.
-func NewBaseRepository(db *sql.DB) *BaseRepository {
+func NewBaseRepository(db *gorm.DB) *BaseRepository {
 	return &BaseRepository{db: db}
 }
 
-// DB returns the underlying *sql.DB for direct access when needed.
-func (r *BaseRepository) DB() *sql.DB {
+func (r *BaseRepository) DB() *gorm.DB {
 	return r.db
 }
 
-// Query executes a SELECT query and returns rows.
+func (r *BaseRepository) SQL() *sql.DB {
+	sqlDB, _ := r.db.DB()
+	return sqlDB
+}
+
 func (r *BaseRepository) Query(query string, args ...interface{}) (*sql.Rows, error) {
-	return r.db.Query(query, args...)
+	return r.SQL().Query(query, args...)
 }
 
-// QueryRow executes a SELECT query that returns a single row.
 func (r *BaseRepository) QueryRow(query string, args ...interface{}) *sql.Row {
-	return r.db.QueryRow(query, args...)
+	return r.SQL().QueryRow(query, args...)
 }
 
-// Exec executes a non-SELECT query.
-func (r *BaseRepository) Exec(query string, args ...interface{}) (sql.Result, error) {
-	return r.db.Exec(query, args...)
+func (r *BaseRepository) WithTransaction(fn func(*gorm.DB) error) error {
+	return r.db.Transaction(fn)
 }
 
-// WithTransaction executes a function within a database transaction.
-func (r *BaseRepository) WithTransaction(fn func(*sql.Tx) error) error {
-	tx, err := r.db.Begin()
+func (r *BaseRepository) Ping() error {
+	sqlDB, err := r.db.DB()
 	if err != nil {
-		return fmt.Errorf("begin transaction: %w", err)
-	}
-
-	defer func() {
-		if p := recover(); p != nil {
-			_ = tx.Rollback()
-			panic(p)
-		} else if err != nil {
-			_ = tx.Rollback()
-		}
-	}()
-
-	if err := fn(tx); err != nil {
 		return err
 	}
-
-	return tx.Commit()
+	return sqlDB.Ping()
 }
 
-// Ping checks if the database connection is alive.
-func (r *BaseRepository) Ping() error {
-	return r.db.Ping()
+func (r *BaseRepository) Raw(query string, args ...interface{}) *gorm.DB {
+	return r.db.Raw(query, args...)
+}
+
+func (r *BaseRepository) Exec(query string, args ...interface{}) (sql.Result, error) {
+	return r.SQL().Exec(query, args...)
+}
+
+func (r *BaseRepository) Create(value interface{}) *gorm.DB {
+	return r.db.Create(value)
+}
+
+func (r *BaseRepository) First(dest interface{}, conds ...interface{}) *gorm.DB {
+	return r.db.First(dest, conds...)
+}
+
+func (r *BaseRepository) Find(dest interface{}, conds ...interface{}) *gorm.DB {
+	return r.db.Find(dest, conds...)
+}
+
+func (r *BaseRepository) Where(query interface{}, args ...interface{}) *gorm.DB {
+	return r.db.Where(query, args...)
+}
+
+func (r *BaseRepository) Update(model interface{}, values interface{}) *gorm.DB {
+	return r.db.Model(model).Updates(values)
+}
+
+func (r *BaseRepository) Delete(value interface{}, conds ...interface{}) *gorm.DB {
+	return r.db.Delete(value, conds...)
+}
+
+func (r *BaseRepository) Count(count *int64) *gorm.DB {
+	return r.db.Model(clause.CurrentTable).Count(count)
+}
+
+func (r *BaseRepository) AutoMigrate(dst ...interface{}) error {
+	return r.db.AutoMigrate(dst...)
+}
+
+func (r *BaseRepository) FirstOrCreate(dest interface{}, conds ...interface{}) *gorm.DB {
+	return r.db.FirstOrCreate(dest, conds...)
+}
+
+func (r *BaseRepository) Pluck(column string, dest interface{}) *gorm.DB {
+	return r.db.Pluck(column, dest)
 }

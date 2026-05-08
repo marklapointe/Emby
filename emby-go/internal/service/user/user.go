@@ -260,7 +260,7 @@ func (m *Manager) AuthenticateUser(username, password string) (*Session, error) 
 		if err != nil {
 			return nil, fmt.Errorf("invalid credentials")
 		}
-		userID = user.ID
+		userID = user.Id
 	} else {
 		var memUser *User
 		for _, u := range m.users {

@@ -4,6 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+
+	"github.com/emby/emby-go/internal/model"
+	"gorm.io/gorm"
 )
 
 // ItemRepository handles media item storage and retrieval.
@@ -12,157 +15,19 @@ type ItemRepository struct {
 }
 
 // NewItemRepository creates a new item repository.
-func NewItemRepository(db *sql.DB) *ItemRepository {
+func NewItemRepository(db *gorm.DB) *ItemRepository {
 	return &ItemRepository{BaseRepository: NewBaseRepository(db)}
 }
 
-// CreateSchema creates the necessary database tables if they don't exist.
+// CreateSchema creates the necessary database tables if they don't exist using GORM AutoMigrate.
 func (r *ItemRepository) CreateSchema() error {
-	schema := `
-	CREATE TABLE IF NOT EXISTS Items (
-		Id TEXT PRIMARY KEY,
-		Name TEXT NOT NULL,
-		Overview TEXT,
-		Tagline TEXT,
-		IndexNumber INTEGER,
-		ParentIndex INTEGER,
-		CommunityRating REAL,
-		RunTimeTicks INTEGER,
-		ProductionYear INTEGER,
-		OfficialRating TEXT,
-		ContentType TEXT,
-		MediaType TEXT,
-		Genres TEXT,
-		Studios TEXT,
-		SeasonNumber INTEGER,
-		EpisodeNumber INTEGER,
-		Album TEXT,
-		Artists TEXT,
-		ExtraType TEXT,
-		ChannelNumber INTEGER,
-		StartDate TEXT,
-		EndDate TEXT,
-		IsLive INTEGER,
-		IsSeries INTEGER,
-		IsMovie INTEGER,
-		IsNews INTEGER,
-		IsSports INTEGER,
-		IsKids INTEGER,
-		IsPremiere INTEGER,
-		LocationType TEXT,
-		Path TEXT,
-		PrimaryImageURL TEXT,
-		BackdropImageURL TEXT,
-		ParentID TEXT,
-		Width INTEGER,
-		Height INTEGER,
-		Video3DFormat TEXT,
-		PostLiveFeedTime INTEGER,
-		LiveMediaSourceID TEXT,
-		StartTimeTicks INTEGER,
-		EndTimeTicks INTEGER,
-		RemoteImageURL TEXT,
-		LocalTrailerCount INTEGER,
-		LockedFields TEXT,
-		LockData INTEGER,
-		Disabled INTEGER,
-		EnableMediaSourceDisplay INTEGER,
-		ExtraIds TEXT,
-		CreatedDate TEXT,
-		ModifiedDate TEXT
-	);
-
-	CREATE TABLE IF NOT EXISTS MediaSources (
-		Id TEXT PRIMARY KEY,
-		ItemId TEXT NOT NULL,
-		Name TEXT,
-		Type TEXT,
-		Container TEXT,
-		Size INTEGER,
-		Path TEXT,
-		Protocol TEXT,
-		Encoder INTEGER,
-		VideoCodec TEXT,
-		AudioCodec TEXT,
-		Format TEXT,
-		Width INTEGER,
-		Height INTEGER,
-		RefFrames INTEGER,
-		VideoFramerate TEXT,
-		VideoBitRate INTEGER,
-		AudioBitRate INTEGER,
-		AudioChannels INTEGER,
-		AudioSampleRate TEXT,
-		DefaultAudioStreamIndex INTEGER,
-		SupportsTranscoding INTEGER,
-		SupportsDirectStream INTEGER,
-		SupportsDirectPlay INTEGER,
-		IsRemote INTEGER,
-		FOREIGN KEY(ItemId) REFERENCES Items(Id)
-	);
-
-	CREATE TABLE IF NOT EXISTS Users (
-		Id TEXT PRIMARY KEY,
-		Name TEXT NOT NULL,
-		Username TEXT,
-		EmailAddress TEXT,
-		LoginUsername TEXT,
-		LoginPassword TEXT,
-		InvalidLoginAttemptCount INTEGER,
-		LastLoginDate TEXT,
-		LastActivityDate TEXT,
-		AuthenticationProviderID TEXT,
-		PrimaryImageTag TEXT,
-		Policy TEXT
-	);
-
-	CREATE TABLE IF NOT EXISTS UserItems (
-		Id TEXT PRIMARY KEY,
-		UserId TEXT NOT NULL,
-		ItemID TEXT NOT NULL,
-		PlaybackPositionTicks INTEGER,
-		PlayCount INTEGER,
-		IsFavorite INTEGER,
-		Liked INTEGER,
-		LastPlayedDate TEXT,
-		Played INTEGER,
-		Rating INTEGER,
-		FOREIGN KEY(UserId) REFERENCES Users(Id),
-		FOREIGN KEY(ItemID) REFERENCES Items(Id)
-	);
-
-	CREATE TABLE IF NOT EXISTS Sessions (
-		Id TEXT PRIMARY KEY,
-		Client TEXT,
-		DeviceName TEXT,
-		DisplayName TEXT,
-		Endpoint TEXT,
-		LocalAddress TEXT,
-		RemoteAddress TEXT,
-		MachineId TEXT,
-		LastActivityTime TEXT,
-		LastPlaybackTime TEXT,
-		PlaybackPositionTicks INTEGER,
-		PlayMethod TEXT,
-		SupportsMediaControl INTEGER,
-		SupportsPersistentIdentification INTEGER,
-		SupportsSync INTEGER,
-		IsInActiveSession INTEGER,
-		IsTerminal INTEGER,
-		StartTimeTicks INTEGER
-	);
-
-	CREATE INDEX IF NOT EXISTS idx_items_path ON Items(Path);
-	CREATE INDEX IF NOT EXISTS idx_items_mediatype ON Items(MediaType);
-	CREATE INDEX IF NOT EXISTS idx_items_locationtype ON Items(LocationType);
-	CREATE INDEX IF NOT EXISTS idx_items_parentid ON Items(ParentID);
-	CREATE INDEX IF NOT EXISTS idx_mediasources_itemid ON MediaSources(ItemId);
-	CREATE INDEX IF NOT EXISTS idx_useritems_userid ON UserItems(UserId);
-	CREATE INDEX IF NOT EXISTS idx_useritems_itemid ON UserItems(ItemID);
-	`
-
-	_, err := r.Exec(schema)
-	return err
+	return r.db.AutoMigrate(
+		&model.GORMItem{},
+		&model.GORMMediaSource{},
+		&model.GORMUser{},
+		&model.GORMUserItem{},
+		&model.GORMSession{},
+	)
 }
 
 // GetItemsByParent returns items with a given parent ID.
@@ -484,7 +349,7 @@ func (r *ItemRepository) GetChannels(userId string) ([]map[string]interface{}, e
 		WHERE MediaType = 'Channel' AND LocationType = 'Remote'
 		ORDER BY ChannelNumber, Name`
 	
-	rows, err := r.db.Query(query)
+	rows, err := r.Query(query)
 	if err != nil {
 		return nil, err
 	}
@@ -543,7 +408,7 @@ func (r *ItemRepository) GetChannel(id string) (map[string]interface{}, error) {
 	var itemId, name, overview, mediaType, channelType, primaryImage, backdropImage, createdDate, modifiedDate sql.NullString
 	var channelNumber sql.NullInt64
 	
-	err := r.db.QueryRow(query, id).Scan(&itemId, &name, &overview, &mediaType, &channelNumber, &channelType,
+	err := r.QueryRow(query, id).Scan(&itemId, &name, &overview, &mediaType, &channelNumber, &channelType,
 		&primaryImage, &backdropImage, &createdDate, &modifiedDate)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("channel not found: %s", id)
@@ -585,7 +450,7 @@ func (r *ItemRepository) GetChannelFolders(channelId string) ([]map[string]inter
 		WHERE ParentID = ? OR Id = ?
 		ORDER BY Name`
 	
-	rows, err := r.db.Query(query, channelId, channelId)
+	rows, err := r.Query(query, channelId, channelId)
 	if err != nil {
 		return nil, err
 	}
@@ -626,7 +491,7 @@ func (r *ItemRepository) GetChannelItems(channelId, userId string) ([]map[string
 		WHERE ParentID = ?
 		ORDER BY SortName, Name`
 	
-	rows, err := r.db.Query(query, channelId)
+	rows, err := r.Query(query, channelId)
 	if err != nil {
 		return nil, err
 	}
@@ -680,7 +545,7 @@ func (r *ItemRepository) GetPrograms(userId string) ([]map[string]interface{}, e
 		WHERE MediaType = 'Video' AND ContentType = 'TvChannel'
 		ORDER BY StartTimeTicks, Name`
 	
-	rows, err := r.db.Query(query)
+	rows, err := r.Query(query)
 	if err != nil {
 		return nil, err
 	}
@@ -730,7 +595,7 @@ func (r *ItemRepository) GetProgram(id string) (map[string]interface{}, error) {
 	var itemId, name, overview, mediaType, contentType sql.NullString
 	var startTimeTicks, endTimeTicks, runTimeTicks, seasonNumber, episodeNumber, channelNumber sql.NullInt64
 	
-	err := r.db.QueryRow(query, id).Scan(&itemId, &name, &overview, &mediaType, &contentType,
+	err := r.QueryRow(query, id).Scan(&itemId, &name, &overview, &mediaType, &contentType,
 		&startTimeTicks, &endTimeTicks, &runTimeTicks, &seasonNumber, &episodeNumber, &channelNumber)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("program not found: %s", id)
@@ -764,7 +629,7 @@ func (r *ItemRepository) GetRecordings(userId string) ([]map[string]interface{},
 		WHERE MediaType = 'Video' AND ContentType = 'Recording'
 		ORDER BY StartTimeTicks DESC`
 	
-	rows, err := r.db.Query(query)
+	rows, err := r.Query(query)
 	if err != nil {
 		return nil, err
 	}
@@ -818,7 +683,7 @@ func (r *ItemRepository) GetRecording(id string) (map[string]interface{}, error)
 	var itemId, name, overview, mediaType, contentType, primaryImage, path sql.NullString
 	var startTimeTicks, endTimeTicks, runTimeTicks, productionYear sql.NullInt64
 	
-	err := r.db.QueryRow(query, id).Scan(&itemId, &name, &overview, &mediaType, &contentType,
+	err := r.QueryRow(query, id).Scan(&itemId, &name, &overview, &mediaType, &contentType,
 		&startTimeTicks, &endTimeTicks, &runTimeTicks, &productionYear, &primaryImage, &path)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("recording not found: %s", id)
@@ -865,7 +730,7 @@ func (r *ItemRepository) GetChannelsWithImage(userId string) ([]map[string]inter
 		  AND (PrimaryImageURL IS NOT NULL OR BackdropImageURL IS NOT NULL)
 		ORDER BY ChannelNumber, Name`
 	
-	rows, err := r.db.Query(query)
+	rows, err := r.Query(query)
 	if err != nil {
 		return nil, err
 	}
@@ -916,7 +781,7 @@ func (r *ItemRepository) GetProgramsWithImage(userId string) ([]map[string]inter
 		  AND PrimaryImageURL IS NOT NULL
 		ORDER BY StartTimeTicks`
 	
-	rows, err := r.db.Query(query)
+	rows, err := r.Query(query)
 	if err != nil {
 		return nil, err
 	}
@@ -973,7 +838,7 @@ func (r *ItemRepository) GetRecommendedPrograms(userId string) ([]map[string]int
 		ORDER BY CommunityRating DESC, StartTimeTicks
 		LIMIT 20`
 	
-	rows, err := r.db.Query(query)
+	rows, err := r.Query(query)
 	if err != nil {
 		return nil, err
 	}
@@ -1020,7 +885,7 @@ func (r *ItemRepository) GetPlaylists(userId string) ([]map[string]interface{}, 
 		WHERE MediaType = 'Playlist'
 		ORDER BY Name`
 	
-	rows, err := r.db.Query(query)
+	rows, err := r.Query(query)
 	if err != nil {
 		return nil, err
 	}
@@ -1070,7 +935,7 @@ func (r *ItemRepository) GetPlaylist(id string) (map[string]interface{}, error) 
 
 	var dbId, name, overview, mediaType, playlistType, primaryImage, backdropImage, createdDate, modifiedDate sql.NullString
 
-	err := r.db.QueryRow(query, id).Scan(&dbId, &name, &overview, &mediaType, &playlistType,
+	err := r.QueryRow(query, id).Scan(&dbId, &name, &overview, &mediaType, &playlistType,
 		&primaryImage, &backdropImage, &createdDate, &modifiedDate)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("playlist not found: %s", id)
@@ -1114,7 +979,7 @@ func (r *ItemRepository) GetPlaylistItems(playlistId string) ([]map[string]inter
 		WHERE ParentID = ?
 		ORDER BY SortName, Name`
 	
-	rows, err := r.db.Query(query, playlistId)
+	rows, err := r.Query(query, playlistId)
 	if err != nil {
 		return nil, err
 	}
@@ -1161,7 +1026,7 @@ func (r *ItemRepository) GetDisplayPreferences(userId string) (map[string]interf
 	
 	var preferences sql.NullString
 	
-	err := r.db.QueryRow(query, userId).Scan(&preferences)
+	err := r.QueryRow(query, userId).Scan(&preferences)
 	if err == sql.ErrNoRows {
 		return map[string]interface{}{
 			"UserId":     userId,
@@ -1188,7 +1053,7 @@ func (r *ItemRepository) GetDisplayPreferencesByItem(itemId, userId string) (map
 	
 	var preferences sql.NullString
 	
-	err := r.db.QueryRow(query, userId, itemId).Scan(&preferences)
+	err := r.QueryRow(query, userId, itemId).Scan(&preferences)
 	if err == sql.ErrNoRows {
 		return map[string]interface{}{
 			"UserId": userId,
@@ -1224,10 +1089,10 @@ func (r *ItemRepository) GetGenres() ([]map[string]interface{}, error) {
 		)
 		ORDER BY value`
 	
-	rows, err := r.db.Query(query)
+	rows, err := r.Query(query)
 	if err != nil {
 		// Fallback: genres stored as comma-separated in Genres column
-		rows, err = r.db.Query(`
+		rows, err = r.Query(`
 			SELECT DISTINCT Genres FROM Items 
 			WHERE Genres IS NOT NULL AND Genres != ''
 		`)
@@ -1264,7 +1129,7 @@ func (r *ItemRepository) GetStudios() ([]map[string]interface{}, error) {
 		WHERE Studios IS NOT NULL AND Studios != ''
 		ORDER BY Studios`
 	
-	rows, err := r.db.Query(query)
+	rows, err := r.Query(query)
 	if err != nil {
 		return nil, err
 	}

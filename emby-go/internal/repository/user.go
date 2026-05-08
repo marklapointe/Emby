@@ -1,179 +1,107 @@
 package repository
 
 import (
-	"database/sql"
 	"fmt"
 	"time"
 
+	"github.com/emby/emby-go/internal/model"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
-// UserRepository handles user data persistence.
+type User struct {
+	ID                          string    `json:"Id"`
+	Name                        string    `json:"Name"`
+	Username                    string    `json:"Username,omitempty"`
+	EmailAddress                string    `json:"Email,omitempty"`
+	PrimaryImageTag             string    `json:"PrimaryImageTag,omitempty"`
+	HasConfiguredPassword       bool      `json:"HasConfiguredPassword"`
+	HasConfiguredEasyPassword   bool      `json:"HasConfiguredEasyPassword"`
+	EnableAutoLogin             bool      `json:"EnableAutoLogin"`
+	LastLoginDate               time.Time `json:"LastLoginDate,omitempty"`
+	CreatedDate                 time.Time `json:"CreatedDate"`
+	ConnectUserName             string    `json:"ConnectUserName,omitempty"`
+}
+
 type UserRepository struct {
 	*BaseRepository
 }
 
-// NewUserRepository creates a new user repository.
-func NewUserRepository(db *sql.DB) *UserRepository {
+func NewUserRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{NewBaseRepository(db)}
 }
 
-// User represents a user in the database.
-type User struct {
-	ID                string    `json:"Id"`
-	Name              string    `json:"Name"`
-	Username          string    `json:"Username,omitempty"`
-	EmailAddress      string    `json:"EmailAddress,omitempty"`
-	PrimaryImageTag   string    `json:"PrimaryImageTag,omitempty"`
-	HasConfiguredPassword bool  `json:"HasConfiguredPassword"`
-	HasConfiguredEasyPassword bool `json:"HasConfiguredEasyPassword"`
-	EnableAutoLogin   bool      `json:"EnableAutoLogin"`
-	LastLoginDate     time.Time `json:"LastLoginDate,omitempty"`
-	CreatedDate       time.Time `json:"CreatedDate"`
-	ConnectUserName   string    `json:"ConnectUserName,omitempty"`
-}
-
-// CreateUserTable creates the users table if it doesn't exist.
-// Uses the Users table from ItemRepository schema for compatibility.
-func (r *UserRepository) CreateUserTable() error {
-	query := `
-	CREATE TABLE IF NOT EXISTS Users (
-		Id TEXT PRIMARY KEY,
-		Name TEXT NOT NULL,
-		Username TEXT,
-		EmailAddress TEXT,
-		LoginUsername TEXT,
-		LoginPassword TEXT,
-		InvalidLoginAttemptCount INTEGER,
-		LastLoginDate TEXT,
-		LastActivityDate TEXT,
-		AuthenticationProviderID TEXT,
-		PrimaryImageTag TEXT,
-		Policy TEXT
-	);`
-	_, err := r.Exec(query)
-	return err
-}
-
-// CreateUser creates a new user.
-func (r *UserRepository) CreateUser(user *User) error {
-	if user.ID == "" {
-		user.ID = fmt.Sprintf("user-%d", time.Now().UnixNano())
+func (r *UserRepository) CreateUser(user *model.GORMUser) error {
+	if user.Id == "" {
+		user.Id = fmt.Sprintf("user-%d", time.Now().UnixNano())
 	}
-	if user.CreatedDate.IsZero() {
-		user.CreatedDate = time.Now()
-	}
-
-	query := `
-	INSERT INTO Users (Id, Name, Username, EmailAddress, LoginUsername, LoginPassword,
-		InvalidLoginAttemptCount, LastLoginDate, LastActivityDate, AuthenticationProviderID,
-		PrimaryImageTag, Policy)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
-
-	_, err := r.Exec(query, user.ID, user.Name, "", "", "", "",
-		0, user.LastLoginDate.Format(time.RFC3339), "", "", user.PrimaryImageTag, "")
-	return err
+	return r.db.Create(user).Error
 }
 
-// GetUserByID retrieves a user by ID.
-func (r *UserRepository) GetUserByID(id string) (*User, error) {
-	query := `SELECT Id, Name, Username, EmailAddress, LoginUsername, LoginPassword,
-		InvalidLoginAttemptCount, LastLoginDate, LastActivityDate, AuthenticationProviderID,
-		PrimaryImageTag, Policy
-		FROM Users WHERE Id = ?`
-
-	user := &User{}
-	var lastLogin, lastActivity, authProviderID, policy sql.NullString
-	var invalidLoginCount sql.NullInt64
-	err := r.QueryRow(query, id).Scan(
-		&user.ID, &user.Name, &user.PrimaryImageTag,
-		&invalidLoginCount, &lastLogin, &lastActivity, &authProviderID, &policy)
+func (r *UserRepository) GetUserByID(id string) (*model.GORMUser, error) {
+	var user model.GORMUser
+	err := r.db.First(&user, "Id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}
-	if lastLogin.Valid {
-		user.LastLoginDate, _ = time.Parse(time.RFC3339, lastLogin.String)
-	}
-	return user, nil
+	return &user, nil
 }
 
-// GetUserByName retrieves a user by name.
-func (r *UserRepository) GetUserByName(name string) (*User, error) {
-	query := `SELECT Id, Name, PrimaryImageTag FROM Users WHERE Name = ?`
-
-	user := &User{}
-	err := r.QueryRow(query, name).Scan(&user.ID, &user.Name, &user.PrimaryImageTag)
+func (r *UserRepository) GetUserByName(name string) (*model.GORMUser, error) {
+	var user model.GORMUser
+	err := r.db.Where("Name = ?", name).First(&user).Error
 	if err != nil {
 		return nil, err
 	}
-	return user, nil
+	return &user, nil
 }
 
-// GetAllUsers retrieves all users.
-func (r *UserRepository) GetAllUsers() ([]*User, error) {
-	query := `SELECT Id, Name, PrimaryImageTag FROM Users ORDER BY Name`
-
-	rows, err := r.Query(query)
+func (r *UserRepository) GetAllUsers() ([]*model.GORMUser, error) {
+	var users []*model.GORMUser
+	err := r.db.Select("Id, Name, PrimaryImageTag").Order("Name").Find(&users).Error
 	if err != nil {
 		return nil, err
-	}
-	defer rows.Close()
-
-	var users []*User
-	for rows.Next() {
-		user := &User{}
-		err := rows.Scan(&user.ID, &user.Name, &user.PrimaryImageTag)
-		if err != nil {
-			return nil, err
-		}
-		users = append(users, user)
 	}
 	if users == nil {
-		users = []*User{}
+		users = []*model.GORMUser{}
 	}
 	return users, nil
 }
 
-// UpdateUser updates an existing user.
-func (r *UserRepository) UpdateUser(user *User) error {
-	query := `UPDATE Users SET Name = ?, PrimaryImageTag = ? WHERE Id = ?`
-
-	_, err := r.Exec(query, user.Name, user.PrimaryImageTag, user.ID)
-	return err
+func (r *UserRepository) UpdateUser(user *model.GORMUser) error {
+	return r.db.Model(user).Updates(map[string]interface{}{
+		"Name": user.Name,
+		"PrimaryImageTag": user.PrimaryImageTag,
+	}).Error
 }
 
-// DeleteUser deletes a user by ID.
 func (r *UserRepository) DeleteUser(id string) error {
-	query := `DELETE FROM Users WHERE Id = ?`
-	_, err := r.Exec(query, id)
-	return err
+	return r.db.Delete(&model.GORMUser{}, "Id = ?", id).Error
 }
 
-// SetPassword sets the password hash for a user.
 func (r *UserRepository) SetPassword(userID, password string) error {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return fmt.Errorf("hash password: %w", err)
 	}
-
-	query := `UPDATE Users SET LoginPassword = ?, InvalidLoginAttemptCount = 0 WHERE Id = ?`
-	_, err = r.Exec(query, string(hash), userID)
-	return err
+	return r.db.Model(&model.GORMUser{}).Where("Id = ?", userID).Updates(map[string]interface{}{
+		"LoginPassword": string(hash),
+		"InvalidLoginAttemptCount": 0,
+	}).Error
 }
 
 func (r *UserRepository) ValidatePassword(userID, password string) (bool, error) {
-	query := `SELECT LoginPassword FROM Users WHERE Id = ?`
-	var hash sql.NullString
-	err := r.QueryRow(query, userID).Scan(&hash)
+	var user model.GORMUser
+	err := r.db.Select("LoginPassword").Where("Id = ?", userID).First(&user).Error
 	if err != nil {
 		return false, err
 	}
 
-	if !hash.Valid || hash.String == "" {
+	if user.LoginPassword == "" {
 		return false, nil
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(hash.String), []byte(password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.LoginPassword), []byte(password))
 	if err == bcrypt.ErrMismatchedHashAndPassword {
 		return false, nil
 	}
@@ -183,40 +111,33 @@ func (r *UserRepository) ValidatePassword(userID, password string) (bool, error)
 	return true, nil
 }
 
-func (r *UserRepository) Authenticate(username, password string) (*User, error) {
-	query := `SELECT Id, Name, Username, EmailAddress, LoginPassword FROM Users WHERE Name = ? OR Username = ? OR EmailAddress = ?`
-	var user User
-	var loginPassword sql.NullString
-	err := r.QueryRow(query, username, username, username).Scan(&user.ID, &user.Name, &user.Username, &user.EmailAddress, &loginPassword)
+func (r *UserRepository) Authenticate(username, password string) (*model.GORMUser, error) {
+	var user model.GORMUser
+	err := r.db.Where("Name = ? OR Username = ? OR EmailAddress = ?", username, username, username).First(&user).Error
 	if err != nil {
 		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
-	if !loginPassword.Valid || loginPassword.String == "" {
+	if user.LoginPassword == "" {
 		if password == "" {
 			return &user, nil
 		}
 		return nil, fmt.Errorf("invalid credentials")
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(loginPassword.String), []byte(password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.LoginPassword), []byte(password))
 	if err != nil {
 		return nil, fmt.Errorf("invalid credentials")
 	}
 	return &user, nil
 }
 
-// UpdateLastLogin updates the last login date for a user.
 func (r *UserRepository) UpdateLastLogin(userID string) error {
-	query := `UPDATE Users SET LastLoginDate = ? WHERE Id = ?`
-	_, err := r.Exec(query, time.Now().Format(time.RFC3339), userID)
-	return err
+	return r.db.Model(&model.GORMUser{}).Where("Id = ?", userID).Update("LastLoginDate", time.Now()).Error
 }
 
-// UserCount returns the total number of users.
-func (r *UserRepository) UserCount() (int, error) {
-	query := `SELECT COUNT(*) FROM Users`
-	var count int
-	err := r.QueryRow(query).Scan(&count)
+func (r *UserRepository) UserCount() (int64, error) {
+	var count int64
+	err := r.db.Model(&model.GORMUser{}).Count(&count).Error
 	return count, err
 }

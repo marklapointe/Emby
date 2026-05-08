@@ -54,7 +54,6 @@ func NewRouter(cfg *config.Config, logger *zap.Logger, dbManager *database.Manag
 	userRepo := repository.NewUserRepository(dbManager.DB())
 
 	configRepo.CreateConfigTable()
-	userRepo.CreateUserTable()
 	itemRepo.CreateSchema()
 
 	return &Router{
@@ -68,6 +67,7 @@ func NewRouter(cfg *config.Config, logger *zap.Logger, dbManager *database.Manag
 }
 
 func (r *Router) RegisterRoutes(router *chi.Mux) {
+	sqlDB, _ := r.dbManager.SQLDB()
 	r.userSvc = user.NewManager(r.dbManager, r.userRepo, r.logger)
 	r.librarySvc = library.NewManager(r.config, r.logger, r.dbManager)
 	r.mediaSvc = media.NewManager(r.config, r.logger)
@@ -76,7 +76,7 @@ func (r *Router) RegisterRoutes(router *chi.Mux) {
 	r.imageSvc = image.NewManager(r.logger)
 	r.notificationSvc = notification.NewManager()
 	r.scheduledSvc = scheduled.NewManager(r.logger)
-	r.transcodingSvc = transcoding.NewManager(r.config, r.logger, r.dbManager.DB())
+	r.transcodingSvc = transcoding.NewManager(r.config, r.logger, sqlDB)
 	r.channelSvc = channel.NewManager(r.logger)
 	r.dlnaSvc = dlna.NewManager(r.logger)
 	r.syncSvc = sync.NewManager(r.logger)

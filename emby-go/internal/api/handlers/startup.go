@@ -224,7 +224,7 @@ func (h *StartupHandler) PostUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user *repository.User
+	var user *model.GORMUser
 	if len(users) > 0 {
 		user = users[0]
 		user.Name = req.Name
@@ -236,7 +236,7 @@ func (h *StartupHandler) PostUser(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		// Create new user
-		user = &repository.User{
+		user = &model.GORMUser{
 			Name:            req.Name,
 			ConnectUserName: req.ConnectUserName,
 		}
