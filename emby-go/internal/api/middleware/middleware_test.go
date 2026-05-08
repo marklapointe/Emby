@@ -85,7 +85,7 @@ func TestSecurityMiddleware(t *testing.T) {
 }
 
 func TestAuthenticationMiddleware(t *testing.T) {
-	handler := AuthenticationMiddleware()(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := AuthenticationMiddleware(nil)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
@@ -100,7 +100,7 @@ func TestAuthenticationMiddleware(t *testing.T) {
 }
 
 func TestSessionMiddleware(t *testing.T) {
-	handler := SessionMiddleware()(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := SessionMiddleware(nil)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 

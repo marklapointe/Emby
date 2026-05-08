@@ -19,7 +19,7 @@ func NewTranscodingHandler(transcodingSvc *transcoding.Manager) *TranscodingHand
 
 // GetTranscodingProfiles handles GET /TranscodingProfiles
 func (h *TranscodingHandler) GetTranscodingProfiles(w http.ResponseWriter, r *http.Request) {
-	profiles := []map[string]interface{}{}
+	profiles := h.transcodingSvc.GetTranscodingProfiles()
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(profiles)
@@ -35,7 +35,8 @@ func (h *TranscodingHandler) GetTranscodingProfile(w http.ResponseWriter, r *htt
 
 // GetActiveTranscodes handles GET /ActiveTranscodes
 func (h *TranscodingHandler) GetActiveTranscodes(w http.ResponseWriter, r *http.Request) {
-	transcodes := []map[string]interface{}{}
+	count := h.transcodingSvc.GetActiveStreamCount()
+	transcodes := make([]map[string]interface{}, count)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(transcodes)

@@ -49,13 +49,6 @@ func TestGetStreamURL(t *testing.T) {
 		t.Error("expected IsLive to be false")
 	}
 }
-	if info.URL == "" {
-		t.Error("expected non-empty URL")
-	}
-	if !info.IsLive {
-		t.Error("expected IsLive to be true")
-	}
-}
 
 func TestBuildTranscodeCommand(t *testing.T) {
 	m := NewManager(nil, nil, nil)

@@ -75,9 +75,7 @@ func (h *MediaHandler) GetStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "video/mp4")
-	w.Header().Set("Content-Disposition", "inline; filename="+mediaSource.Name)
-	w.Write([]byte("stream_data"))
+	http.ServeFile(w, r, mediaSource.Path)
 }
 
 // GetSubtitles handles GET /Items/{id}/Subtitles
@@ -116,7 +114,5 @@ func (h *MediaHandler) GetAudioStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "audio/mpeg")
-	w.Header().Set("Content-Disposition", "inline; filename="+mediaSource.Name+".mp3")
-	w.Write([]byte("audio_data"))
+	http.ServeFile(w, r, mediaSource.Path)
 }

@@ -3,7 +3,6 @@ package library
 import (
 	"github.com/emby/emby-go/internal/config"
 	"github.com/emby/emby-go/internal/database"
-	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
 
@@ -23,7 +22,4 @@ func NewManager(cfg *config.Config, logger *zap.Logger, dbManager *database.Mana
 	}
 }
 
-// RegisterRoutes registers library API routes.
-func (m *Manager) RegisterRoutes(r chi.Router) {
-	// TODO: Add library endpoints
-}
+
