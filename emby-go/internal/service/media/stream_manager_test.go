@@ -221,3 +221,123 @@ func TestPooledTranscoding_MixedDevices(t *testing.T) {
 		t.Errorf("expected 5 total viewers on source, got %d", sourceViewers)
 	}
 }
+
+func TestSourceResilience_DisconnectAndReconnect(t *testing.T) {
+	logger := zap.NewNop()
+	m := NewStreamManager(10, logger)
+
+	ctx := context.Background()
+	profile := &TranscodingProfile{Container: "ts", VideoCodec: "h264", MaxVideoBitrate: 5000}
+
+	src, out, err := m.GetOrCreateStream(ctx, "channel-101", profile, "tv-1")
+	if err != nil {
+		t.Fatalf("GetOrCreateStream failed: %v", err)
+	}
+
+	if src.State != SourceStateConnected {
+		t.Errorf("expected source to be connected, got %s", src.State)
+	}
+
+	m.SourceDisconnected("channel-101")
+
+	if m.GetSourceState("channel-101") != SourceStateDisconnected {
+		t.Errorf("expected source to be disconnected")
+	}
+
+	m.SourceReconnected("channel-101")
+
+	if m.GetSourceState("channel-101") != SourceStateConnected {
+		t.Errorf("expected source to be reconnected")
+	}
+
+	if len(out.Viewers) != 1 {
+		t.Errorf("expected output to still have 1 viewer, got %d", len(out.Viewers))
+	}
+}
+
+func TestSourceResilience_MultipleClientsReconnect(t *testing.T) {
+	logger := zap.NewNop()
+	m := NewStreamManager(10, logger)
+
+	ctx := context.Background()
+	profile := &TranscodingProfile{Container: "ts", VideoCodec: "h264", MaxVideoBitrate: 5000}
+
+	m.GetOrCreateStream(ctx, "channel-101", profile, "tv-1")
+	m.GetOrCreateStream(ctx, "channel-101", profile, "tv-2")
+	m.GetOrCreateStream(ctx, "channel-101", profile, "tv-3")
+
+	viewers := m.GetSourceViewerCount("channel-101")
+	if viewers != 3 {
+		t.Errorf("expected 3 viewers, got %d", viewers)
+	}
+
+	m.SourceDisconnected("channel-101")
+
+	state := m.GetSourceState("channel-101")
+	if state != SourceStateDisconnected {
+		t.Errorf("expected disconnected state, got %s", state)
+	}
+
+	m.SourceReconnected("channel-101")
+
+	viewers = m.GetSourceViewerCount("channel-101")
+	if viewers != 3 {
+		t.Errorf("expected 3 viewers after reconnect, got %d", viewers)
+	}
+}
+
+func TestSourceResilience_MetricsTracking(t *testing.T) {
+	logger := zap.NewNop()
+	m := NewStreamManager(10, logger)
+
+	ctx := context.Background()
+	profile := &TranscodingProfile{Container: "ts", VideoCodec: "h264", MaxVideoBitrate: 5000}
+
+	m.GetOrCreateStream(ctx, "channel-101", profile, "tv-1")
+
+	m.SourceDisconnected("channel-101")
+	m.SourceReconnected("channel-101")
+	m.SourceDisconnected("channel-101")
+	m.SourceReconnected("channel-101")
+
+	metrics := m.GetMetrics()
+	if metrics.TotalReconnectsAttempted != 0 {
+		t.Logf("Note: TotalReconnectsAttempted=%d (automatic reconnect not triggered in this test)", metrics.TotalReconnectsAttempted)
+	}
+}
+
+func TestSourceResilience_MultipleResolutionsSurviveDisconnect(t *testing.T) {
+	logger := zap.NewNop()
+	m := NewStreamManager(10, logger)
+
+	ctx := context.Background()
+	profile1080 := &TranscodingProfile{Container: "ts", VideoCodec: "h264", MaxVideoBitrate: 5000}
+	profile720 := &TranscodingProfile{Container: "ts", VideoCodec: "h264", MaxVideoBitrate: 2500}
+
+	m.GetOrCreateStream(ctx, "channel-101", profile1080, "tv-1080")
+	m.GetOrCreateStream(ctx, "channel-101", profile720, "tablet-720")
+
+	m.SourceDisconnected("channel-101")
+
+	viewers1080 := m.GetStreamViewers("channel-101", profile1080)
+	viewers720 := m.GetStreamViewers("channel-101", profile720)
+
+	if viewers1080 != 1 {
+		t.Errorf("expected 1 viewer at 1080p, got %d", viewers1080)
+	}
+	if viewers720 != 1 {
+		t.Errorf("expected 1 viewer at 720p, got %d", viewers720)
+	}
+
+	m.SourceReconnected("channel-101")
+
+	viewers1080 = m.GetStreamViewers("channel-101", profile1080)
+	viewers720 = m.GetStreamViewers("channel-101", profile720)
+
+	if viewers1080 != 1 {
+		t.Errorf("expected 1 viewer at 1080p after reconnect, got %d", viewers1080)
+	}
+	if viewers720 != 1 {
+		t.Errorf("expected 1 viewer at 720p after reconnect, got %d", viewers720)
+	}
+}

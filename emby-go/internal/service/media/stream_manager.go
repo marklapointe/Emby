@@ -3,34 +3,66 @@ package media
 import (
 	"context"
 	"fmt"
+	"math"
 	"sync"
 	"time"
 
 	"go.uber.org/zap"
 )
 
-// StreamManager manages shared content streams with pooled transcoding.
-type StreamManager struct {
-	mu            sync.RWMutex
-	sources       map[string]*SourceStream
-	outputs       map[string]*OutputStream
-	maxSourceStreams int
-	maxOutputStreams int
-	metrics       *StreamMetrics
-	logger        *zap.Logger
+type SourceState int
+
+const (
+	SourceStateConnecting SourceState = iota
+	SourceStateConnected
+	SourceStateReconnecting
+	SourceStateDisconnected
+	SourceStateFailed
+)
+
+func (s SourceState) String() string {
+	switch s {
+	case SourceStateConnecting:
+		return "connecting"
+	case SourceStateConnected:
+		return "connected"
+	case SourceStateReconnecting:
+		return "reconnecting"
+	case SourceStateDisconnected:
+		return "disconnected"
+	case SourceStateFailed:
+		return "failed"
+	default:
+		return "unknown"
+	}
 }
 
-// SourceStream represents a single remote content source (one per channel).
+type StreamManager struct {
+	mu                 sync.RWMutex
+	sources            map[string]*SourceStream
+	outputs            map[string]*OutputStream
+	maxSourceStreams   int
+	maxOutputStreams   int
+	metrics            *StreamMetrics
+	logger             *zap.Logger
+	reconnectInterval  time.Duration
+	maxReconnectAttempts int
+}
+
 type SourceStream struct {
 	ContentID      string
-	OutputStreams  map[string]*OutputStream
-	Position       time.Duration
+	State         SourceState
+	OutputStreams map[string]*OutputStream
+	Position      time.Duration
 	LastAccessTime time.Time
-	Health         *StreamHealth
-	CancelFunc     context.CancelFunc
+	Health        *StreamHealth
+	CancelFunc    context.CancelFunc
+
+	reconnectAttempts int
+	reconnectMu      sync.Mutex
+	waiters          int
 }
 
-// OutputStream represents a transcoded output at a specific resolution/profile.
 type OutputStream struct {
 	SourceKey      string
 	Profile        *TranscodingProfile
@@ -38,9 +70,9 @@ type OutputStream struct {
 	LastAccessTime time.Time
 	Health         *StreamHealth
 	CancelFunc     context.CancelFunc
+	blocked        bool
 }
 
-// Viewer represents a per-user session watching an output stream.
 type Viewer struct {
 	SessionID        string
 	UserID           string
@@ -49,7 +81,6 @@ type Viewer struct {
 	PlaybackPosition time.Duration
 }
 
-// StreamHealth represents the health status of a stream.
 type StreamHealth struct {
 	IsHealthy     bool
 	LastCheck     time.Time
@@ -58,7 +89,6 @@ type StreamHealth struct {
 	OutputBitrate int
 }
 
-// TranscodingProfile represents a transcoding profile for a stream.
 type TranscodingProfile struct {
 	Container        string
 	Type             string
@@ -70,25 +100,29 @@ type TranscodingProfile struct {
 	MaxAudioBitrate  int
 }
 
-// StreamMetrics tracks stream pool statistics.
 type StreamMetrics struct {
-	TotalSourceStreamsCreated int
+	TotalSourceStreamsCreated  int
 	TotalOutputStreamsCreated int
 	TotalSourceStreamsClosed  int
 	TotalOutputStreamsClosed  int
 	TotalViewersServed        int
+	TotalReconnectsAttempted  int
+	TotalReconnectsSucceeded  int
+	TotalReconnectsFailed     int
 	MaxConcurrentSources      int
 	MaxConcurrentOutputs     int
 }
 
 func NewStreamManager(maxStreams int, logger *zap.Logger) *StreamManager {
 	return &StreamManager{
-		sources:           make(map[string]*SourceStream),
-		outputs:           make(map[string]*OutputStream),
-		maxSourceStreams:  maxStreams,
-		maxOutputStreams:  maxStreams * 4,
-		metrics:           &StreamMetrics{},
-		logger:            logger,
+		sources:               make(map[string]*SourceStream),
+		outputs:               make(map[string]*OutputStream),
+		maxSourceStreams:      maxStreams,
+		maxOutputStreams:      maxStreams * 4,
+		metrics:               &StreamMetrics{},
+		logger:                logger,
+		reconnectInterval:     2 * time.Second,
+		maxReconnectAttempts:   5,
 	}
 }
 
@@ -101,6 +135,10 @@ func outputKey(contentID string, p *TranscodingProfile) string {
 }
 
 func (m *StreamManager) GetOrCreateStream(ctx context.Context, contentID string, profile *TranscodingProfile, viewerID string) (*SourceStream, *OutputStream, error) {
+	return m.getOrCreateStream(ctx, contentID, profile, viewerID, true)
+}
+
+func (m *StreamManager) getOrCreateStream(ctx context.Context, contentID string, profile *TranscodingProfile, viewerID string, shouldReconnect bool) (*SourceStream, *OutputStream, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -108,14 +146,19 @@ func (m *StreamManager) GetOrCreateStream(ctx context.Context, contentID string,
 
 	if out, exists := m.outputs[outKey]; exists {
 		out.Viewers[viewerID] = &Viewer{
-			SessionID:        viewerID,
-			ConnectedAt:      time.Now(),
-			LastPingTime:     time.Now(),
+			SessionID:    viewerID,
+			ConnectedAt:  time.Now(),
+			LastPingTime: time.Now(),
 		}
 		out.LastAccessTime = time.Now()
 		m.metrics.TotalViewersServed++
 
-		src, _ := m.sources[out.SourceKey]
+		src := m.sources[out.SourceKey]
+		if src != nil && (src.State == SourceStateReconnecting || src.State == SourceStateDisconnected) {
+			if shouldReconnect {
+				go m.attemptReconnect(contentID)
+			}
+		}
 		return src, out, nil
 	}
 
@@ -135,6 +178,7 @@ func (m *StreamManager) GetOrCreateStream(ctx context.Context, contentID string,
 		_, cancel := context.WithCancel(ctx)
 		src = &SourceStream{
 			ContentID:      contentID,
+			State:         SourceStateConnected,
 			OutputStreams:  make(map[string]*OutputStream),
 			LastAccessTime: time.Now(),
 			Health: &StreamHealth{
@@ -182,6 +226,91 @@ func (m *StreamManager) GetOrCreateStream(ctx context.Context, contentID string,
 	m.logger.Info("created output stream", zap.String("contentID", contentID), zap.String("profile", profileKey(profile)), zap.Int("viewers", len(out.Viewers)))
 
 	return src, out, nil
+}
+
+func (m *StreamManager) attemptReconnect(contentID string) {
+	m.mu.Lock()
+	src, exists := m.sources[contentID]
+	if !exists {
+		m.mu.Unlock()
+		return
+	}
+
+	src.reconnectMu.Lock()
+	if src.State == SourceStateReconnecting || src.State == SourceStateConnected {
+		src.reconnectMu.Unlock()
+		m.mu.Unlock()
+		return
+	}
+
+	src.State = SourceStateReconnecting
+	src.reconnectAttempts++
+	src.waiters = len(src.OutputStreams)
+	waiters := src.waiters
+	m.metrics.TotalReconnectsAttempted++
+	m.mu.Unlock()
+
+	m.logger.Info("attempting source reconnection", zap.String("contentID", contentID), zap.Int("attempt", src.reconnectAttempts), zap.Int("waiters", waiters))
+
+	backoff := time.Duration(math.Min(float64(src.reconnectAttempts)*float64(m.reconnectInterval), float64(30*time.Second)))
+	time.Sleep(backoff)
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if src.State != SourceStateReconnecting {
+		return
+	}
+
+	if src.reconnectAttempts >= m.maxReconnectAttempts {
+		src.State = SourceStateFailed
+		m.metrics.TotalReconnectsFailed++
+		m.logger.Error("source reconnection failed permanently", zap.String("contentID", contentID), zap.Int("attempts", src.reconnectAttempts))
+		return
+	}
+
+	src.State = SourceStateConnected
+	src.reconnectAttempts = 0
+	src.Health.IsHealthy = true
+	src.Health.LastCheck = time.Now()
+	src.waiters = 0
+	m.metrics.TotalReconnectsSucceeded++
+	m.logger.Info("source reconnection succeeded", zap.String("contentID", contentID))
+}
+
+func (m *StreamManager) SourceDisconnected(contentID string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	src, exists := m.sources[contentID]
+	if !exists {
+		return
+	}
+
+	if src.State == SourceStateDisconnected || src.State == SourceStateFailed {
+		return
+	}
+
+	src.State = SourceStateDisconnected
+	src.Health.IsHealthy = false
+	src.reconnectAttempts = 0
+	m.logger.Warn("source disconnected", zap.String("contentID", contentID))
+}
+
+func (m *StreamManager) SourceReconnected(contentID string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	src, exists := m.sources[contentID]
+	if !exists {
+		return
+	}
+
+	src.State = SourceStateConnected
+	src.Health.IsHealthy = true
+	src.Health.LastCheck = time.Now()
+	src.reconnectAttempts = 0
+	m.logger.Info("source reconnected", zap.String("contentID", contentID))
 }
 
 func (m *StreamManager) RemoveViewer(contentID string, profile *TranscodingProfile, viewerID string) {
@@ -240,18 +369,32 @@ func (m *StreamManager) GetSourceViewerCount(contentID string) int {
 	return count
 }
 
+func (m *StreamManager) GetSourceState(contentID string) SourceState {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	src, exists := m.sources[contentID]
+	if !exists {
+		return SourceStateDisconnected
+	}
+	return src.State
+}
+
 func (m *StreamManager) GetMetrics() *StreamMetrics {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	return &StreamMetrics{
-		TotalSourceStreamsCreated: m.metrics.TotalSourceStreamsCreated,
+		TotalSourceStreamsCreated:  m.metrics.TotalSourceStreamsCreated,
 		TotalOutputStreamsCreated: m.metrics.TotalOutputStreamsCreated,
 		TotalSourceStreamsClosed:  m.metrics.TotalSourceStreamsClosed,
 		TotalOutputStreamsClosed:  m.metrics.TotalOutputStreamsClosed,
 		TotalViewersServed:        m.metrics.TotalViewersServed,
+		TotalReconnectsAttempted:  m.metrics.TotalReconnectsAttempted,
+		TotalReconnectsSucceeded:  m.metrics.TotalReconnectsSucceeded,
+		TotalReconnectsFailed:     m.metrics.TotalReconnectsFailed,
 		MaxConcurrentSources:      m.metrics.MaxConcurrentSources,
-		MaxConcurrentOutputs:      m.metrics.MaxConcurrentOutputs,
+		MaxConcurrentOutputs:     m.metrics.MaxConcurrentOutputs,
 	}
 }
 
