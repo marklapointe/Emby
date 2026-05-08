@@ -175,17 +175,12 @@ func (r *Router) registerLibraryRoutes(router *chi.Mux) {
 	r.registerRoute(router, http.MethodGet, "/library/mediafolders/{id}/items", libHandler.GetFolderItems)
 	r.registerRoute(router, http.MethodPost, "/library/folders/fullscan", libHandler.ScanLibrary)
 	r.registerRoute(router, http.MethodGet, "/library/virtualfolders", libHandler.GetVirtualFolders)
-	router.Get("/Library/VirtualFolders", libHandler.GetVirtualFolders)
 	r.registerRoute(router, http.MethodPost, "/library/virtualfolders", libHandler.AddVirtualFolder)
-	router.Post("/Library/VirtualFolders", libHandler.AddVirtualFolder)
 	r.registerRoute(router, http.MethodPost, "/library/virtualfolders/name", libHandler.RenameVirtualFolder)
-	router.Post("/Library/VirtualFolders/Name", libHandler.RenameVirtualFolder)
 	r.registerRoute(router, http.MethodPost, "/library/virtualfolders/paths", libHandler.AddMediaPath)
-	router.Post("/Library/VirtualFolders/Paths", libHandler.AddMediaPath)
 	r.registerRoute(router, http.MethodPost, "/library/virtualfolders/libraryoptions", libHandler.UpdateVirtualFolderOptions)
-	router.Post("/Library/VirtualFolders/LibraryOptions", libHandler.UpdateVirtualFolderOptions)
 	r.registerRoute(router, http.MethodGet, "/library/virtualfolders/{id}/items", libHandler.GetVirtualFolderItems)
-	router.Get("/Libraries/AvailableOptions", libHandler.GetAvailableOptions)
+	r.registerRoute(router, http.MethodGet, "/libraries/availableoptions", libHandler.GetAvailableOptions)
 }
 
 func (r *Router) registerSessionRoutes(router *chi.Mux) {
@@ -419,10 +414,7 @@ func (r *Router) registerEnvironmentRoutes(router *chi.Mux) {
 	r.registerRoute(router, http.MethodGet, "/environment/parentpath", environmentHandler.GetParentPath)
 	r.registerRoute(router, http.MethodGet, "/environment/directorycontents", environmentHandler.GetDirectoryContents)
 	r.registerRoute(router, http.MethodPost, "/environment/validatepath", environmentHandler.ValidatePath)
-	router.Get("/Environment/DefaultDirectoryBrowser", environmentHandler.GetDefaultDirectoryBrowser)
-	router.Get("/Environment/ParentPath", environmentHandler.GetParentPath)
-	router.Get("/Environment/DirectoryContents", environmentHandler.GetDirectoryContents)
-	router.Post("/Environment/ValidatePath", environmentHandler.ValidatePath)
+	r.registerRoute(router, http.MethodGet, "/environment/defaultdirectorybrowser", environmentHandler.GetDefaultDirectoryBrowser)
 }
 
 func (r *Router) registerFilterRoutes(router *chi.Mux) {
