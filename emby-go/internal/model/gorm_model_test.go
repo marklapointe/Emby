@@ -49,7 +49,6 @@ func TestGORMItemFields(t *testing.T) {
 		ProductionYear:  2024,
 		MediaType:       "Video",
 		Path:            "/media/test.mp4",
-		IsMovie:         true,
 		CreatedDate:     time.Now(),
 	}
 	if item.Id != "test-id" {
@@ -58,8 +57,25 @@ func TestGORMItemFields(t *testing.T) {
 	if item.Name != "Test Movie" {
 		t.Errorf("expected Name Test Movie, got %s", item.Name)
 	}
-	if !item.IsMovie {
-		t.Error("expected IsMovie to be true")
+}
+
+func TestGORMItemMediaTypeTableName(t *testing.T) {
+	imt := GORMItemMediaType{}
+	if imt.TableName() != "ItemMediaTypes" {
+		t.Errorf("expected ItemMediaTypes, got %s", imt.TableName())
+	}
+}
+
+func TestGORMItemMediaTypeFields(t *testing.T) {
+	imt := GORMItemMediaType{
+		ItemId:    "item-1",
+		MediaType: "Movie",
+	}
+	if imt.ItemId != "item-1" {
+		t.Errorf("expected ItemId item-1, got %s", imt.ItemId)
+	}
+	if imt.MediaType != "Movie" {
+		t.Errorf("expected MediaType Movie, got %s", imt.MediaType)
 	}
 }
 

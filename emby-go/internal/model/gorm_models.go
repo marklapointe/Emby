@@ -16,50 +16,54 @@ type GORMItem struct {
 	RunTimeTicks                 int64     `gorm:"column:RunTimeTicks"`
 	ProductionYear               int       `gorm:"column:ProductionYear"`
 	OfficialRating               string    `gorm:"column:OfficialRating"`
-	ContentType                 string    `gorm:"column:ContentType"`
-	MediaType                   string    `gorm:"column:MediaType"`
-	Genres                      string    `gorm:"column:Genres"`
+	ContentType                  string    `gorm:"column:ContentType"`
+	MediaType                    string    `gorm:"column:MediaType"`
+	Genres                       string    `gorm:"column:Genres"`
 	Studios                      string    `gorm:"column:Studios"`
-	SeasonNumber                int       `gorm:"column:SeasonNumber"`
-	EpisodeNumber               int       `gorm:"column:EpisodeNumber"`
-	Album                       string    `gorm:"column:Album"`
-	Artists                     string    `gorm:"column:Artists"`
-	ExtraType                   string    `gorm:"column:ExtraType"`
-	ChannelNumber               int       `gorm:"column:ChannelNumber"`
-	StartDate                   time.Time `gorm:"column:StartDate"`
-	EndDate                     time.Time `gorm:"column:EndDate"`
-	IsLive                      bool      `gorm:"column:IsLive"`
-	IsSeries                    bool      `gorm:"column:IsSeries"`
-	IsMovie                     bool      `gorm:"column:IsMovie"`
-	IsNews                      bool      `gorm:"column:IsNews"`
-	IsSports                    bool      `gorm:"column:IsSports"`
-	IsKids                      bool      `gorm:"column:IsKids"`
-	IsPremiere                  bool      `gorm:"column:IsPremiere"`
-	LocationType                string    `gorm:"column:LocationType"`
-	Path                        string    `gorm:"column:Path"`
-	PrimaryImageURL             string    `gorm:"column:PrimaryImageURL"`
-	BackdropImageURL             string    `gorm:"column:BackdropImageURL"`
-	ParentID                    string    `gorm:"column:ParentID"`
-	Width                       int       `gorm:"column:Width"`
-	Height                      int       `gorm:"column:Height"`
-	Video3DFormat               string    `gorm:"column:Video3DFormat"`
-	PostLiveFeedTime            int64     `gorm:"column:PostLiveFeedTime"`
-	LiveMediaSourceID           string    `gorm:"column:LiveMediaSourceID"`
-	StartTimeTicks              int64     `gorm:"column:StartTimeTicks"`
-	EndTimeTicks                int64     `gorm:"column:EndTimeTicks"`
-	RemoteImageURL              string    `gorm:"column:RemoteImageURL"`
-	LocalTrailerCount           int       `gorm:"column:LocalTrailerCount"`
-	LockedFields                string    `gorm:"column:LockedFields"`
-	LockData                    bool      `gorm:"column:LockData"`
-	Disabled                    bool      `gorm:"column:Disabled"`
-	EnableMediaSourceDisplay    bool      `gorm:"column:EnableMediaSourceDisplay"`
-	ExtraIds                    string    `gorm:"column:ExtraIds"`
-	CreatedDate                 time.Time `gorm:"column:CreatedDate"`
-	ModifiedDate                time.Time `gorm:"column:ModifiedDate"`
+	SeasonNumber                 int       `gorm:"column:SeasonNumber"`
+	EpisodeNumber                int       `gorm:"column:EpisodeNumber"`
+	Album                        string    `gorm:"column:Album"`
+	Artists                      string    `gorm:"column:Artists"`
+	ExtraType                    string    `gorm:"column:ExtraType"`
+	ChannelNumber                int       `gorm:"column:ChannelNumber"`
+	StartDate                    time.Time `gorm:"column:StartDate"`
+	EndDate                      time.Time `gorm:"column:EndDate"`
+	LocationType                 string    `gorm:"column:LocationType"`
+	Path                         string    `gorm:"column:Path"`
+	PrimaryImageURL              string    `gorm:"column:PrimaryImageURL"`
+	BackdropImageURL              string    `gorm:"column:BackdropImageURL"`
+	ParentID                     string    `gorm:"column:ParentID"`
+	Width                        int       `gorm:"column:Width"`
+	Height                       int       `gorm:"column:Height"`
+	Video3DFormat                string    `gorm:"column:Video3DFormat"`
+	PostLiveFeedTime             int64     `gorm:"column:PostLiveFeedTime"`
+	LiveMediaSourceID             string    `gorm:"column:LiveMediaSourceID"`
+	StartTimeTicks               int64     `gorm:"column:StartTimeTicks"`
+	EndTimeTicks                 int64     `gorm:"column:EndTimeTicks"`
+	RemoteImageURL                string    `gorm:"column:RemoteImageURL"`
+	LocalTrailerCount            int       `gorm:"column:LocalTrailerCount"`
+	LockedFields                 string    `gorm:"column:LockedFields"`
+	LockData                     bool      `gorm:"column:LockData"`
+	Disabled                      bool      `gorm:"column:Disabled"`
+	EnableMediaSourceDisplay      bool      `gorm:"column:EnableMediaSourceDisplay"`
+	ExtraIds                     string    `gorm:"column:ExtraIds"`
+	CreatedDate                   time.Time `gorm:"column:CreatedDate"`
+	ModifiedDate                  time.Time `gorm:"column:ModifiedDate"`
 }
 
 func (GORMItem) TableName() string {
 	return "Items"
+}
+
+// GORMItemMediaType represents the media types an item belongs to (Movie, Series, Live, News, Sports, Kids, Premiere)
+type GORMItemMediaType struct {
+	Id        uint   `gorm:"column:Id;primaryKey;autoIncrement"`
+	ItemId    string `gorm:"column:ItemId;not null;index"`
+	MediaType string `gorm:"column:MediaType;not null"`
+}
+
+func (GORMItemMediaType) TableName() string {
+	return "ItemMediaTypes"
 }
 
 // GORMMediaSource is the GORM model for MediaSources table

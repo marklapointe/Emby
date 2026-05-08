@@ -13,8 +13,9 @@ func setupGORM(t *testing.T) (*gorm.DB, func()) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
+	sqlDB, _ := db.DB()
+	sqlDB.SetMaxOpenConns(1)
 	cleanup := func() {
-		sqlDB, _ := db.DB()
 		sqlDB.Close()
 	}
 	return db, cleanup
@@ -136,5 +137,58 @@ func TestGetTotalItemCounts(t *testing.T) {
 
 	if counts["Music"] != 1 {
 		t.Errorf("expected 1 Music item, got %d", counts["Music"])
+	}
+}
+
+func TestBaseRepository_DB(t *testing.T) {
+	db, cleanup := setupGORM(t)
+	defer cleanup()
+
+	repo := NewBaseRepository(db)
+	if repo.DB() == nil {
+		t.Error("DB() returned nil")
+	}
+}
+
+func TestBaseRepository_SQL(t *testing.T) {
+	db, cleanup := setupGORM(t)
+	defer cleanup()
+
+	repo := NewBaseRepository(db)
+	sqlDB := repo.SQL()
+	if sqlDB == nil {
+		t.Error("SQL() returned nil")
+	}
+}
+
+func TestBaseRepository_Ping(t *testing.T) {
+	db, cleanup := setupGORM(t)
+	defer cleanup()
+
+	repo := NewBaseRepository(db)
+	err := repo.Ping()
+	if err != nil {
+		t.Errorf("Ping failed: %v", err)
+	}
+}
+
+func TestItemRepository_GetAllItems(t *testing.T) {
+	db, cleanup := setupGORM(t)
+	defer cleanup()
+
+	repo := NewItemRepository(db)
+	if err := repo.CreateSchema(); err != nil {
+		t.Fatalf("failed to create schema: %v", err)
+	}
+
+	repo.InsertItem("all1", "All Items 1", "/path1", "Video")
+	repo.InsertItem("all2", "All Items 2", "/path2", "Music")
+
+	items, err := repo.GetAllItems()
+	if err != nil {
+		t.Fatalf("GetAllItems failed: %v", err)
+	}
+	if len(items) != 2 {
+		t.Errorf("expected 2 items, got %d", len(items))
 	}
 }

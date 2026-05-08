@@ -23,6 +23,7 @@ func NewItemRepository(db *gorm.DB) *ItemRepository {
 func (r *ItemRepository) CreateSchema() error {
 	return r.db.AutoMigrate(
 		&model.GORMItem{},
+		&model.GORMItemMediaType{},
 		&model.GORMMediaSource{},
 		&model.GORMUser{},
 		&model.GORMUserItem{},
@@ -34,7 +35,7 @@ func (r *ItemRepository) CreateSchema() error {
 func (r *ItemRepository) GetItemsByParent(parentID string, mediaType string, limit, offset int) ([]map[string]interface{}, error) {
 	query := `
 		SELECT Id, Name, Overview, ContentType, MediaType, Path,
-		       ProductionYear, CommunityRating, IsMovie, IsSeries,
+		       ProductionYear, CommunityRating,
 		       RunTimeTicks, PrimaryImageURL
 		FROM Items
 		WHERE ParentID = ?
@@ -60,10 +61,9 @@ func (r *ItemRepository) GetItemsByParent(parentID string, mediaType string, lim
 		var id, name, overview, contentType, mediaType, path, primaryImage sql.NullString
 		var productionYear, runTimeTicks sql.NullInt64
 		var communityRating sql.NullFloat64
-		var isMovie, isSeries sql.NullInt64
 
 		err := rows.Scan(&id, &name, &overview, &contentType, &mediaType, &path,
-			&productionYear, &communityRating, &isMovie, &isSeries, &runTimeTicks, &primaryImage)
+			&productionYear, &communityRating, &runTimeTicks, &primaryImage)
 		if err != nil {
 			return nil, fmt.Errorf("scan item: %w", err)
 		}
@@ -88,12 +88,6 @@ func (r *ItemRepository) GetItemsByParent(parentID string, mediaType string, lim
 		}
 		if communityRating.Valid {
 			item["CommunityRating"] = communityRating.Float64
-		}
-		if isMovie.Valid {
-			item["IsMovie"] = isMovie.Int64 == 1
-		}
-		if isSeries.Valid {
-			item["IsSeries"] = isSeries.Int64 == 1
 		}
 		if runTimeTicks.Valid {
 			item["RunTimeTicks"] = runTimeTicks.Int64
@@ -127,25 +121,23 @@ func (r *ItemRepository) InsertItem(id, name, path, locationType string) error {
 // GetItem retrieves a media item by ID.
 func (r *ItemRepository) GetItem(id string) (map[string]interface{}, error) {
 	query := `
-		SELECT Id, Name, Overview, Tagline, ContentType, MediaType, 
+		SELECT Id, Name, Overview, Tagline, ContentType, MediaType,
 		       Path, LocationType, ProductionYear, CommunityRating,
-		       RunTimeTicks, IsMovie, IsSeries, IsLive
+		       RunTimeTicks
 		FROM Items WHERE Id = ?
 	`
 	row := r.QueryRow(query, id)
-	
+
 	var item map[string]interface{} = make(map[string]interface{})
-	var isMovie, isSeries, isLive int
 	var overview, tagline, contentType, mediaType, path, locationType sql.NullString
 	var productionYear sql.NullInt64
 	var communityRating sql.NullFloat64
 	var runTimeTicks sql.NullInt64
-	
+
 	var idVal, nameVal string
 	err := row.Scan(&idVal, &nameVal, &overview, &tagline,
 		&contentType, &mediaType, &path, &locationType,
 		&productionYear, &communityRating, &runTimeTicks,
-		&isMovie, &isSeries, &isLive,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("scan item: %w", err)
@@ -180,9 +172,11 @@ func (r *ItemRepository) GetItem(id string) (map[string]interface{}, error) {
 	if runTimeTicks.Valid {
 		item["RunTimeTicks"] = runTimeTicks.Int64
 	}
-	item["IsMovie"] = isMovie == 1
-	item["IsSeries"] = isSeries == 1
-	item["IsLive"] = isLive == 1
+
+	mediaTypes, err := r.GetItemMediaTypes(id)
+	if err == nil {
+		item["MediaTypes"] = mediaTypes
+	}
 
 	return item, nil
 }
@@ -191,7 +185,7 @@ func (r *ItemRepository) GetItem(id string) (map[string]interface{}, error) {
 func (r *ItemRepository) GetAllItems() ([]map[string]interface{}, error) {
 	sqlQuery := `
 		SELECT Id, Name, ContentType, MediaType, Path,
-		       ProductionYear, CommunityRating, IsMovie, IsSeries
+		       ProductionYear, CommunityRating
 		FROM Items
 		ORDER BY Name
 	`
@@ -208,11 +202,9 @@ func (r *ItemRepository) GetAllItems() ([]map[string]interface{}, error) {
 		var contentType, mediaType, path sql.NullString
 		var productionYear sql.NullInt64
 		var communityRating sql.NullFloat64
-		var isMovie, isSeries sql.NullInt64
 
 		err := rows.Scan(&idVal, &nameVal, &contentType, &mediaType,
 			&path, &productionYear, &communityRating,
-			&isMovie, &isSeries,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan item: %w", err)
@@ -236,8 +228,6 @@ func (r *ItemRepository) GetAllItems() ([]map[string]interface{}, error) {
 		if communityRating.Valid {
 			item["CommunityRating"] = communityRating.Float64
 		}
-		item["IsMovie"] = isMovie.Int64 == 1
-		item["IsSeries"] = isSeries.Int64 == 1
 
 		items = append(items, item)
 	}
@@ -252,11 +242,11 @@ func (r *ItemRepository) GetAllItems() ([]map[string]interface{}, error) {
 // SearchItems searches for media items by name.
 func (r *ItemRepository) SearchItems(query string, limit, offset int) ([]map[string]interface{}, error) {
 	sqlQuery := `
-		SELECT Id, Name, ContentType, MediaType, Path, 
-		       ProductionYear, CommunityRating, IsMovie, IsSeries
-		FROM Items 
-		WHERE Name LIKE ? 
-		ORDER BY Name 
+		SELECT Id, Name, ContentType, MediaType, Path,
+		       ProductionYear, CommunityRating
+		FROM Items
+		WHERE Name LIKE ?
+		ORDER BY Name
 		LIMIT ? OFFSET ?
 	`
 	rows, err := r.Query(sqlQuery, "%"+query+"%", limit, offset)
@@ -271,11 +261,9 @@ func (r *ItemRepository) SearchItems(query string, limit, offset int) ([]map[str
 		var contentType, mediaType, path sql.NullString
 		var productionYear sql.NullInt64
 		var communityRating sql.NullFloat64
-		var isMovie, isSeries sql.NullInt64
-		
+
 		err := rows.Scan(&idVal, &nameVal, &contentType, &mediaType,
 			&path, &productionYear, &communityRating,
-			&isMovie, &isSeries,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan item: %w", err)
@@ -299,16 +287,10 @@ func (r *ItemRepository) SearchItems(query string, limit, offset int) ([]map[str
 		if communityRating.Valid {
 			item["CommunityRating"] = communityRating.Float64
 		}
-		if isMovie.Valid {
-			item["IsMovie"] = isMovie.Int64 == 1
-		}
-		if isSeries.Valid {
-			item["IsSeries"] = isSeries.Int64 == 1
-		}
 
 		items = append(items, item)
 	}
-	
+
 	return items, rows.Err()
 }
 
@@ -1178,6 +1160,47 @@ func (r *ItemRepository) GetGames(userId string) ([]map[string]interface{}, erro
 // GetGame returns a single game.
 func (r *ItemRepository) GetGame(id string) (map[string]interface{}, error) {
 	return map[string]interface{}{}, nil
+}
+
+// GetItemMediaTypes returns all media types for an item.
+func (r *ItemRepository) GetItemMediaTypes(itemId string) ([]string, error) {
+	var mediaTypes []string
+	rows, err := r.Query("SELECT MediaType FROM ItemMediaTypes WHERE ItemId = ?", itemId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var mt string
+		if err := rows.Scan(&mt); err != nil {
+			return nil, err
+		}
+		mediaTypes = append(mediaTypes, mt)
+	}
+	if mediaTypes == nil {
+		mediaTypes = []string{}
+	}
+	return mediaTypes, rows.Err()
+}
+
+// SetItemMediaTypes sets the media types for an item, replacing any existing types.
+func (r *ItemRepository) SetItemMediaTypes(itemId string, mediaTypes []string) error {
+	if _, err := r.Exec("DELETE FROM ItemMediaTypes WHERE ItemId = ?", itemId); err != nil {
+		return err
+	}
+	for _, mt := range mediaTypes {
+		if _, err := r.Exec("INSERT INTO ItemMediaTypes (ItemId, MediaType) VALUES (?, ?)", itemId, mt); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// AddItemMediaType adds a single media type to an item.
+func (r *ItemRepository) AddItemMediaType(itemId, mediaType string) error {
+	_, err := r.Exec("INSERT OR IGNORE INTO ItemMediaTypes (ItemId, MediaType) VALUES (?, ?)", itemId, mediaType)
+	return err
 }
 
 // GetGameGenres returns game genres.

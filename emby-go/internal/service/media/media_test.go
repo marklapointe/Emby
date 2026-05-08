@@ -1,7 +1,10 @@
 package media
 
 import (
+	"context"
 	"testing"
+
+	"go.uber.org/zap"
 )
 
 func TestNewManager(t *testing.T) {
@@ -266,4 +269,139 @@ func TestStreamManager_EvictIdleStreams(t *testing.T) {
 func TestStreamManager_RemoveViewer_NotFound(t *testing.T) {
 	m := NewStreamManager(5, nil)
 	m.RemoveViewer("non-existent", "profile", "viewer-1")
+}
+
+func TestParseInt(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int
+	}{
+		{"123", 123},
+		{"0", 0},
+		{"-456", -456},
+		{"invalid", 0},
+	}
+
+	for _, tc := range tests {
+		result := parseInt(tc.input)
+		if result != tc.expected {
+			t.Errorf("parseInt(%s) = %d, expected %d", tc.input, result, tc.expected)
+		}
+	}
+}
+
+func TestParseBitrate(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int
+	}{
+		{"5000", 5000},
+		{"0", 0},
+		{"-1000", -1000},
+		{"invalid", 0},
+	}
+
+	for _, tc := range tests {
+		result := parseBitrate(tc.input)
+		if result != tc.expected {
+			t.Errorf("parseBitrate(%s) = %d, expected %d", tc.input, result, tc.expected)
+		}
+	}
+}
+
+func TestParseSize(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"1024000", 1024000},
+		{"0", 0},
+		{"-500", -500},
+		{"invalid", 0},
+	}
+
+	for _, tc := range tests {
+		result := parseSize(tc.input)
+		if result != tc.expected {
+			t.Errorf("parseSize(%s) = %d, expected %d", tc.input, result, tc.expected)
+		}
+	}
+}
+
+func TestItemIDFromPath(t *testing.T) {
+	id1 := itemIDFromPath("/path/to/file.mp4")
+	id2 := itemIDFromPath("/path/to/file.mp4")
+
+	if id1 == "" {
+		t.Error("itemIDFromPath returned empty string")
+	}
+	if id1 == id2 {
+		t.Error("itemIDFromPath should generate unique IDs")
+	}
+}
+
+func TestStreamManager_GetOrCreateStream_New(t *testing.T) {
+	m := NewStreamManager(5, zap.NewNop())
+
+	profile := &TranscodingProfile{
+		Container: "mp4",
+		VideoCodec: "h264",
+	}
+
+	stream, err := m.GetOrCreateStream(context.Background(), "content-1", profile, "viewer-1")
+	if err != nil {
+		t.Fatalf("GetOrCreateStream failed: %v", err)
+	}
+	if stream == nil {
+		t.Fatal("GetOrCreateStream returned nil stream")
+	}
+	if stream.ContentID != "content-1" {
+		t.Errorf("expected ContentID 'content-1', got '%s'", stream.ContentID)
+	}
+}
+
+func TestStreamManager_GetOrCreateStream_Existing(t *testing.T) {
+	m := NewStreamManager(5, zap.NewNop())
+
+	profile := &TranscodingProfile{
+		Container: "mp4",
+		VideoCodec: "h264",
+	}
+
+	stream1, err := m.GetOrCreateStream(context.Background(), "content-1", profile, "viewer-1")
+	if err != nil {
+		t.Fatalf("GetOrCreateStream failed: %v", err)
+	}
+
+	stream2, err := m.GetOrCreateStream(context.Background(), "content-1", profile, "viewer-2")
+	if err != nil {
+		t.Fatalf("GetOrCreateStream failed: %v", err)
+	}
+
+	if stream1 != stream2 {
+		t.Error("GetOrCreateStream should return same stream for same content")
+	}
+
+	if len(stream2.Viewers) != 2 {
+		t.Errorf("expected 2 viewers, got %d", len(stream2.Viewers))
+	}
+}
+
+func TestStreamManager_GetOrCreateStream_MaxStreams(t *testing.T) {
+	m := NewStreamManager(1, zap.NewNop())
+
+	profile := &TranscodingProfile{
+		Container: "mp4",
+		VideoCodec: "h264",
+	}
+
+	_, err := m.GetOrCreateStream(context.Background(), "content-1", profile, "viewer-1")
+	if err != nil {
+		t.Fatalf("GetOrCreateStream failed: %v", err)
+	}
+
+	_, err = m.GetOrCreateStream(context.Background(), "content-2", profile, "viewer-2")
+	if err == nil {
+		t.Error("expected error when max streams exceeded")
+	}
 }

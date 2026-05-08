@@ -19,7 +19,9 @@ func TestNewScanner(t *testing.T) {
 
 	logger, _ := zap.NewDevelopment()
 	dbMgr, err := database.NewManager(&config.DatabaseConfig{
-		Path: ":memory:",
+		Path:         ":memory:",
+		MaxOpenConns: 1,
+		MaxIdleConns: 1,
 	})
 	if err != nil {
 		t.Fatalf("failed to create db manager: %v", err)
@@ -45,7 +47,7 @@ func TestScanner_AddPath(t *testing.T) {
 	}
 
 	logger, _ := zap.NewDevelopment()
-	dbMgr, _ := database.NewManager(&config.DatabaseConfig{Path: ":memory:"})
+	dbMgr, _ := database.NewManager(&config.DatabaseConfig{Path: ":memory:", MaxOpenConns: 1, MaxIdleConns: 1})
 	defer dbMgr.Close()
 
 	repo := repository.NewItemRepository(dbMgr.DB())
@@ -111,7 +113,7 @@ func TestScanLibrary_ContextCancellation(t *testing.T) {
 	}
 
 	logger, _ := zap.NewDevelopment()
-	dbMgr, _ := database.NewManager(&config.DatabaseConfig{Path: ":memory:"})
+	dbMgr, _ := database.NewManager(&config.DatabaseConfig{Path: ":memory:", MaxOpenConns: 1, MaxIdleConns: 1})
 	defer dbMgr.Close()
 
 	repo := repository.NewItemRepository(dbMgr.DB())

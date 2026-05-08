@@ -46,7 +46,7 @@ func TestScanner_NewScanner(t *testing.T) {
 	}
 
 	logger := zap.NewNop()
-	dbMgr, err := database.NewManager(&config.DatabaseConfig{Path: ":memory:"})
+	dbMgr, err := database.NewManager(&config.DatabaseConfig{Path: ":memory:", MaxOpenConns: 1, MaxIdleConns: 1})
 	if err != nil {
 		t.Fatalf("failed to create db manager: %v", err)
 	}
@@ -71,7 +71,7 @@ func TestScanner_Paths(t *testing.T) {
 	}
 
 	logger := zap.NewNop()
-	dbMgr, err := database.NewManager(&config.DatabaseConfig{Path: ":memory:"})
+	dbMgr, err := database.NewManager(&config.DatabaseConfig{Path: ":memory:", MaxOpenConns: 1, MaxIdleConns: 1})
 	if err != nil {
 		t.Fatalf("failed to create db manager: %v", err)
 	}
@@ -102,7 +102,7 @@ func TestScanner_RemovePath_NotFound(t *testing.T) {
 	}
 
 	logger := zap.NewNop()
-	dbMgr, err := database.NewManager(&config.DatabaseConfig{Path: ":memory:"})
+	dbMgr, err := database.NewManager(&config.DatabaseConfig{Path: ":memory:", MaxOpenConns: 1, MaxIdleConns: 1})
 	if err != nil {
 		t.Fatalf("failed to create db manager: %v", err)
 	}
@@ -128,7 +128,7 @@ func TestScanner_IsMediaFile(t *testing.T) {
 	}
 
 	logger := zap.NewNop()
-	dbMgr, err := database.NewManager(&config.DatabaseConfig{Path: ":memory:"})
+	dbMgr, err := database.NewManager(&config.DatabaseConfig{Path: ":memory:", MaxOpenConns: 1, MaxIdleConns: 1})
 	if err != nil {
 		t.Fatalf("failed to create db manager: %v", err)
 	}
@@ -174,7 +174,7 @@ func TestScanner_GetMediaFolderPath(t *testing.T) {
 	}
 
 	logger := zap.NewNop()
-	dbMgr, err := database.NewManager(&config.DatabaseConfig{Path: ":memory:"})
+	dbMgr, err := database.NewManager(&config.DatabaseConfig{Path: ":memory:", MaxOpenConns: 1, MaxIdleConns: 1})
 	if err != nil {
 		t.Fatalf("failed to create db manager: %v", err)
 	}
