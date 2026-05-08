@@ -22,6 +22,8 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 type User struct {
 	ID                string    `json:"Id"`
 	Name              string    `json:"Name"`
+	Username          string    `json:"Username,omitempty"`
+	EmailAddress      string    `json:"EmailAddress,omitempty"`
 	PrimaryImageTag   string    `json:"PrimaryImageTag,omitempty"`
 	HasConfiguredPassword bool  `json:"HasConfiguredPassword"`
 	HasConfiguredEasyPassword bool `json:"HasConfiguredEasyPassword"`
@@ -159,16 +161,19 @@ func (r *UserRepository) SetPassword(userID, password string) error {
 	return err
 }
 
-// ValidatePassword validates a user's password.
 func (r *UserRepository) ValidatePassword(userID, password string) (bool, error) {
 	query := `SELECT LoginPassword FROM Users WHERE Id = ?`
-	var hash string
+	var hash sql.NullString
 	err := r.QueryRow(query, userID).Scan(&hash)
 	if err != nil {
 		return false, err
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	if !hash.Valid || hash.String == "" {
+		return false, nil
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(hash.String), []byte(password))
 	if err == bcrypt.ErrMismatchedHashAndPassword {
 		return false, nil
 	}
@@ -176,6 +181,29 @@ func (r *UserRepository) ValidatePassword(userID, password string) (bool, error)
 		return false, err
 	}
 	return true, nil
+}
+
+func (r *UserRepository) Authenticate(username, password string) (*User, error) {
+	query := `SELECT Id, Name, Username, EmailAddress, LoginPassword FROM Users WHERE Name = ? OR Username = ? OR EmailAddress = ?`
+	var user User
+	var loginPassword sql.NullString
+	err := r.QueryRow(query, username, username, username).Scan(&user.ID, &user.Name, &user.Username, &user.EmailAddress, &loginPassword)
+	if err != nil {
+		return nil, fmt.Errorf("user not found: %w", err)
+	}
+
+	if !loginPassword.Valid || loginPassword.String == "" {
+		if password == "" {
+			return &user, nil
+		}
+		return nil, fmt.Errorf("invalid credentials")
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(loginPassword.String), []byte(password))
+	if err != nil {
+		return nil, fmt.Errorf("invalid credentials")
+	}
+	return &user, nil
 }
 
 // UpdateLastLogin updates the last login date for a user.

@@ -1,10 +1,12 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/emby/emby-go/internal/service/user"
 	"github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
 )
@@ -94,27 +96,41 @@ func LoggingMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 }
 
 // AuthenticationMiddleware returns authentication middleware.
-func AuthenticationMiddleware() func(http.Handler) http.Handler {
+func AuthenticationMiddleware(userSvc *user.Manager) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Check for API key in header or query parameter
-			apiKey := r.Header.Get("X-Emby-Token")
-			if apiKey == "" {
-				apiKey = r.URL.Query().Get("api_key")
+			token := r.Header.Get("X-Emby-Token")
+			if token == "" {
+				token = r.URL.Query().Get("api_key")
 			}
 
-			// For now, allow all requests (authentication will be implemented later)
+			if token != "" {
+				session, err := userSvc.ValidateSession(token)
+				if err == nil && session != nil {
+					ctx := context.WithValue(r.Context(), UserIDKey, session.UserID)
+					ctx = context.WithValue(ctx, SessionIDKey, token)
+					r = r.WithContext(ctx)
+				}
+			}
+
 			next.ServeHTTP(w, r)
 		})
 	}
 }
 
 // SessionMiddleware returns session middleware.
-func SessionMiddleware() func(http.Handler) http.Handler {
+func SessionMiddleware(userSvc *user.Manager) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Extract session from cookie or header
-			// For now, pass through (session management will be implemented later)
+			token := r.Header.Get("X-Emby-Token")
+			if token != "" {
+				session, err := userSvc.ValidateSession(token)
+				if err == nil && session != nil {
+					ctx := context.WithValue(r.Context(), SessionIDKey, token)
+					ctx = context.WithValue(ctx, UserIDKey, session.UserID)
+					r = r.WithContext(ctx)
+				}
+			}
 			next.ServeHTTP(w, r)
 		})
 	}

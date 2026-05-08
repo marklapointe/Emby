@@ -224,12 +224,79 @@ func decodeBase83(s string) int {
 	return val
 }
 
-// ResizeImage resizes an image to the specified dimensions.
 func (p *Processor) ResizeImage(src image.Image, width, height int) (image.Image, error) {
-	// For now, return the original image
-	_ = width
-	_ = height
-	return src, nil
+	if width <= 0 || height <= 0 {
+		return nil, fmt.Errorf("width and height must be positive")
+	}
+
+	srcBounds := src.Bounds()
+	srcWidth := srcBounds.Dx()
+	srcHeight := srcBounds.Dy()
+
+	if srcWidth == 0 || srcHeight == 0 {
+		return nil, fmt.Errorf("source image has zero dimensions")
+	}
+
+	if srcWidth == width && srcHeight == height {
+		return src, nil
+	}
+
+	dst := image.NewRGBA(image.Rect(0, 0, width, height))
+
+	scaleX := float64(srcWidth) / float64(width)
+	scaleY := float64(srcHeight) / float64(height)
+
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			srcX := float64(x) * scaleX
+			srcY := float64(y) * scaleY
+
+			x0 := int(srcX)
+			y0 := int(srcY)
+			x1 := x0 + 1
+			y1 := y0 + 1
+
+			if x1 >= srcWidth {
+				x1 = srcWidth - 1
+			}
+			if y1 >= srcHeight {
+				y1 = srcHeight - 1
+			}
+
+			px := srcX - float64(x0)
+			py := srcY - float64(y0)
+
+			c00 := src.At(x0, y0)
+			c10 := src.At(x1, y0)
+			c01 := src.At(x0, y1)
+			c11 := src.At(x1, y1)
+
+			r00, g00, b00, a00 := c00.RGBA()
+			r10, g10, b10, a10 := c10.RGBA()
+			r01, g01, b01, a01 := c01.RGBA()
+			r11, g11, b11, a11 := c11.RGBA()
+
+			r := bilinearInterpolate(float64(r00), float64(r10), float64(r01), float64(r11), px, py)
+			g := bilinearInterpolate(float64(g00), float64(g10), float64(g01), float64(g11), px, py)
+			b := bilinearInterpolate(float64(b00), float64(b10), float64(b01), float64(b11), px, py)
+			a := bilinearInterpolate(float64(a00), float64(a10), float64(a01), float64(a11), px, py)
+
+			dst.Set(x, y, color.RGBA{
+				R: uint8(r / 257),
+				G: uint8(g / 257),
+				B: uint8(b / 257),
+				A: uint8(a / 257),
+			})
+		}
+	}
+
+	return dst, nil
+}
+
+func bilinearInterpolate(c00, c10, c01, c11, px, py float64) float64 {
+	c0 := c00*(1-px) + c10*px
+	c1 := c01*(1-px) + c11*px
+	return c0*(1-py) + c1*py
 }
 
 // ConvertFormat converts an image to the specified format.

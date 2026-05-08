@@ -6,6 +6,7 @@ import (
 
 	"github.com/emby/emby-go/internal/version"
 	"github.com/emby/emby-go/internal/api/handlers"
+	"github.com/emby/emby-go/internal/api/middleware"
 	"github.com/emby/emby-go/internal/config"
 	"github.com/emby/emby-go/internal/database"
 	"github.com/emby/emby-go/internal/repository"
@@ -67,7 +68,7 @@ func NewRouter(cfg *config.Config, logger *zap.Logger, dbManager *database.Manag
 }
 
 func (r *Router) RegisterRoutes(router *chi.Mux) {
-	r.userSvc = user.NewManager(r.dbManager, r.logger)
+	r.userSvc = user.NewManager(r.dbManager, r.userRepo, r.logger)
 	r.librarySvc = library.NewManager(r.config, r.logger, r.dbManager)
 	r.mediaSvc = media.NewManager(r.config, r.logger)
 	r.sessionSvc = session.NewManager(r.config, r.logger)
@@ -75,10 +76,13 @@ func (r *Router) RegisterRoutes(router *chi.Mux) {
 	r.imageSvc = image.NewManager(r.logger)
 	r.notificationSvc = notification.NewManager()
 	r.scheduledSvc = scheduled.NewManager(r.logger)
-	r.transcodingSvc = transcoding.NewManager(r.config, r.logger)
+	r.transcodingSvc = transcoding.NewManager(r.config, r.logger, r.dbManager.DB())
 	r.channelSvc = channel.NewManager(r.logger)
 	r.dlnaSvc = dlna.NewManager(r.logger)
 	r.syncSvc = sync.NewManager(r.logger)
+
+	router.Use(middleware.AuthenticationMiddleware(r.userSvc))
+	router.Use(middleware.SessionMiddleware(r.userSvc))
 
 	embyRouter := chi.NewRouter()
 

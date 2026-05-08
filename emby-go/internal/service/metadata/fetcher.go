@@ -13,11 +13,12 @@ import (
 
 // Provider represents a metadata provider.
 type Provider struct {
-	Name        string `json:"name"`
-	ID          string `json:"id"`
-	Enabled     bool   `json:"enabled"`
-	Priority    int    `json:"priority"`
-	LastUpdated time.Time `json:"lastUpdated"`
+	Name        string            `json:"name"`
+	ID          string            `json:"id"`
+	Enabled     bool              `json:"enabled"`
+	Priority    int               `json:"priority"`
+	LastUpdated time.Time         `json:"lastUpdated"`
+	Config      map[string]string `json:"config"`
 }
 
 // Fetcher handles metadata fetching.
@@ -98,27 +99,49 @@ func (f *Fetcher) FetchMetadata(itemID string, providerID string) (map[string]in
 
 // fetchFromProvider fetches metadata from a specific provider.
 func (f *Fetcher) fetchFromProvider(itemID, providerID string) (map[string]interface{}, error) {
-	// For now, return a placeholder
-	_ = itemID
-	_ = providerID
+	provider, ok := f.providers[providerID]
+	if !ok {
+		return nil, fmt.Errorf("provider not registered: %s", providerID)
+	}
 
-	return map[string]interface{}{
-		"Name":        "Sample Item",
-		"Overview":    "This is a sample item description.",
-		"Tagline":     "Sample tagline",
-		"Rating":      8.5,
-		"Year":        2026,
-		"Runtime":     120,
-		"Genres":      []string{"Action", "Adventure"},
-		"Studios":     []string{"Sample Studio"},
-		"Directors":   []string{"Sample Director"},
-		"Writers":     []string{"Sample Writer"},
-		"Actors":      []string{"Sample Actor"},
-		"BackdropImages": []string{"https://example.com/backdrop.jpg"},
-		"PrimaryImage":  "https://example.com/primary.jpg",
-		"ThumbImage":    "https://example.com/thumb.jpg",
-		"LogoImage":     "https://example.com/logo.png",
-	}, nil
+	baseURL, ok := provider.Config["api_url"]
+	if !ok {
+		baseURL = fmt.Sprintf("https://api.%s.com", providerID)
+	}
+
+	apiKey, _ := provider.Config["api_key"]
+
+	url := fmt.Sprintf("%s/items/%s/metadata", baseURL, itemID)
+	if apiKey != "" {
+		url += "?apikey=" + apiKey
+	}
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Accept", "application/json")
+	if apiKey != "" {
+		req.Header.Set("Authorization", "Bearer "+apiKey)
+	}
+
+	resp, err := f.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch metadata: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("provider returned status: %d", resp.StatusCode)
+	}
+
+	var metadata map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&metadata); err != nil {
+		return nil, fmt.Errorf("failed to decode metadata: %w", err)
+	}
+
+	return metadata, nil
 }
 
 // DownloadImage downloads an image from a URL.

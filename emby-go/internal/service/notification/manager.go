@@ -1,17 +1,21 @@
 package notification
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"sync"
 	"time"
 )
 
 // Provider represents a notification provider.
 type Provider struct {
-	Name        string `json:"name"`
-	ID          string `json:"id"`
-	Enabled     bool   `json:"enabled"`
+	Name        string            `json:"name"`
+	ID          string            `json:"id"`
+	Enabled     bool              `json:"enabled"`
 	Config      map[string]string `json:"config"`
+	HTTPClient  *http.Client
 }
 
 // Notification represents a notification message.
@@ -29,15 +33,15 @@ type Notification struct {
 
 // Manager handles notification sending and management.
 type Manager struct {
-	providers   map[string]*Provider
+	providers    map[string]*Provider
 	notifications []*Notification
-	mu          sync.RWMutex
+	mu           sync.RWMutex
 }
 
 // NewManager creates a new notification manager.
 func NewManager() *Manager {
 	return &Manager{
-		providers:   make(map[string]*Provider),
+		providers:    make(map[string]*Provider),
 		notifications: make([]*Notification, 0),
 	}
 }
@@ -86,11 +90,54 @@ func (m *Manager) SendNotification(notification *Notification) error {
 	return nil
 }
 
-// sendToProvider sends a notification to a specific provider.
 func (m *Manager) sendToProvider(provider *Provider, notification *Notification) error {
-	// For now, just log the notification
-	_ = provider
-	_ = notification
+	webhookURL, ok := provider.Config["webhook_url"]
+	if !ok || webhookURL == "" {
+		return nil
+	}
+
+	client := provider.HTTPClient
+	if client == nil {
+		client = &http.Client{Timeout: 10 * time.Second}
+	}
+
+	payload := map[string]interface{}{
+		"id":        notification.ID,
+		"title":     notification.Title,
+		"message":   notification.Message,
+		"type":      notification.Type,
+		"icon":      notification.Icon,
+		"severity":  notification.Severity,
+		"userId":    notification.UserID,
+		"timestamp": notification.CreatedAt.Format(time.RFC3339),
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal notification: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, webhookURL, bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	if authToken, ok := provider.Config["auth_token"]; ok && authToken != "" {
+		req.Header.Set("Authorization", "Bearer "+authToken)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send notification: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("webhook returned error status: %d", resp.StatusCode)
+	}
+
 	return nil
 }
 

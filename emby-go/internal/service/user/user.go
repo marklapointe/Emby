@@ -7,6 +7,7 @@ import (
 
 	"github.com/emby/emby-go/internal/database"
 	"github.com/emby/emby-go/internal/model"
+	"github.com/emby/emby-go/internal/repository"
 	"go.uber.org/zap"
 )
 
@@ -85,6 +86,7 @@ type Session struct {
 // Manager handles user-related operations.
 type Manager struct {
 	dbManager *database.Manager
+	userRepo  *repository.UserRepository
 	logger    *zap.Logger
 	mu        sync.RWMutex
 	users     map[string]*User
@@ -92,9 +94,10 @@ type Manager struct {
 }
 
 // NewManager creates a new user manager.
-func NewManager(dbManager *database.Manager, logger *zap.Logger) *Manager {
+func NewManager(dbManager *database.Manager, userRepo *repository.UserRepository, logger *zap.Logger) *Manager {
 	return &Manager{
 		dbManager: dbManager,
+		userRepo:  userRepo,
 		logger:    logger,
 		users:     make(map[string]*User),
 		sessions:  make(map[string]*Session),
@@ -246,34 +249,47 @@ func (m *Manager) DeleteUser(id string) error {
 	return nil
 }
 
-// AuthenticateUser authenticates a user by email and password.
-func (m *Manager) AuthenticateUser(email, password string) (*Session, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+func (m *Manager) AuthenticateUser(username, password string) (*Session, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
-	user, exists := m.GetUserByEmail(email)
-	if !exists {
-		return nil, fmt.Errorf("invalid credentials")
-	}
+	var userID string
 
-	if user.Password != password {
-		return nil, fmt.Errorf("invalid credentials")
+	if m.userRepo != nil {
+		user, err := m.userRepo.Authenticate(username, password)
+		if err != nil {
+			return nil, fmt.Errorf("invalid credentials")
+		}
+		userID = user.ID
+	} else {
+		var memUser *User
+		for _, u := range m.users {
+			if u.Name == username || u.Email == username {
+				memUser = u
+				break
+			}
+		}
+		if memUser == nil {
+			return nil, fmt.Errorf("invalid credentials")
+		}
+		if memUser.Password != password {
+			return nil, fmt.Errorf("invalid credentials")
+		}
+		userID = memUser.ID
 	}
 
 	token := generateToken()
 	session := &Session{
-		Token:   token,
-		UserID:  user.ID,
+		Token:     token,
+		UserID:    userID,
 		CreatedAt: time.Now(),
 		ExpiresAt: time.Now().Add(24 * time.Hour),
 	}
 
-	m.mu.RLock()
 	m.sessions[token] = session
-	m.mu.RUnlock()
 
 	if m.logger != nil {
-		m.logger.Info("user authenticated", zap.String("id", user.ID))
+		m.logger.Info("user authenticated", zap.String("id", userID))
 	}
 	return session, nil
 }

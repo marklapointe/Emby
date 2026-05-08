@@ -8,7 +8,7 @@ import (
 )
 
 func TestUserManager_CreateUser(t *testing.T) {
-	mgr := NewManager(nil, nil)
+	mgr := NewManager(nil, nil, nil)
 
 	user := &User{
 		ID:            "user-1",
@@ -39,7 +39,7 @@ func TestUserManager_CreateUser(t *testing.T) {
 }
 
 func TestUserManager_GetNonExistentUser(t *testing.T) {
-	mgr := NewManager(nil, nil)
+	mgr := NewManager(nil, nil, nil)
 
 	_, exists := mgr.GetUser("non-existent")
 	if exists {
@@ -48,7 +48,7 @@ func TestUserManager_GetNonExistentUser(t *testing.T) {
 }
 
 func TestUserManager_UpdateUser(t *testing.T) {
-	mgr := NewManager(nil, nil)
+	mgr := NewManager(nil, nil, nil)
 
 	user := &User{
 		ID:            "user-1",
@@ -81,7 +81,7 @@ func TestUserManager_UpdateUser(t *testing.T) {
 }
 
 func TestUserManager_DeleteUser(t *testing.T) {
-	mgr := NewManager(nil, nil)
+	mgr := NewManager(nil, nil, nil)
 
 	user := &User{
 		ID:            "user-1",
@@ -109,7 +109,7 @@ func TestUserManager_DeleteUser(t *testing.T) {
 }
 
 func TestUserManager_GetAllUsers(t *testing.T) {
-	mgr := NewManager(nil, nil)
+	mgr := NewManager(nil, nil, nil)
 
 	users := []*User{
 		{ID: "user-1", Name: "User 1", Email: "user1@example.com", Password: "pass1", Configuration: &model.UserConfiguration{}, Policy: &model.UserPolicy{}},
@@ -130,7 +130,7 @@ func TestUserManager_GetAllUsers(t *testing.T) {
 }
 
 func TestUserManager_CreateDuplicateUser(t *testing.T) {
-	mgr := NewManager(nil, nil)
+	mgr := NewManager(nil, nil, nil)
 
 	user1 := &User{ID: "user-1", Name: "User 1", Email: "user1@example.com", Password: "pass1", Configuration: &model.UserConfiguration{}, Policy: &model.UserPolicy{}}
 	user2 := &User{ID: "user-1", Name: "User 1 Duplicate", Email: "user1dup@example.com", Password: "pass2", Configuration: &model.UserConfiguration{}, Policy: &model.UserPolicy{}}
@@ -146,7 +146,7 @@ func TestUserManager_CreateDuplicateUser(t *testing.T) {
 }
 
 func TestUserManager_AuthenticateUser(t *testing.T) {
-	mgr := NewManager(nil, nil)
+	mgr := NewManager(nil, nil, nil)
 
 	user := &User{
 		ID:            "user-1",
@@ -186,7 +186,7 @@ func TestUserManager_AuthenticateUser(t *testing.T) {
 }
 
 func TestUserManager_GetUserByName(t *testing.T) {
-	mgr := NewManager(nil, nil)
+	mgr := NewManager(nil, nil, nil)
 
 	user := &User{
 		ID:            "user-1",
@@ -213,7 +213,7 @@ func TestUserManager_GetUserByName(t *testing.T) {
 }
 
 func TestUserManager_GetUserByEmail(t *testing.T) {
-	mgr := NewManager(nil, nil)
+	mgr := NewManager(nil, nil, nil)
 
 	user := &User{
 		ID:            "user-1",

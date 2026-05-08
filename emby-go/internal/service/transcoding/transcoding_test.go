@@ -5,7 +5,7 @@ import (
 )
 
 func TestNewManager(t *testing.T) {
-	m := NewManager(nil, nil)
+	m := NewManager(nil, nil, nil)
 	if m == nil {
 		t.Fatal("NewManager returned nil")
 	}
@@ -15,7 +15,7 @@ func TestNewManager(t *testing.T) {
 }
 
 func TestGetTranscodingProfiles(t *testing.T) {
-	m := NewManager(nil, nil)
+	m := NewManager(nil, nil, nil)
 	profiles := m.GetTranscodingProfiles()
 	if len(profiles) == 0 {
 		t.Error("expected at least one profile")
@@ -26,7 +26,7 @@ func TestGetTranscodingProfiles(t *testing.T) {
 }
 
 func TestGetActiveStreamCount(t *testing.T) {
-	m := NewManager(nil, nil)
+	m := NewManager(nil, nil, nil)
 	count := m.GetActiveStreamCount()
 	if count != 0 {
 		t.Errorf("expected 0 active streams, got %d", count)
@@ -34,11 +34,21 @@ func TestGetActiveStreamCount(t *testing.T) {
 }
 
 func TestGetStreamURL(t *testing.T) {
-	m := NewManager(nil, nil)
+	m := NewManager(nil, nil, nil)
 	info, err := m.GetStreamURL("item-1", "mobile")
 	if err != nil {
 		t.Fatalf("GetStreamURL returned error: %v", err)
 	}
+	if info == nil {
+		t.Fatal("expected non-nil StreamInfo")
+	}
+	if info.URL == "" {
+		t.Error("expected non-empty URL")
+	}
+	if info.IsLive {
+		t.Error("expected IsLive to be false")
+	}
+}
 	if info.URL == "" {
 		t.Error("expected non-empty URL")
 	}
@@ -48,7 +58,7 @@ func TestGetStreamURL(t *testing.T) {
 }
 
 func TestBuildTranscodeCommand(t *testing.T) {
-	m := NewManager(nil, nil)
+	m := NewManager(nil, nil, nil)
 	config := TranscodeConfig{
 		VideoCodec:      "h264",
 		AudioCodec:      "aac",
@@ -66,7 +76,7 @@ func TestBuildTranscodeCommand(t *testing.T) {
 }
 
 func TestBuildAudioTranscodeCommand(t *testing.T) {
-	m := NewManager(nil, nil)
+	m := NewManager(nil, nil, nil)
 	config := AudioTranscodeConfig{
 		AudioCodec:    "mp3",
 		MaxAudioBitrate: "320k",
@@ -84,7 +94,7 @@ func TestBuildAudioTranscodeCommand(t *testing.T) {
 }
 
 func TestGetSubtitleStream(t *testing.T) {
-	m := NewManager(nil, nil)
+	m := NewManager(nil, nil, nil)
 	data, err := m.GetSubtitleStream("item-1", "0", "vtt")
 	if err != nil {
 		t.Fatalf("GetSubtitleStream returned error: %v", err)
@@ -95,7 +105,7 @@ func TestGetSubtitleStream(t *testing.T) {
 }
 
 func TestStopStream_NotFound(t *testing.T) {
-	m := NewManager(nil, nil)
+	m := NewManager(nil, nil, nil)
 	err := m.StopStream("non-existent")
 	if err == nil {
 		t.Error("expected error for non-existent stream")

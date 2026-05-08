@@ -1,6 +1,7 @@
 package transcoding
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -53,10 +54,11 @@ type StreamInfo struct {
 
 // Manager handles transcoding operations.
 type Manager struct {
-	config *config.Config
-	logger *zap.Logger
-	mu     sync.RWMutex
+	config        *config.Config
+	logger        *zap.Logger
+	mu            sync.RWMutex
 	activeStreams map[string]*ActiveStream
+	db            *sql.DB
 }
 
 // ActiveStream represents an active transcoding stream.
@@ -70,23 +72,42 @@ type ActiveStream struct {
 }
 
 // NewManager creates a new transcoding manager.
-func NewManager(cfg *config.Config, logger *zap.Logger) *Manager {
+func NewManager(cfg *config.Config, logger *zap.Logger, db *sql.DB) *Manager {
 	return &Manager{
 		config:        cfg,
 		logger:        logger,
 		activeStreams: make(map[string]*ActiveStream),
+		db:            db,
 	}
 }
 
 // GetStreamURL returns a stream URL for the given item and profile.
 func (m *Manager) GetStreamURL(itemID, profile string) (*StreamInfo, error) {
-	// For now, return a placeholder URL
+	streamURL := fmt.Sprintf("/Videos/%s/stream", itemID)
+	container := "mp4"
+	protocol := "Http"
+
+	if m.db != nil {
+		query := `SELECT Path, MediaType, ContentType FROM Items WHERE Id = ?`
+		var path, mediaType, contentType sql.NullString
+		err := m.db.QueryRow(query, itemID).Scan(&path, &mediaType, &contentType)
+		if err == nil && path.Valid && path.String != "" {
+			streamURL = path.String
+			switch {
+			case mediaType.Valid && mediaType.String == "Video":
+				container = "mp4"
+			case mediaType.Valid && mediaType.String == "Audio":
+				container = "mp3"
+			}
+		}
+	}
+
 	return &StreamInfo{
-		URL:       fmt.Sprintf("/Videos/%s/stream", itemID),
-		Protocol:  "Http",
-		Container: "ts",
+		URL:       streamURL,
+		Protocol:  protocol,
+		Container: container,
 		StartTime: time.Now(),
-		IsLive:    true,
+		IsLive:    false,
 	}, nil
 }
 
