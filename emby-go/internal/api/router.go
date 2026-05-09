@@ -85,7 +85,7 @@ func (r *Router) RegisterRoutes(router *chi.Mux) {
 	r.dlnaSvc = dlna.NewManager(r.logger)
 	r.syncSvc = sync.NewManager(r.logger)
 
-	router.Use(middleware.AuthenticationMiddleware(r.userSvc))
+	router.Use(middleware.AuthenticationMiddleware(r.userSvc, r.config.Security.EmbyServerURL, r.config.Security.APIKey))
 	router.Use(middleware.SessionMiddleware(r.userSvc))
 
 	embyRouter := chi.NewRouter()

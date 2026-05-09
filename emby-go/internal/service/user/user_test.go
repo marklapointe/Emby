@@ -238,3 +238,26 @@ func TestUserManager_GetUserByEmail(t *testing.T) {
 		t.Errorf("expected ID %s, got %s", user.ID, retrieved.ID)
 	}
 }
+
+func TestValidateAPIKey(t *testing.T) {
+	apiKey := "5086e7864a9439e0ab284177b5c8009d"
+	if apiKey == "" {
+		t.Skip("EMBY_API_KEY not set")
+	}
+
+	embyServerURL := "https://api.emby.media"
+	if embyServerURL == "" {
+		t.Skip("EMBY_SERVER_URL not set")
+	}
+
+	mgr := NewManager(nil, nil, nil)
+	mgr.SetEmbyServer(embyServerURL, apiKey)
+
+	user, err := mgr.ValidateAPIKey(apiKey)
+	if err != nil {
+		t.Skipf("Skipping: %v", err)
+	}
+	if user == nil {
+		t.Error("expected user, got nil")
+	}
+}

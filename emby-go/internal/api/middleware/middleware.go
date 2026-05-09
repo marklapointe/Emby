@@ -11,6 +11,10 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	IsPremiereKey ContextKey = "is_premiere"
+)
+
 // CORSMiddleware returns CORS middleware.
 func CORSMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -96,7 +100,7 @@ func LoggingMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 }
 
 // AuthenticationMiddleware returns authentication middleware.
-func AuthenticationMiddleware(userSvc *user.Manager) func(http.Handler) http.Handler {
+func AuthenticationMiddleware(userSvc *user.Manager, embyServerURL, embyAPIKey string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token := r.Header.Get("X-Emby-Token")
@@ -110,6 +114,16 @@ func AuthenticationMiddleware(userSvc *user.Manager) func(http.Handler) http.Han
 					ctx := context.WithValue(r.Context(), UserIDKey, session.UserID)
 					ctx = context.WithValue(ctx, SessionIDKey, token)
 					r = r.WithContext(ctx)
+				} else if embyServerURL != "" && embyAPIKey != "" {
+					userSvc.SetEmbyServer(embyServerURL, embyAPIKey)
+					if validatedUser, err := userSvc.ValidateAPIKey(token); err == nil && validatedUser != nil {
+						newToken := "emby-api-" + token[:16]
+						userSvc.AddSessionForAPIKey(token, validatedUser.ID, validatedUser.Name)
+						ctx := context.WithValue(r.Context(), UserIDKey, validatedUser.ID)
+						ctx = context.WithValue(ctx, SessionIDKey, newToken)
+						ctx = context.WithValue(ctx, IsPremiereKey, true)
+						r = r.WithContext(ctx)
+					}
 				}
 			}
 

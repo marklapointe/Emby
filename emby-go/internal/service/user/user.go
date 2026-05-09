@@ -1,7 +1,9 @@
 package user
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"sync"
 	"time"
 
@@ -85,12 +87,14 @@ type Session struct {
 
 // Manager handles user-related operations.
 type Manager struct {
-	dbManager *database.Manager
-	userRepo  *repository.UserRepository
-	logger    *zap.Logger
-	mu        sync.RWMutex
-	users     map[string]*User
-	sessions  map[string]*Session
+	dbManager      *database.Manager
+	userRepo       *repository.UserRepository
+	logger         *zap.Logger
+	mu             sync.RWMutex
+	users          map[string]*User
+	sessions       map[string]*Session
+	embyServerURL  string
+	apiKey         string
 }
 
 // NewManager creates a new user manager.
@@ -102,6 +106,59 @@ func NewManager(dbManager *database.Manager, userRepo *repository.UserRepository
 		users:     make(map[string]*User),
 		sessions:  make(map[string]*Session),
 	}
+}
+
+// SetEmbyServer configures the Emby server URL and API key for validation.
+func (m *Manager) SetEmbyServer(url, apiKey string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.embyServerURL = url
+	m.apiKey = apiKey
+}
+
+// ValidateAPIKey validates an Emby Premiere API key against Emby's servers.
+func (m *Manager) ValidateAPIKey(apiKey string) (*User, error) {
+	if m.embyServerURL == "" || m.apiKey == "" {
+		return nil, fmt.Errorf("emby server not configured")
+	}
+
+	url := fmt.Sprintf("%s/Users/AuthenticateByApiKey?api_key=%s", m.embyServerURL, apiKey)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("create request: %w", err)
+	}
+
+	req.Header.Set("X-Emby-Token", m.apiKey)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("invalid API key (status %d)", resp.StatusCode)
+	}
+
+	var authResult struct {
+		User struct {
+			ID   string `json:"Id"`
+			Name string `json:"Name"`
+		} `json:"User"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&authResult); err != nil {
+		return nil, fmt.Errorf("parse response: %w", err)
+	}
+
+	user := &User{
+		ID:   authResult.User.ID,
+		Name: authResult.User.Name,
+	}
+
+	return user, nil
 }
 
 // CreateUser creates a new user.
@@ -357,6 +414,32 @@ func (m *Manager) RevokeSession(token string) error {
 
 	delete(m.sessions, token)
 	return nil
+}
+
+// AddSessionForAPIKey creates a local session for an API key validated against Emby servers.
+func (m *Manager) AddSessionForAPIKey(apiKey, userID, userName string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if _, exists := m.users[userID]; !exists {
+		m.users[userID] = &User{
+			ID:   userID,
+			Name: userName,
+		}
+	}
+
+	token := generateToken()
+	session := &Session{
+		Token:     token,
+		UserID:    userID,
+		CreatedAt: time.Now(),
+		ExpiresAt: time.Now().Add(24 * time.Hour),
+	}
+	m.sessions[token] = session
+
+	if m.logger != nil {
+		m.logger.Info("premiere user authenticated", zap.String("user_id", userID), zap.String("user_name", userName))
+	}
 }
 
 // generateToken generates a random session token.

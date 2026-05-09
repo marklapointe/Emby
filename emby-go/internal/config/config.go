@@ -76,8 +76,9 @@ type WizardConfig struct {
 }
 
 type SecurityConfig struct {
-	APIKey     string `yaml:"api_key"`
-	APIKeyHash string `yaml:"api_key_hash"`
+	APIKey        string `yaml:"api_key"`
+	APIKeyHash    string `yaml:"api_key_hash"`
+	EmbyServerURL string `yaml:"emby_server_url"`
 }
 
 type ConfigFile struct {
