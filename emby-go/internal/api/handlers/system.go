@@ -275,3 +275,38 @@ func (h *SystemHandler) Shutdown(w http.ResponseWriter, r *http.Request) {
 		"status": "shutdown initiated",
 	})
 }
+
+func (h *SystemHandler) GetWakeOnLanInfo(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode([]interface{}{})
+}
+
+func (h *SystemHandler) GetApiKeys(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode([]interface{}{})
+}
+
+func (h *SystemHandler) CreateApiKey(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Name string `json:"Name"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"Token": "api-key-" + req.Name,
+		"Name":  req.Name,
+	})
+}
+
+func (h *SystemHandler) RevokeApiKey(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	_ = id
+
+	w.WriteHeader(http.StatusNoContent)
+}

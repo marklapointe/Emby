@@ -1,14 +1,20 @@
-# Emby Server Go Configuration
-
 server:
   host: "0.0.0.0"
   port: 8096
   max_header_bytes: 1048576
   read_timeout: 30
   write_timeout: 30
+  public_port: 8096
+  public_https_port: 8920
 
 database:
+  type: "sqlite"
   path: "data/emby-server.db"
+  host: ""
+  port: 3306
+  username: ""
+  password: ""
+  database: "emby"
   max_open_conns: 25
   max_idle_conns: 10
   conn_max_lifetime: 300
@@ -37,3 +43,11 @@ stream_pooling:
   idle_timeout: "5m"
   health_check_interval: "30s"
   metrics_enabled: true
+
+wizard:
+  is_completed: false
+  server_name: "Emby Server"
+
+security:
+  api_key: ""
+  api_key_hash: ""

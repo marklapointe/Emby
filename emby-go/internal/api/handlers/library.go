@@ -457,3 +457,218 @@ func (h *LibraryHandler) GetVirtualFolderItems(w http.ResponseWriter, r *http.Re
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)
 }
+
+func (h *LibraryHandler) GetSimilarItems(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	items, err := h.repo.GetSimilarItems(id, "", 20)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(items)
+}
+
+func (h *LibraryHandler) GetItemCounts(w http.ResponseWriter, r *http.Request) {
+	userId := r.URL.Query().Get("UserId")
+
+	counts, err := h.repo.GetItemCounts(userId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(counts)
+}
+
+func (h *LibraryHandler) GetAncestors(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	ancestors, err := h.repo.GetAncestors(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(ancestors)
+}
+
+func (h *LibraryHandler) GetThemeMedia(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	themeMedia, err := h.repo.GetThemeMedia(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(themeMedia)
+}
+
+func (h *LibraryHandler) GetIntros(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	intros, err := h.repo.GetIntros(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(intros)
+}
+
+func (h *LibraryHandler) MarkFavoriteItem(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	userId := r.URL.Query().Get("UserId")
+
+	err := h.repo.MarkFavoriteItem(userId, id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *LibraryHandler) UnmarkFavoriteItem(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	userId := r.URL.Query().Get("UserId")
+
+	err := h.repo.UnmarkFavoriteItem(userId, id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *LibraryHandler) UpdateUserItemRating(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	userId := r.URL.Query().Get("UserId")
+
+	var req struct {
+		Rating float64 `json:"Rating"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err := h.repo.UpdateUserItemRating(userId, id, req.Rating)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *LibraryHandler) DeleteUserItemRating(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	userId := r.URL.Query().Get("UserId")
+
+	err := h.repo.DeleteUserItemRating(userId, id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *LibraryHandler) GetGroupingOptions(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode([]string{})
+}
+
+func (h *LibraryHandler) MergeVersions(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	_ = id
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *LibraryHandler) GetExternalIdInfos(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	infos, err := h.repo.GetExternalIdInfos(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(infos)
+}
+
+func (h *LibraryHandler) GetCriticReviews(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	reviews, err := h.repo.GetCriticReviews(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(reviews)
+}
+
+func (h *LibraryHandler) RefreshItem(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	if err := h.repo.RefreshItemMetadata(id); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *LibraryHandler) MoveItem(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	itemId := chi.URLParam(r, "itemId")
+	newIndexStr := chi.URLParam(r, "newIndex")
+
+	newIndex, err := strconv.Atoi(newIndexStr)
+	if err != nil {
+		http.Error(w, "invalid newIndex", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.repo.MovePlaylistItem(id, itemId, newIndex); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *LibraryHandler) UpdateItemContentType(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	var req struct {
+		ContentType string `json:"ContentType"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := h.repo.UpdateItemContentType(id, req.ContentType); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}

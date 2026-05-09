@@ -165,3 +165,93 @@ type GORMSession struct {
 func (GORMSession) TableName() string {
 	return "Sessions"
 }
+
+// GORMTimer represents a TV recording timer.
+type GORMTimer struct {
+	Id          string    `gorm:"column:Id;primaryKey"`
+	ChannelId   string    `gorm:"column:ChannelId"`
+	ProgramId   string    `gorm:"column:ProgramId"`
+	Name        string    `gorm:"column:Name"`
+	StartTime   time.Time `gorm:"column:StartTime"`
+	EndTime     time.Time `gorm:"column:EndTime"`
+	PrePadding  int       `gorm:"column:PrePadding"`
+	PostPadding int       `gorm:"column:PostPadding"`
+	Status     string    `gorm:"column:Status"`
+	RecordingId string    `gorm:"column:RecordingId"`
+	CreatedDate time.Time `gorm:"column:CreatedDate"`
+}
+
+func (GORMTimer) TableName() string {
+	return "Timers"
+}
+
+// GORMSeriesTimer represents a series recording timer.
+type GORMSeriesTimer struct {
+	Id                string    `gorm:"column:Id;primaryKey"`
+	ChannelId         string    `gorm:"column:ChannelId"`
+	ProgramName       string    `gorm:"column:ProgramName"`
+	StartTime         time.Time `gorm:"column:StartTime"`
+	EndTime           time.Time `gorm:"column:EndTime"`
+	PrePadding       int       `gorm:"column:PrePadding"`
+	PostPadding       int       `gorm:"column:PostPadding"`
+	Days             string    `gorm:"column:Days"`
+	RecordAnyTime    bool      `gorm:"column:RecordAnyTime"`
+	RecordAnyChannel bool      `gorm:"column:RecordAnyChannel"`
+	RecordNewOnly    bool      `gorm:"column:RecordNewOnly"`
+	Status           string    `gorm:"column:Status"`
+	CreatedDate      time.Time `gorm:"column:CreatedDate"`
+}
+
+func (GORMSeriesTimer) TableName() string {
+	return "SeriesTimers"
+}
+
+// GORMRecording represents a TV recording.
+type GORMRecording struct {
+	Id            string    `gorm:"column:Id;primaryKey"`
+	Name          string    `gorm:"column:Name"`
+	ChannelId     string    `gorm:"column:ChannelId"`
+	ProgramId     string    `gorm:"column:ProgramId"`
+	StartTime     time.Time `gorm:"column:StartTime"`
+	EndTime       time.Time `gorm:"column:EndTime"`
+	Status        string    `gorm:"column:Status"`
+	Format        string    `gorm:"column:Format"`
+	FileSize      int64     `gorm:"column:FileSize"`
+	ItemId        string    `gorm:"column:ItemId"`
+	SeriesTimerId string    `gorm:"column:SeriesTimerId"`
+	CreatedDate   time.Time `gorm:"column:CreatedDate"`
+}
+
+func (GORMRecording) TableName() string {
+	return "Recordings"
+}
+
+// GORMTunerHost represents a TV tuner host.
+type GORMTunerHost struct {
+	Id          string `gorm:"column:Id;primaryKey"`
+	Type        string `gorm:"column:Type"`
+	Host        string `gorm:"column:Host"`
+	Port        int    `gorm:"column:Port"`
+	TunerIp     string `gorm:"column:TunerIp"`
+	FriendlyName string `gorm:"column:FriendlyName"`
+	Enabled     bool   `gorm:"column:Enabled"`
+}
+
+func (GORMTunerHost) TableName() string {
+	return "TunerHosts"
+}
+
+// GORMListingProvider represents an EPG listing provider.
+type GORMListingProvider struct {
+	Id       string `gorm:"column:Id;primaryKey"`
+	Type     string `gorm:"column:Type"`
+	Username string `gorm:"column:Username"`
+	Password string `gorm:"column:Password"`
+	Country  string `gorm:"column:Country"`
+	ZipCode  string `gorm:"column:ZipCode"`
+	Enabled  bool   `gorm:"column:Enabled"`
+}
+
+func (GORMListingProvider) TableName() string {
+	return "ListingProviders"
+}

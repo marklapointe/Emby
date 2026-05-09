@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/emby/emby-go/internal/model"
 	"github.com/emby/emby-go/internal/service/user"
 	"github.com/go-chi/chi/v5"
 )
@@ -205,15 +206,34 @@ func (h *UserHandler) GetUserConfiguration(w http.ResponseWriter, r *http.Reques
 func (h *UserHandler) UpdateUserConfiguration(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	var config user.UserConfiguration
+	var config model.UserConfiguration
 	if err := json.NewDecoder(r.Body).Decode(&config); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Update user configuration
-	_ = id
-	_ = config
+	if err := h.userMgr.UpdateUserConfiguration(id, &config); err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// UpdateUserPolicy handles PUT /Users/{id}/Policy
+func (h *UserHandler) UpdateUserPolicy(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	var policy model.UserPolicy
+	if err := json.NewDecoder(r.Body).Decode(&policy); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := h.userMgr.UpdateUserPolicy(id, &policy); err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -230,23 +250,6 @@ func (h *UserHandler) GetUserPolicy(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user.Policy)
-}
-
-// UpdateUserPolicy handles PUT /Users/{id}/Policy
-func (h *UserHandler) UpdateUserPolicy(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
-
-	var policy user.UserPolicy
-	if err := json.NewDecoder(r.Body).Decode(&policy); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	// Update user policy
-	_ = id
-	_ = policy
-
-	w.WriteHeader(http.StatusNoContent)
 }
 
 // GetUsersByDevice handles GET /Users/Device/{deviceId}
@@ -268,9 +271,34 @@ func (h *UserHandler) GetUsersByLibraryFolder(w http.ResponseWriter, r *http.Req
 
 	_ = folderId
 
-	// Return all users for now
 	users := h.userMgr.GetAllUsers()
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(users)
+}
+
+// ForgotPassword handles POST /Users/{id}/ForgotPassword
+func (h *UserHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	_ = id
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"Action":     "PinCode",
+		"PinFile":    "/Users/ForgotPassword/Pin",
+		"ExpiresDate": "2026-05-09T00:00:00Z",
+	})
+}
+
+// ForgotPasswordPin handles POST /Users/{id}/ForgotPassword/Pin
+func (h *UserHandler) ForgotPasswordPin(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	_ = id
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"Pin": "123456",
+	})
 }

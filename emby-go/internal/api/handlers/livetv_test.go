@@ -10,7 +10,26 @@ import (
 	"github.com/emby/emby-go/internal/repository"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
+
+func setupTestRepo(t *testing.T) (*repository.ItemRepository, func()) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("failed to open database: %v", err)
+	}
+	sqlDB, _ := db.DB()
+	sqlDB.SetMaxOpenConns(1)
+	cleanup := func() {
+		sqlDB.Close()
+	}
+	repo := repository.NewItemRepository(db)
+	if err := repo.CreateSchema(); err != nil {
+		t.Fatalf("failed to create schema: %v", err)
+	}
+	return repo, cleanup
+}
 
 func TestNewLiveTVHandler(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
@@ -28,9 +47,11 @@ func TestNewLiveTVHandler(t *testing.T) {
 }
 
 func TestGetSeriesTimers(t *testing.T) {
+	repo, cleanup := setupTestRepo(t)
+	defer cleanup()
+
 	logger, _ := zap.NewDevelopment()
-	itemRepo := &repository.ItemRepository{}
-	h := NewLiveTVHandler(itemRepo, logger)
+	h := NewLiveTVHandler(repo, logger)
 
 	req := httptest.NewRequest("GET", "/LiveTv/SeriesTimers", nil)
 	w := httptest.NewRecorder()
@@ -63,9 +84,11 @@ func TestGetTimerProviders(t *testing.T) {
 }
 
 func TestGetTunerHosts(t *testing.T) {
+	repo, cleanup := setupTestRepo(t)
+	defer cleanup()
+
 	logger, _ := zap.NewDevelopment()
-	itemRepo := &repository.ItemRepository{}
-	h := NewLiveTVHandler(itemRepo, logger)
+	h := NewLiveTVHandler(repo, logger)
 
 	req := httptest.NewRequest("GET", "/LiveTv/TunerHosts", nil)
 	w := httptest.NewRecorder()
@@ -105,9 +128,11 @@ func TestGetTunerHost_WithChi(t *testing.T) {
 }
 
 func TestCreateTunerHost(t *testing.T) {
+	repo, cleanup := setupTestRepo(t)
+	defer cleanup()
+
 	logger, _ := zap.NewDevelopment()
-	itemRepo := &repository.ItemRepository{}
-	h := NewLiveTVHandler(itemRepo, logger)
+	h := NewLiveTVHandler(repo, logger)
 
 	body := `{"Type":"m3u","Host":"192.168.1.100","Port":8080}`
 	req := httptest.NewRequest("POST", "/LiveTv/TunerHosts", strings.NewReader(body))
@@ -122,9 +147,11 @@ func TestCreateTunerHost(t *testing.T) {
 }
 
 func TestDeleteTunerHost_WithChi(t *testing.T) {
+	repo, cleanup := setupTestRepo(t)
+	defer cleanup()
+
 	logger, _ := zap.NewDevelopment()
-	itemRepo := &repository.ItemRepository{}
-	h := NewLiveTVHandler(itemRepo, logger)
+	h := NewLiveTVHandler(repo, logger)
 
 	r := chi.NewRouter()
 	r.Delete("/LiveTv/TunerHosts/{id}", h.DeleteTunerHost)
@@ -170,9 +197,11 @@ func TestGetListingProviders(t *testing.T) {
 }
 
 func TestCreateListingProvider(t *testing.T) {
+	repo, cleanup := setupTestRepo(t)
+	defer cleanup()
+
 	logger, _ := zap.NewDevelopment()
-	itemRepo := &repository.ItemRepository{}
-	h := NewLiveTVHandler(itemRepo, logger)
+	h := NewLiveTVHandler(repo, logger)
 
 	body := `{"Type":"schedulesdirect","Username":"user","Password":"pass","Country":"USA","ZipCode":"12345"}`
 	req := httptest.NewRequest("POST", "/LiveTv/ListingProviders", strings.NewReader(body))

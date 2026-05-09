@@ -161,3 +161,91 @@ func (m *Manager) GetActiveSessionCount() int {
 	}
 	return count
 }
+
+// StartPlayback starts playback for a session.
+func (m *Manager) StartPlayback(id string, itemId string, mediaSourceId string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	session, exists := m.sessions[id]
+	if !exists {
+		return fmt.Errorf("session not found: %s", id)
+	}
+
+	session.PlayState.PositionTicks = 0
+	session.PlayState.IsPaused = false
+	session.LastActivityTime = time.Now()
+
+	return nil
+}
+
+// StopPlayback stops playback for a session.
+func (m *Manager) StopPlayback(id string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	session, exists := m.sessions[id]
+	if !exists {
+		return fmt.Errorf("session not found: %s", id)
+	}
+
+	session.PlayState.PositionTicks = 0
+	session.PlayState.IsPaused = false
+	session.LastActivityTime = time.Now()
+
+	return nil
+}
+
+// SendCommand sends a command to a session.
+func (m *Manager) SendCommand(id string, command string, args map[string]interface{}) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	session, exists := m.sessions[id]
+	if !exists {
+		return fmt.Errorf("session not found: %s", id)
+	}
+
+	if m.logger != nil {
+		m.logger.Info("session command", zap.String("id", id), zap.String("command", command))
+	}
+
+	session.LastActivityTime = time.Now()
+	return nil
+}
+
+// AddUserToSession adds a user to a session.
+func (m *Manager) AddUserToSession(id string, userId string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	session, exists := m.sessions[id]
+	if !exists {
+		return fmt.Errorf("session not found: %s", id)
+	}
+
+	if m.logger != nil {
+		m.logger.Info("user added to session", zap.String("sessionId", id), zap.String("userId", userId))
+	}
+
+	session.LastActivityTime = time.Now()
+	return nil
+}
+
+// RemoveUserFromSession removes a user from a session.
+func (m *Manager) RemoveUserFromSession(id string, userId string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	session, exists := m.sessions[id]
+	if !exists {
+		return fmt.Errorf("session not found: %s", id)
+	}
+
+	if m.logger != nil {
+		m.logger.Info("user removed from session", zap.String("sessionId", id), zap.String("userId", userId))
+	}
+
+	session.LastActivityTime = time.Now()
+	return nil
+}

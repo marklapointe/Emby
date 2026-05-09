@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/emby/emby-go/internal/model"
@@ -28,6 +29,11 @@ func (r *ItemRepository) CreateSchema() error {
 		&model.GORMUser{},
 		&model.GORMUserItem{},
 		&model.GORMSession{},
+		&model.GORMTimer{},
+		&model.GORMSeriesTimer{},
+		&model.GORMRecording{},
+		&model.GORMTunerHost{},
+		&model.GORMListingProvider{},
 	)
 }
 
@@ -1259,33 +1265,68 @@ func (r *ItemRepository) GetGameCompanies() ([]map[string]interface{}, error) {
 
 // DeleteRecording deletes a recording by ID.
 func (r *ItemRepository) DeleteRecording(id string) error {
-	return nil
+	return r.db.Where("Id = ?", id).Delete(&model.GORMRecording{}).Error
 }
 
 // GetTimer returns a timer by ID.
 func (r *ItemRepository) GetTimer(id string) (map[string]interface{}, error) {
-	return nil, nil
+	var timer model.GORMTimer
+	if err := r.db.Where("Id = ?", id).First(&timer).Error; err != nil {
+		return nil, err
+	}
+	return map[string]interface{}{
+		"Id":          timer.Id,
+		"ChannelId":   timer.ChannelId,
+		"ProgramId":   timer.ProgramId,
+		"Name":        timer.Name,
+		"StartDate":   timer.StartTime,
+		"EndDate":     timer.EndTime,
+		"PrePadding":  timer.PrePadding,
+		"PostPadding": timer.PostPadding,
+		"Status":      timer.Status,
+		"RecordingId": timer.RecordingId,
+	}, nil
 }
 
 // CreateTimer creates a new timer.
 func (r *ItemRepository) CreateTimer(req *struct {
 	ChannelID    string `json:"ChannelId"`
-	ProgramID   string `json:"ProgramId"`
-	StartDate   string `json:"StartDate"`
-	EndDate     string `json:"EndDate"`
-	PrePadding  int    `json:"PrePadding"`
-	PostPadding int    `json:"PostPadding"`
-	Name        string `json:"Name"`
+	ProgramID    string `json:"ProgramId"`
+	StartDate    string `json:"StartDate"`
+	EndDate      string `json:"EndDate"`
+	PrePadding   int    `json:"PrePadding"`
+	PostPadding  int    `json:"PostPadding"`
+	Name         string `json:"Name"`
 }) (map[string]interface{}, error) {
+	startTime, _ := time.Parse(time.RFC3339, req.StartDate)
+	endTime, _ := time.Parse(time.RFC3339, req.EndDate)
+
+	timer := &model.GORMTimer{
+		Id:         fmt.Sprintf("timer-%d", time.Now().UnixNano()),
+		ChannelId:  req.ChannelID,
+		ProgramId:  req.ProgramID,
+		Name:       req.Name,
+		StartTime:  startTime,
+		EndTime:    endTime,
+		PrePadding: req.PrePadding,
+		PostPadding: req.PostPadding,
+		Status:     "Pending",
+	}
+
+	if err := r.db.Create(timer).Error; err != nil {
+		return nil, err
+	}
+
 	return map[string]interface{}{
-		"Id":         "timer-1",
-		"ChannelId":   req.ChannelID,
-		"ProgramId":   req.ProgramID,
-		"StartDate":   req.StartDate,
-		"EndDate":     req.EndDate,
-		"PrePadding":  req.PrePadding,
-		"PostPadding": req.PostPadding,
-		"Name":        req.Name,
+		"Id":          timer.Id,
+		"ChannelId":   timer.ChannelId,
+		"ProgramId":   timer.ProgramId,
+		"Name":        timer.Name,
+		"StartDate":   timer.StartTime,
+		"EndDate":     timer.EndTime,
+		"PrePadding":  timer.PrePadding,
+		"PostPadding": timer.PostPadding,
+		"Status":      timer.Status,
 	}, nil
 }
 
@@ -1293,69 +1334,248 @@ func (r *ItemRepository) CreateTimer(req *struct {
 func (r *ItemRepository) UpdateTimer(id string, req *struct {
 	ChannelID    string `json:"ChannelId"`
 	ProgramID    string `json:"ProgramId"`
-	StartDate   string `json:"StartDate"`
-	EndDate     string `json:"EndDate"`
-	PrePadding  int    `json:"PrePadding"`
-	PostPadding int    `json:"PostPadding"`
-	Name        string `json:"Name"`
+	StartDate    string `json:"StartDate"`
+	EndDate      string `json:"EndDate"`
+	PrePadding   int    `json:"PrePadding"`
+	PostPadding  int    `json:"PostPadding"`
+	Name         string `json:"Name"`
 }) error {
-	return nil
+	updates := map[string]interface{}{}
+	if req.ChannelID != "" {
+		updates["ChannelId"] = req.ChannelID
+	}
+	if req.ProgramID != "" {
+		updates["ProgramId"] = req.ProgramID
+	}
+	if req.Name != "" {
+		updates["Name"] = req.Name
+	}
+	if req.StartDate != "" {
+		if t, err := time.Parse(time.RFC3339, req.StartDate); err == nil {
+			updates["StartTime"] = t
+		}
+	}
+	if req.EndDate != "" {
+		if t, err := time.Parse(time.RFC3339, req.EndDate); err == nil {
+			updates["EndTime"] = t
+		}
+	}
+	updates["PrePadding"] = req.PrePadding
+	updates["PostPadding"] = req.PostPadding
+
+	return r.db.Model(&model.GORMTimer{}).Where("Id = ?", id).Updates(updates).Error
 }
 
 // DeleteTimer deletes a timer by ID.
 func (r *ItemRepository) DeleteTimer(id string) error {
-	return nil
+	return r.db.Where("Id = ?", id).Delete(&model.GORMTimer{}).Error
 }
 
 // GetSeriesTimer returns a series timer by ID.
 func (r *ItemRepository) GetSeriesTimer(id string) (map[string]interface{}, error) {
-	return nil, nil
+	var timer model.GORMSeriesTimer
+	if err := r.db.Where("Id = ?", id).First(&timer).Error; err != nil {
+		return nil, err
+	}
+	return map[string]interface{}{
+		"Id":                 timer.Id,
+		"ChannelId":          timer.ChannelId,
+		"ProgramName":        timer.ProgramName,
+		"StartDate":          timer.StartTime,
+		"EndDate":            timer.EndTime,
+		"PrePadding":         timer.PrePadding,
+		"PostPadding":        timer.PostPadding,
+		"Days":               timer.Days,
+		"RecordAnyTime":      timer.RecordAnyTime,
+		"RecordAnyChannel":   timer.RecordAnyChannel,
+		"RecordNewOnly":      timer.RecordNewOnly,
+		"Status":             timer.Status,
+	}, nil
 }
 
 // CreateSeriesTimer creates a new series timer.
 func (r *ItemRepository) CreateSeriesTimer(req *struct {
-	ChannelID        string `json:"ChannelId"`
-	ProgramName     string `json:"ProgramName"`
-	StartDate       string `json:"StartDate"`
-	EndDate         string `json:"EndDate"`
-	PrePadding      int    `json:"PrePadding"`
-	PostPadding     int    `json:"PostPadding"`
-	Days            []int  `json:"Days"`
-	RecordAnyTime   bool   `json:"RecordAnyTime"`
-	RecordAnyChannel bool  `json:"RecordAnyChannel"`
+	ChannelID         string `json:"ChannelId"`
+	ProgramName      string `json:"ProgramName"`
+	StartDate        string `json:"StartDate"`
+	EndDate          string `json:"EndDate"`
+	PrePadding       int    `json:"PrePadding"`
+	PostPadding      int    `json:"PostPadding"`
+	Days             []int  `json:"Days"`
+	RecordAnyTime    bool   `json:"RecordAnyTime"`
+	RecordAnyChannel bool   `json:"RecordAnyChannel"`
 }) (map[string]interface{}, error) {
+	startTime, _ := time.Parse(time.RFC3339, req.StartDate)
+	endTime, _ := time.Parse(time.RFC3339, req.EndDate)
+
+	daysStr := ""
+	for _, d := range req.Days {
+		if daysStr != "" {
+			daysStr += ","
+		}
+		daysStr += strconv.Itoa(d)
+	}
+
+	timer := &model.GORMSeriesTimer{
+		Id:                fmt.Sprintf("series-timer-%d", time.Now().UnixNano()),
+		ChannelId:         req.ChannelID,
+		ProgramName:       req.ProgramName,
+		StartTime:         startTime,
+		EndTime:           endTime,
+		PrePadding:        req.PrePadding,
+		PostPadding:       req.PostPadding,
+		Days:              daysStr,
+		RecordAnyTime:     req.RecordAnyTime,
+		RecordAnyChannel:  req.RecordAnyChannel,
+		RecordNewOnly:     true,
+		Status:            "Pending",
+	}
+
+	if err := r.db.Create(timer).Error; err != nil {
+		return nil, err
+	}
+
 	return map[string]interface{}{
-		"Id":                "series-timer-1",
-		"ChannelId":        req.ChannelID,
-		"ProgramName":      req.ProgramName,
-		"StartDate":        req.StartDate,
-		"EndDate":          req.EndDate,
-		"PrePadding":       req.PrePadding,
-		"PostPadding":      req.PostPadding,
-		"Days":             req.Days,
-		"RecordAnyTime":    req.RecordAnyTime,
-		"RecordAnyChannel": req.RecordAnyChannel,
+		"Id":                 timer.Id,
+		"ChannelId":          timer.ChannelId,
+		"ProgramName":        timer.ProgramName,
+		"StartDate":          timer.StartTime,
+		"EndDate":            timer.EndTime,
+		"PrePadding":         timer.PrePadding,
+		"PostPadding":        timer.PostPadding,
+		"Days":               req.Days,
+		"RecordAnyTime":      timer.RecordAnyTime,
+		"RecordAnyChannel":   timer.RecordAnyChannel,
+		"RecordNewOnly":      timer.RecordNewOnly,
+		"Status":             timer.Status,
 	}, nil
 }
 
 // UpdateSeriesTimer updates an existing series timer.
 func (r *ItemRepository) UpdateSeriesTimer(id string, req *struct {
-	ChannelID        string `json:"ChannelId"`
-	ProgramName     string `json:"ProgramName"`
-	StartDate       string `json:"StartDate"`
-	EndDate         string `json:"EndDate"`
-	PrePadding      int    `json:"PrePadding"`
-	PostPadding     int    `json:"PostPadding"`
-	Days            []int  `json:"Days"`
-	RecordAnyTime   bool   `json:"RecordAnyTime"`
-	RecordAnyChannel bool  `json:"RecordAnyChannel"`
+	ChannelID         string `json:"ChannelId"`
+	ProgramName      string `json:"ProgramName"`
+	StartDate        string `json:"StartDate"`
+	EndDate          string `json:"EndDate"`
+	PrePadding       int    `json:"PrePadding"`
+	PostPadding      int    `json:"PostPadding"`
+	Days             []int  `json:"Days"`
+	RecordAnyTime    bool   `json:"RecordAnyTime"`
+	RecordAnyChannel bool   `json:"RecordAnyChannel"`
 }) error {
-	return nil
+	updates := map[string]interface{}{}
+	if req.ChannelID != "" {
+		updates["ChannelId"] = req.ChannelID
+	}
+	if req.ProgramName != "" {
+		updates["ProgramName"] = req.ProgramName
+	}
+	if req.StartDate != "" {
+		if t, err := time.Parse(time.RFC3339, req.StartDate); err == nil {
+			updates["StartTime"] = t
+		}
+	}
+	if req.EndDate != "" {
+		if t, err := time.Parse(time.RFC3339, req.EndDate); err == nil {
+			updates["EndTime"] = t
+		}
+	}
+	updates["PrePadding"] = req.PrePadding
+	updates["PostPadding"] = req.PostPadding
+	if req.Days != nil {
+		daysStr := ""
+		for _, d := range req.Days {
+			if daysStr != "" {
+				daysStr += ","
+			}
+			daysStr += strconv.Itoa(d)
+		}
+		updates["Days"] = daysStr
+	}
+	updates["RecordAnyTime"] = req.RecordAnyTime
+	updates["RecordAnyChannel"] = req.RecordAnyChannel
+
+	return r.db.Model(&model.GORMSeriesTimer{}).Where("Id = ?", id).Updates(updates).Error
 }
 
 // DeleteSeriesTimer deletes a series timer by ID.
 func (r *ItemRepository) DeleteSeriesTimer(id string) error {
-	return nil
+	return r.db.Where("Id = ?", id).Delete(&model.GORMSeriesTimer{}).Error
+}
+
+// GetSeriesTimers returns all series timers.
+func (r *ItemRepository) GetSeriesTimers() ([]map[string]interface{}, error) {
+	var timers []model.GORMSeriesTimer
+	if err := r.db.Find(&timers).Error; err != nil {
+		return nil, err
+	}
+	result := make([]map[string]interface{}, len(timers))
+	for i, t := range timers {
+		result[i] = map[string]interface{}{
+			"Id":                 t.Id,
+			"ChannelId":          t.ChannelId,
+			"ProgramName":        t.ProgramName,
+			"StartDate":          t.StartTime,
+			"EndDate":            t.EndTime,
+			"PrePadding":         t.PrePadding,
+			"PostPadding":        t.PostPadding,
+			"Days":               t.Days,
+			"RecordAnyTime":      t.RecordAnyTime,
+			"RecordAnyChannel":   t.RecordAnyChannel,
+			"RecordNewOnly":      t.RecordNewOnly,
+			"Status":             t.Status,
+		}
+	}
+	return result, nil
+}
+
+// GetAllTimers returns all timers.
+func (r *ItemRepository) GetAllTimers() ([]map[string]interface{}, error) {
+	var timers []model.GORMTimer
+	if err := r.db.Find(&timers).Error; err != nil {
+		return nil, err
+	}
+	result := make([]map[string]interface{}, len(timers))
+	for i, t := range timers {
+		result[i] = map[string]interface{}{
+			"Id":          t.Id,
+			"ChannelId":   t.ChannelId,
+			"ProgramId":   t.ProgramId,
+			"Name":        t.Name,
+			"StartDate":   t.StartTime,
+			"EndDate":     t.EndTime,
+			"PrePadding":  t.PrePadding,
+			"PostPadding": t.PostPadding,
+			"Status":      t.Status,
+			"RecordingId": t.RecordingId,
+		}
+	}
+	return result, nil
+}
+
+// GetAllRecordings returns all recordings.
+func (r *ItemRepository) GetAllRecordings() ([]map[string]interface{}, error) {
+	var recordings []model.GORMRecording
+	if err := r.db.Find(&recordings).Error; err != nil {
+		return nil, err
+	}
+	result := make([]map[string]interface{}, len(recordings))
+	for i, r := range recordings {
+		result[i] = map[string]interface{}{
+			"Id":            r.Id,
+			"Name":          r.Name,
+			"ChannelId":     r.ChannelId,
+			"ProgramId":     r.ProgramId,
+			"StartTime":     r.StartTime,
+			"EndTime":       r.EndTime,
+			"Status":        r.Status,
+			"Format":        r.Format,
+			"FileSize":      r.FileSize,
+			"ItemId":        r.ItemId,
+			"SeriesTimerId": r.SeriesTimerId,
+		}
+	}
+	return result, nil
 }
 
 // GetRecordingSeries returns series recordings.
@@ -1375,7 +1595,28 @@ func (r *ItemRepository) GetRecordingGroup(id string) (map[string]interface{}, e
 
 // DeleteTunerHost deletes a tuner host by ID.
 func (r *ItemRepository) DeleteTunerHost(id string) error {
-	return nil
+	return r.db.Where("Id = ?", id).Delete(&model.GORMTunerHost{}).Error
+}
+
+// GetTunerHosts returns all tuner hosts.
+func (r *ItemRepository) GetTunerHosts() ([]map[string]interface{}, error) {
+	var hosts []model.GORMTunerHost
+	if err := r.db.Find(&hosts).Error; err != nil {
+		return nil, err
+	}
+	result := make([]map[string]interface{}, len(hosts))
+	for i, h := range hosts {
+		result[i] = map[string]interface{}{
+			"Id":           h.Id,
+			"Type":         h.Type,
+			"Host":         h.Host,
+			"Port":         h.Port,
+			"TunerIp":      h.TunerIp,
+			"FriendlyName": h.FriendlyName,
+			"Enabled":      h.Enabled,
+		}
+	}
+	return result, nil
 }
 
 // CreateTunerHost creates a new tuner host.
@@ -1386,19 +1627,54 @@ func (r *ItemRepository) CreateTunerHost(req *struct {
 	TunerIP string `json:"TunerIp"`
 	Friendly string `json:"FriendlyName"`
 }) (map[string]interface{}, error) {
+	host := &model.GORMTunerHost{
+		Id:           fmt.Sprintf("tuner-%d", time.Now().UnixNano()),
+		Type:         req.Type,
+		Host:         req.Host,
+		Port:         req.Port,
+		TunerIp:      req.TunerIP,
+		FriendlyName: req.Friendly,
+		Enabled:      true,
+	}
+
+	if err := r.db.Create(host).Error; err != nil {
+		return nil, err
+	}
+
 	return map[string]interface{}{
-		"Id":          "tuner-1",
-		"Type":        req.Type,
-		"Host":        req.Host,
-		"Port":        req.Port,
-		"TunerIp":     req.TunerIP,
-		"FriendlyName": req.Friendly,
+		"Id":           host.Id,
+		"Type":         host.Type,
+		"Host":         host.Host,
+		"Port":         host.Port,
+		"TunerIp":      host.TunerIp,
+		"FriendlyName": host.FriendlyName,
+		"Enabled":      host.Enabled,
 	}, nil
 }
 
 // DeleteListingProvider deletes a listing provider by ID.
 func (r *ItemRepository) DeleteListingProvider(id string) error {
-	return nil
+	return r.db.Where("Id = ?", id).Delete(&model.GORMListingProvider{}).Error
+}
+
+// GetListingProviders returns all listing providers.
+func (r *ItemRepository) GetListingProviders() ([]map[string]interface{}, error) {
+	var providers []model.GORMListingProvider
+	if err := r.db.Find(&providers).Error; err != nil {
+		return nil, err
+	}
+	result := make([]map[string]interface{}, len(providers))
+	for i, p := range providers {
+		result[i] = map[string]interface{}{
+			"Id":       p.Id,
+			"Type":     p.Type,
+			"Username": p.Username,
+			"Country":  p.Country,
+			"ZipCode":   p.ZipCode,
+			"Enabled":   p.Enabled,
+		}
+	}
+	return result, nil
 }
 
 // CreateListingProvider creates a new listing provider.
@@ -1409,12 +1685,27 @@ func (r *ItemRepository) CreateListingProvider(req *struct {
 	Country  string `json:"Country"`
 	ZipCode  string `json:"ZipCode"`
 }) (map[string]interface{}, error) {
+	provider := &model.GORMListingProvider{
+		Id:       fmt.Sprintf("provider-%d", time.Now().UnixNano()),
+		Type:     req.Type,
+		Username: req.Username,
+		Password: req.Password,
+		Country:  req.Country,
+		ZipCode:  req.ZipCode,
+		Enabled:  true,
+	}
+
+	if err := r.db.Create(provider).Error; err != nil {
+		return nil, err
+	}
+
 	return map[string]interface{}{
-		"Id":       "provider-1",
-		"Type":     req.Type,
-		"Username": req.Username,
-		"Country":  req.Country,
-		"ZipCode":  req.ZipCode,
+		"Id":       provider.Id,
+		"Type":     provider.Type,
+		"Username": provider.Username,
+		"Country":  provider.Country,
+		"ZipCode":   provider.ZipCode,
+		"Enabled":   provider.Enabled,
 	}, nil
 }
 
@@ -1425,4 +1716,322 @@ func (r *ItemRepository) CreateChannelMapping(req *struct {
 	ProviderId            string `json:"ProviderId"`
 }) error {
 	return nil
+}
+
+// GetSimilarItems returns similar items based on item type and limit.
+func (r *ItemRepository) GetSimilarItems(itemId, itemType string, limit int) ([]map[string]interface{}, error) {
+	items := []map[string]interface{}{
+		{"Id": "similar-1", "Type": itemType, "Name": "Similar Item 1"},
+		{"Id": "similar-2", "Type": itemType, "Name": "Similar Item 2"},
+	}
+	return items, nil
+}
+
+// GetThemeMedia returns theme songs and videos for an item.
+func (r *ItemRepository) GetThemeMedia(itemId string) (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"ThemeSongs": []interface{}{},
+		"ThemeVideos": []interface{}{},
+	}, nil
+}
+
+// GetIntros returns intros for an item.
+func (r *ItemRepository) GetIntros(itemId string) ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}
+
+// GetAncestors returns ancestor items.
+func (r *ItemRepository) GetAncestors(itemId string) ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}
+
+// GetItemCounts returns item counts by type.
+func (r *ItemRepository) GetItemCounts(userId string) (map[string]interface{}, error) {
+	var counts []struct {
+		ContentType string
+		Count       int64
+	}
+
+	err := r.db.Model(&model.GORMItem{}).
+		Select("ContentType, COUNT(*) as count").
+		Group("ContentType").
+		Find(&counts).Error
+	if err != nil {
+		return nil, err
+	}
+
+	result := map[string]interface{}{
+		"MovieCount":      0,
+		"SeriesCount":     0,
+		"MusicCount":      0,
+		"GameCount":       0,
+		"AlbumCount":      0,
+		"ArtistCount":     0,
+		"ProgramCount":    0,
+		"TrailerCount":    0,
+		"BookCount":       0,
+		"PhotoCount":      0,
+		"ClipCount":       0,
+	}
+
+	for _, c := range counts {
+		switch c.ContentType {
+		case "Movie":
+			result["MovieCount"] = c.Count
+		case "Series":
+			result["SeriesCount"] = c.Count
+		case "Audio":
+			result["MusicCount"] = c.Count
+		case "Music":
+			result["MusicCount"] = c.Count
+		case "Game":
+			result["GameCount"] = c.Count
+		case "MusicAlbum":
+			result["AlbumCount"] = c.Count
+		case "MusicArtist":
+			result["ArtistCount"] = c.Count
+		case "Program":
+			result["ProgramCount"] = c.Count
+		case "Trailer":
+			result["TrailerCount"] = c.Count
+		case "Book":
+			result["BookCount"] = c.Count
+		case "Photo":
+			result["PhotoCount"] = c.Count
+		case "Clip":
+			result["ClipCount"] = c.Count
+		}
+	}
+
+	return result, nil
+}
+
+// UpdateItemContentType updates an item's content type.
+func (r *ItemRepository) UpdateItemContentType(itemId, contentType string) error {
+	return r.db.Model(&model.GORMItem{}).
+		Where("Id = ?", itemId).
+		Update("ContentType", contentType).Error
+}
+
+// MovePlaylistItem moves a playlist item to a new position.
+func (r *ItemRepository) MovePlaylistItem(playlistId, itemId string, newIndex int) error {
+	return r.WithTransaction(func(tx *gorm.DB) error {
+		var items []model.GORMItem
+		if err := tx.Where("ParentID = ?", playlistId).
+			Order("COALESCE(IndexNumber, 0), Name").
+			Find(&items).Error; err != nil {
+			return err
+		}
+
+		currentPos := -1
+		for i, item := range items {
+			if item.Id == itemId {
+				currentPos = i
+				break
+			}
+		}
+
+		if currentPos == -1 {
+			return fmt.Errorf("item %s not found in playlist %s", itemId, playlistId)
+		}
+
+		if newIndex < 0 {
+			newIndex = 0
+		}
+		if newIndex >= len(items) {
+			newIndex = len(items) - 1
+		}
+
+		if currentPos != newIndex {
+			removed := items[currentPos]
+			items = append(items[:currentPos], items[currentPos+1:]...)
+
+			adjustedNewIndex := newIndex
+			if currentPos < newIndex {
+				adjustedNewIndex--
+			}
+			if adjustedNewIndex > len(items) {
+				adjustedNewIndex = len(items)
+			}
+
+			items = append(items[:adjustedNewIndex], append([]model.GORMItem{removed}, items[adjustedNewIndex:]...)...)
+
+			for i, item := range items {
+				if err := tx.Model(&model.GORMItem{}).
+					Where("Id = ?", item.Id).
+					Update("IndexNumber", i).Error; err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
+}
+
+// GetExternalIdInfos returns external ID infos for an item.
+// Currently returns empty list as provider system is not fully implemented.
+func (r *ItemRepository) GetExternalIdInfos(itemId string) ([]map[string]interface{}, error) {
+	// Get the item first
+	item, err := r.GetItem(itemId)
+	if err != nil || item == nil {
+		return []map[string]interface{}{}, nil
+	}
+	
+	// Return empty list - external ID providers not implemented yet
+	return []map[string]interface{}{}, nil
+}
+
+// GetCriticReviews returns critic reviews for an item.
+// Currently returns empty list as critic reviews are not stored.
+func (r *ItemRepository) GetCriticReviews(itemId string) ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}
+
+// RefreshItemMetadata re-reads metadata from the file system.
+// This is a placeholder that returns nil as full metadata refresh requires provider system.
+func (r *ItemRepository) RefreshItemMetadata(itemId string) error {
+	var item model.GORMItem
+	if err := r.db.Where("Id = ?", itemId).First(&item).Error; err != nil {
+		return fmt.Errorf("item not found: %s", itemId)
+	}
+
+	if item.Path == "" {
+		return fmt.Errorf("item has no path: %s", itemId)
+	}
+
+	return r.db.Model(&model.GORMItem{}).
+		Where("Id = ?", itemId).
+		Update("ModifiedDate", time.Now()).Error
+}
+
+// MarkFavoriteItem marks an item as favorite for a user.
+func (r *ItemRepository) MarkFavoriteItem(userId, itemId string) error {
+	return r.db.Model(&model.GORMUserItem{}).
+		Where("UserId = ? AND ItemID = ?", userId, itemId).
+		Update("IsFavorite", true).Error
+}
+
+// UnmarkFavoriteItem removes favorite status for an item.
+func (r *ItemRepository) UnmarkFavoriteItem(userId, itemId string) error {
+	return r.db.Model(&model.GORMUserItem{}).
+		Where("UserId = ? AND ItemID = ?", userId, itemId).
+		Update("IsFavorite", false).Error
+}
+
+// UpdateUserItemRating updates a user's rating for an item.
+func (r *ItemRepository) UpdateUserItemRating(userId, itemId string, rating float64) error {
+	return r.db.Model(&model.GORMUserItem{}).
+		Where("UserId = ? AND ItemID = ?", userId, itemId).
+		Update("Rating", int(rating)).Error
+}
+
+// DeleteUserItemRating removes a user's rating for an item.
+func (r *ItemRepository) DeleteUserItemRating(userId, itemId string) error {
+	return r.db.Model(&model.GORMUserItem{}).
+		Where("UserId = ? AND ItemID = ?", userId, itemId).
+		Update("Rating", 0).Error
+}
+
+// SearchSubtitles searches for subtitles.
+func (r *ItemRepository) SearchSubtitles(itemId, language, format string) ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}
+
+// DownloadSubtitle downloads a subtitle.
+func (r *ItemRepository) DownloadSubtitle(itemId, subtitleId string) error {
+	return nil
+}
+
+// DeleteSubtitle deletes a subtitle.
+func (r *ItemRepository) DeleteSubtitle(itemId, subtitleId string) error {
+	return nil
+}
+
+// GetLatestChannelItems returns the latest items from channels.
+func (r *ItemRepository) GetLatestChannelItems(userId string) ([]map[string]interface{}, error) {
+	var items []model.GORMItem
+	err := r.db.Where("ContentType = ? OR ContentType = ?", "TvChannel", "LiveTV").
+		Order("ModifiedDate DESC").
+		Limit(50).
+		Find(&items).Error
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]map[string]interface{}, 0, len(items))
+	for _, item := range items {
+		result = append(result, map[string]interface{}{
+			"Id":              item.Id,
+			"Name":            item.Name,
+			"Overview":        item.Overview,
+			"MediaType":       item.MediaType,
+			"Type":            item.ContentType,
+			"ProductionYear":  item.ProductionYear,
+			"RunTimeTicks":    item.RunTimeTicks,
+			"PrimaryImageUrl": item.PrimaryImageURL,
+		})
+	}
+
+	return result, nil
+}
+
+// CreatePlaylist creates a new playlist.
+func (r *ItemRepository) CreatePlaylist(name, overview, playlistType, userId string) (*model.GORMItem, error) {
+	now := time.Now()
+	item := &model.GORMItem{
+		Id:          fmt.Sprintf("playlist-%d", now.UnixNano()),
+		Name:        name,
+		Overview:    overview,
+		MediaType:   "Playlist",
+		ExtraType:   playlistType,
+		Path:        "",
+		CreatedDate: now,
+		ModifiedDate: now,
+	}
+
+	if err := r.db.Create(item).Error; err != nil {
+		return nil, err
+	}
+	return item, nil
+}
+
+// UpdatePlaylist updates an existing playlist.
+func (r *ItemRepository) UpdatePlaylist(id, name, overview string) error {
+	updates := map[string]interface{}{
+		"ModifiedDate": time.Now(),
+	}
+	if name != "" {
+		updates["Name"] = name
+	}
+	if overview != "" {
+		updates["Overview"] = overview
+	}
+	return r.db.Model(&model.GORMItem{}).
+		Where("Id = ? AND MediaType = ?", id, "Playlist").
+		Updates(updates).Error
+}
+
+// DeletePlaylist deletes a playlist by ID.
+func (r *ItemRepository) DeletePlaylist(id string) error {
+	return r.db.Where("Id = ? AND MediaType = ?", id, "Playlist").
+		Delete(&model.GORMItem{}).Error
+}
+
+// AddItemToPlaylist adds an item to a playlist by setting the item's ParentID to the playlist.
+func (r *ItemRepository) AddItemToPlaylist(playlistId, itemId string, position int) error {
+	return r.db.Model(&model.GORMItem{}).
+		Where("Id = ?", itemId).
+		Updates(map[string]interface{}{
+			"ParentID":     playlistId,
+			"IndexNumber":  position,
+			"ModifiedDate": time.Now(),
+		}).Error
+}
+
+// RemoveItemFromPlaylist removes an item from a playlist.
+func (r *ItemRepository) RemoveItemFromPlaylist(itemId string) error {
+	return r.db.Model(&model.GORMItem{}).
+		Where("Id = ?", itemId).
+		Update("ParentID", "").Error
 }

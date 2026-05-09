@@ -58,9 +58,10 @@ func (h *SessionHandler) StartPlayback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update session with playback info
-	_ = id
-	_ = req
+	if err := h.sessionMgr.StartPlayback(id, req.ItemId, req.MediaSourceId); err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -85,7 +86,6 @@ func (h *SessionHandler) PlaybackProgress(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Update session playback progress
 	newPos := req.PositionTicks
 	if err := h.sessionMgr.UpdateSession(id, &newPos, nil, &req.IsPaused); err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -99,8 +99,10 @@ func (h *SessionHandler) PlaybackProgress(w http.ResponseWriter, r *http.Request
 func (h *SessionHandler) StopPlayback(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	// Stop playback for session
-	_ = id
+	if err := h.sessionMgr.StopPlayback(id); err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -177,9 +179,10 @@ func (h *SessionHandler) NavigateTo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Navigate to item
-	_ = id
-	_ = req
+	if err := h.sessionMgr.SendCommand(id, "GoTo", map[string]interface{}{"ItemId": req.ItemId}); err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -197,9 +200,10 @@ func (h *SessionHandler) SendKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Send key to device
-	_ = id
-	_ = req
+	if err := h.sessionMgr.SendCommand(id, "SendKey", map[string]interface{}{"Key": req.Key}); err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -217,9 +221,10 @@ func (h *SessionHandler) SendText(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Send text to device
-	_ = id
-	_ = req
+	if err := h.sessionMgr.SendCommand(id, "SendText", map[string]interface{}{"Text": req.Text}); err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -229,6 +234,174 @@ func (h *SessionHandler) CloseSession(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	if err := h.sessionMgr.DeleteSession(id); err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *SessionHandler) Play(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	var req struct {
+		ItemIds []string `json:"ItemIds"`
+		PlayCommand string `json:"PlayCommand"`
+		StartPositionTicks int64 `json:"StartPositionTicks"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := h.sessionMgr.SendCommand(id, "Play", map[string]interface{}{
+		"ItemIds": req.ItemIds,
+		"PlayCommand": req.PlayCommand,
+		"StartPositionTicks": req.StartPositionTicks,
+	}); err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *SessionHandler) SendGeneralCommand(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	var req struct {
+		Name string `json:"Name"`
+		Args map[string]interface{} `json:"Args"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := h.sessionMgr.SendCommand(id, req.Name, req.Args); err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *SessionHandler) SendSystemCommand(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	var req struct {
+		Name string `json:"Name"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := h.sessionMgr.SendCommand(id, req.Name, nil); err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *SessionHandler) SendMessageCommand(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	var req struct {
+		Message string `json:"Message"`
+		TimeoutMs int `json:"TimeoutMs"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	_ = id
+	_ = req
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *SessionHandler) PostCapabilities(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	var req struct {
+		PlayableMediaTypes []string `json:"PlayableMediaTypes"`
+		SupportedCommands []string `json:"SupportedCommands"`
+		SupportsMediaControl bool `json:"SupportsMediaControl"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	_ = id
+	_ = req
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *SessionHandler) PostFullCapabilities(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	var req struct {
+		PlayableMediaTypes []string `json:"PlayableMediaTypes"`
+		SupportedCommands []string `json:"SupportedCommands"`
+		SupportsMediaControl bool `json:"SupportsMediaControl"`
+		SupportsSync bool `json:"SupportsSync"`
+		DeviceProfile string `json:"DeviceProfile"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	_ = id
+	_ = req
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *SessionHandler) AddUserToSession(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	var req struct {
+		UserId string `json:"UserId"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := h.sessionMgr.AddUserToSession(id, req.UserId); err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *SessionHandler) RemoveUserFromSession(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	var req struct {
+		UserId string `json:"UserId"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := h.sessionMgr.RemoveUserFromSession(id, req.UserId); err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}

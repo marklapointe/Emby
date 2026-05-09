@@ -122,6 +122,9 @@ func (r *Router) RegisterRoutes(router *chi.Mux) {
 	r.registerPluginRoutes(embyRouter)
 	r.registerCollectionRoutes(embyRouter)
 	r.registerAuthRoutes(embyRouter)
+	r.registerMusicRoutes(embyRouter)
+	r.registerSubtitleRoutes(embyRouter)
+	r.registerRemoteSearchRoutes(embyRouter)
 
 	// Add missing routes
 	// /emby redirects to /emby/web/
@@ -216,6 +219,22 @@ func (r *Router) registerLibraryRoutes(router *chi.Mux) {
 	r.registerRoute(router, http.MethodPost, "/library/virtualfolders/libraryoptions", libHandler.UpdateVirtualFolderOptions)
 	r.registerRoute(router, http.MethodGet, "/library/virtualfolders/{id}/items", libHandler.GetVirtualFolderItems)
 	r.registerRoute(router, http.MethodGet, "/libraries/availableoptions", libHandler.GetAvailableOptions)
+	r.registerRoute(router, http.MethodGet, "/items/{id}/similars", libHandler.GetSimilarItems)
+	r.registerRoute(router, http.MethodGet, "/items/{id}/theme", libHandler.GetThemeMedia)
+	r.registerRoute(router, http.MethodGet, "/items/{id}/intros", libHandler.GetIntros)
+	r.registerRoute(router, http.MethodGet, "/users/{id}/items/counts", libHandler.GetItemCounts)
+	r.registerRoute(router, http.MethodGet, "/items/{id}/ancestors", libHandler.GetAncestors)
+	r.registerRoute(router, http.MethodPost, "/users/{userId}/favoriteitems/{id}", libHandler.MarkFavoriteItem)
+	r.registerRoute(router, http.MethodDelete, "/users/{userId}/favoriteitems/{id}", libHandler.UnmarkFavoriteItem)
+	r.registerRoute(router, http.MethodPost, "/users/{userId}/items/{id}/rating", libHandler.UpdateUserItemRating)
+	r.registerRoute(router, http.MethodDelete, "/users/{userId}/items/{id}/rating", libHandler.DeleteUserItemRating)
+	r.registerRoute(router, http.MethodGet, "/items/groupingoptions", libHandler.GetGroupingOptions)
+	r.registerRoute(router, http.MethodPost, "/items/{id}/mergeversions", libHandler.MergeVersions)
+	r.registerRoute(router, http.MethodGet, "/items/{id}/externalidinfos", libHandler.GetExternalIdInfos)
+	r.registerRoute(router, http.MethodGet, "/items/{id}/crititreviews", libHandler.GetCriticReviews)
+	r.registerRoute(router, http.MethodPost, "/items/{id}/refresh", libHandler.RefreshItem)
+	r.registerRoute(router, http.MethodPost, "/items/{id}/move", libHandler.MoveItem)
+	r.registerRoute(router, http.MethodPost, "/items/{id}/updatecontenttype", libHandler.UpdateItemContentType)
 }
 
 func (r *Router) registerSessionRoutes(router *chi.Mux) {
@@ -234,6 +253,12 @@ func (r *Router) registerSessionRoutes(router *chi.Mux) {
 	r.registerRoute(router, http.MethodPost, "/sessions/{id}/sendkey", sessionHandler.SendKey)
 	r.registerRoute(router, http.MethodPost, "/sessions/{id}/sendtext", sessionHandler.SendText)
 	r.registerRoute(router, http.MethodDelete, "/sessions/{id}", sessionHandler.CloseSession)
+	r.registerRoute(router, http.MethodPost, "/sessions/{id}/playing/play", sessionHandler.Play)
+	r.registerRoute(router, http.MethodPost, "/sessions/{id}/command", sessionHandler.SendGeneralCommand)
+	r.registerRoute(router, http.MethodPost, "/sessions/{id}/systemcommand", sessionHandler.SendSystemCommand)
+	r.registerRoute(router, http.MethodPost, "/sessions/{id}/message", sessionHandler.SendMessageCommand)
+	r.registerRoute(router, http.MethodPost, "/sessions/{id}/capabilities", sessionHandler.PostCapabilities)
+	r.registerRoute(router, http.MethodPost, "/sessions/{id}/capabilities/full", sessionHandler.PostFullCapabilities)
 }
 
 func (r *Router) registerUserRoutes(router *chi.Mux) {
@@ -254,6 +279,8 @@ func (r *Router) registerUserRoutes(router *chi.Mux) {
 	r.registerRoute(router, http.MethodPut, "/users/{id}/policy", userHandler.UpdateUserPolicy)
 	r.registerRoute(router, http.MethodGet, "/users/device/{deviceId}", userHandler.GetUsersByDevice)
 	r.registerRoute(router, http.MethodGet, "/users/libraryfolders/{folderId}", userHandler.GetUsersByLibraryFolder)
+	r.registerRoute(router, http.MethodPost, "/users/{id}/forgotpassword", userHandler.ForgotPassword)
+	r.registerRoute(router, http.MethodPost, "/users/{id}/forgotpassword/pin", userHandler.ForgotPasswordPin)
 }
 
 func (r *Router) registerDeviceRoutes(router *chi.Mux) {
@@ -279,6 +306,11 @@ func (r *Router) registerImageRoutes(router *chi.Mux) {
 	r.registerRoute(router, http.MethodGet, "/items/{id}/images/{type}/resize", imageHandler.GetItemImageResize)
 	r.registerRoute(router, http.MethodGet, "/items/{id}/images/{type}/rotate", imageHandler.GetItemImageRotation)
 	r.registerRoute(router, http.MethodGet, "/items/{id}/remoteimages/providers", imageHandler.GetRemoteImageProviders)
+	r.registerRoute(router, http.MethodPost, "/users/{id}/images/{type}", imageHandler.PostUserImage)
+	r.registerRoute(router, http.MethodPost, "/items/{id}/images/{type}", imageHandler.PostItemImage)
+	r.registerRoute(router, http.MethodDelete, "/users/{id}/images/{type}", imageHandler.DeleteUserImage)
+	r.registerRoute(router, http.MethodDelete, "/items/{id}/images/{type}", imageHandler.DeleteItemImage)
+	r.registerRoute(router, http.MethodPost, "/items/{id}/images/{type}/index", imageHandler.UpdateItemImageIndex)
 }
 
 func (r *Router) registerMediaRoutes(router *chi.Mux) {
@@ -342,28 +374,75 @@ func (r *Router) registerChannelRoutes(router *chi.Mux) {
 func (r *Router) registerLiveTVRoutes(router *chi.Mux) {
 	liveTVHandler := handlers.NewLiveTVHandler(r.itemRepo, r.logger)
 
+	// LiveTV Info
+	r.registerRoute(router, http.MethodGet, "/livetv/info", liveTVHandler.GetLiveTvInfo)
+
+	// Channels
 	r.registerRoute(router, http.MethodGet, "/livetv/channels", liveTVHandler.GetChannels)
-	r.registerRoute(router, http.MethodGet, "/livetv/channels/{id}", liveTVHandler.GetChannels)
+	r.registerRoute(router, http.MethodGet, "/livetv/channels/{id}", liveTVHandler.GetChannel)
+	r.registerRoute(router, http.MethodGet, "/livetv/channels/withimages", liveTVHandler.GetChannelsWithImage)
+
+	// Programs
 	r.registerRoute(router, http.MethodGet, "/livetv/programs", liveTVHandler.GetPrograms)
 	r.registerRoute(router, http.MethodGet, "/livetv/programs/{id}", liveTVHandler.GetProgram)
+	r.registerRoute(router, http.MethodGet, "/livetv/programs/withimages", liveTVHandler.GetProgramWithImage)
+
+	// Recordings
 	r.registerRoute(router, http.MethodGet, "/livetv/recordings", liveTVHandler.GetRecordings)
 	r.registerRoute(router, http.MethodGet, "/livetv/recordings/{id}", liveTVHandler.GetRecording)
+	r.registerRoute(router, http.MethodDelete, "/livetv/recordings/{id}", liveTVHandler.DeleteRecording)
+	r.registerRoute(router, http.MethodGet, "/livetv/recordings/series", liveTVHandler.GetRecordingSeries)
+	r.registerRoute(router, http.MethodGet, "/livetv/recordings/groups", liveTVHandler.GetRecordingGroups)
+	r.registerRoute(router, http.MethodGet, "/livetv/recordings/groups/{id}", liveTVHandler.GetRecordingGroup)
+	r.registerRoute(router, http.MethodGet, "/livetv/recordings/folders", liveTVHandler.GetRecordingFolders)
+
+	// Timers
 	r.registerRoute(router, http.MethodGet, "/livetv/timers", liveTVHandler.GetTimers)
-	r.registerRoute(router, http.MethodGet, "/livetv/info", liveTVHandler.GetGuideInfo)
-	r.registerRoute(router, http.MethodGet, "/livetv/recommendedprograms", liveTVHandler.GetRecommendedPrograms)
+	r.registerRoute(router, http.MethodGet, "/livetv/timers/{id}", liveTVHandler.GetTimer)
+	r.registerRoute(router, http.MethodPost, "/livetv/timers", liveTVHandler.CreateTimer)
+	r.registerRoute(router, http.MethodPut, "/livetv/timers/{id}", liveTVHandler.UpdateTimer)
+	r.registerRoute(router, http.MethodDelete, "/livetv/timers/{id}", liveTVHandler.DeleteTimer)
+
+	// Series Timers
 	r.registerRoute(router, http.MethodGet, "/livetv/seriestimers", liveTVHandler.GetSeriesTimers)
+	r.registerRoute(router, http.MethodGet, "/livetv/seriestimers/{id}", liveTVHandler.GetSeriesTimer)
+	r.registerRoute(router, http.MethodPost, "/livetv/seriestimers", liveTVHandler.CreateSeriesTimer)
+	r.registerRoute(router, http.MethodPut, "/livetv/seriestimers/{id}", liveTVHandler.UpdateSeriesTimer)
+	r.registerRoute(router, http.MethodDelete, "/livetv/seriestimers/{id}", liveTVHandler.DeleteSeriesTimer)
+
+	// Timer Providers
 	r.registerRoute(router, http.MethodGet, "/livetv/timerproviders", liveTVHandler.GetTimerProviders)
+	r.registerRoute(router, http.MethodGet, "/livetv/timerproviders/default", liveTVHandler.GetDefaultTimer)
+
+	// Tuner Hosts
 	r.registerRoute(router, http.MethodGet, "/livetv/tunerhosts", liveTVHandler.GetTunerHosts)
 	r.registerRoute(router, http.MethodGet, "/livetv/tunerhosts/{id}", liveTVHandler.GetTunerHost)
 	r.registerRoute(router, http.MethodPost, "/livetv/tunerhosts", liveTVHandler.CreateTunerHost)
 	r.registerRoute(router, http.MethodDelete, "/livetv/tunerhosts/{id}", liveTVHandler.DeleteTunerHost)
 	r.registerRoute(router, http.MethodGet, "/livetv/tunerhosts/types", liveTVHandler.GetTunerHostTypes)
+	r.registerRoute(router, http.MethodPost, "/livetv/tunerhosts/{id}/reset", liveTVHandler.TunerReset)
+	r.registerRoute(router, http.MethodGet, "/livetv/tunerhosts/discover", liveTVHandler.DiscoverTuners)
+
+	// Listing Providers
 	r.registerRoute(router, http.MethodGet, "/livetv/listingproviders", liveTVHandler.GetListingProviders)
 	r.registerRoute(router, http.MethodPost, "/livetv/listingproviders", liveTVHandler.CreateListingProvider)
+	r.registerRoute(router, http.MethodDelete, "/livetv/listingproviders/{id}", liveTVHandler.DeleteListingProvider)
 	r.registerRoute(router, http.MethodGet, "/livetv/listingproviders/default", liveTVHandler.GetDefaultListingProvider)
 	r.registerRoute(router, http.MethodGet, "/livetv/listingproviders/schedulesdirect/countries", liveTVHandler.GetSchedulesDirectCountries)
+
+	// Channel Mappings
 	r.registerRoute(router, http.MethodPost, "/livetv/channelmappings", liveTVHandler.CreateChannelMapping)
 	r.registerRoute(router, http.MethodGet, "/livetv/channelmappingoptions", liveTVHandler.GetChannelMappingOptions)
+
+	// Guide
+	r.registerRoute(router, http.MethodGet, "/livetv/guideinfo", liveTVHandler.GetGuideInfo)
+
+	// Recommended Programs
+	r.registerRoute(router, http.MethodGet, "/livetv/recommendedprograms", liveTVHandler.GetRecommendedPrograms)
+
+	// Streams
+	r.registerRoute(router, http.MethodGet, "/livetv/livestreams/{id}", liveTVHandler.GetLiveStream)
+	r.registerRoute(router, http.MethodGet, "/livetv/recordings/{id}/stream", liveTVHandler.GetRecordingStream)
 }
 
 func (r *Router) registerMoviesRoutes(router *chi.Mux) {
@@ -373,6 +452,8 @@ func (r *Router) registerMoviesRoutes(router *chi.Mux) {
 	r.registerRoute(router, http.MethodGet, "/movies/{id}", moviesHandler.GetMovie)
 	r.registerRoute(router, http.MethodGet, "/movies/{id}/similar", moviesHandler.GetSimilar)
 	r.registerRoute(router, http.MethodGet, "/movies/recommendations", moviesHandler.GetRecommendations)
+	r.registerRoute(router, http.MethodGet, "/movies/trailers", moviesHandler.GetTrailers)
+	r.registerRoute(router, http.MethodGet, "/movies/{id}/specialfeatures", moviesHandler.GetSpecialFeatures)
 }
 
 func (r *Router) registerTVShowRoutes(router *chi.Mux) {
@@ -395,6 +476,7 @@ func (r *Router) registerSystemRoutes(router *chi.Mux) {
 	r.registerRoute(router, http.MethodGet, "/system/configuration", systemHandler.GetConfiguration)
 	r.registerRoute(router, http.MethodGet, "/system/ping", systemHandler.Ping)
 	r.registerRoute(router, http.MethodPost, "/system/shutdown", systemHandler.Shutdown)
+	r.registerRoute(router, http.MethodGet, "/system/wakeonlaninfo", systemHandler.GetWakeOnLanInfo)
 }
 
 func (r *Router) registerPlaylistRoutes(router *chi.Mux) {
@@ -520,6 +602,10 @@ func (r *Router) registerStartupRoutes(router *chi.Mux) {
 	r.registerRoute(router, http.MethodGet, "/startup/dashboard", startupHandler.GetStartupDashboardInfo)
 	r.registerRoute(router, http.MethodGet, "/localization/options", startupHandler.GetStartupLanguage)
 	r.registerRoute(router, http.MethodGet, "/wizardsettings", startupHandler.GetWizardSettings)
+	r.registerRoute(router, http.MethodGet, "/startup/registration", startupHandler.GetRegistration)
+	r.registerRoute(router, http.MethodGet, "/startup/registrationstatus", startupHandler.GetRegistrationStatus)
+	r.registerRoute(router, http.MethodGet, "/startup/additionalparts", startupHandler.GetAdditionalParts)
+	r.registerRoute(router, http.MethodDelete, "/startup/alternatesources", startupHandler.DeleteAlternateSources)
 }
 
 func (r *Router) registerDLNARoutes(router *chi.Mux) {
@@ -656,4 +742,44 @@ func (r *Router) registerRoute(router *chi.Mux, method, path string, handler htt
 		router.Patch(path, handler)
 		router.Patch(toTitleCase(path), handler)
 	}
+}
+
+func (r *Router) registerMusicRoutes(router *chi.Mux) {
+	musicHandler := handlers.NewMusicHandler(r.itemRepo)
+
+	r.registerRoute(router, http.MethodGet, "/music/instantmix/{id}", musicHandler.GetInstantMixFromItem)
+	r.registerRoute(router, http.MethodGet, "/music/artists/{id}/instantmix", musicHandler.GetInstantMixFromArtistId)
+	r.registerRoute(router, http.MethodGet, "/music/musicgenres/{id}/instantmix", musicHandler.GetInstantMixFromMusicGenreId)
+	r.registerRoute(router, http.MethodGet, "/music/songs/{id}/instantmix", musicHandler.GetInstantMixFromSong)
+	r.registerRoute(router, http.MethodGet, "/music/albums/{id}/instantmix", musicHandler.GetInstantMixFromAlbum)
+	r.registerRoute(router, http.MethodGet, "/music/playlists/{id}/instantmix", musicHandler.GetInstantMixFromPlaylist)
+	r.registerRoute(router, http.MethodGet, "/music/genres/{id}/instantmix", musicHandler.GetInstantMixFromMusicGenre)
+	r.registerRoute(router, http.MethodGet, "/music/artists/{id}/similar", musicHandler.GetSimilarArtists)
+	r.registerRoute(router, http.MethodGet, "/music/albums/{id}/similar", musicHandler.GetSimilarAlbums)
+}
+
+func (r *Router) registerSubtitleRoutes(router *chi.Mux) {
+	subtitleHandler := handlers.NewSubtitleHandler(r.itemRepo)
+
+	r.registerRoute(router, http.MethodGet, "/items/{id}/remotesubtitles/{subtitleId}", subtitleHandler.GetRemoteSubtitles)
+	r.registerRoute(router, http.MethodPost, "/items/{id}/remotesearch/subtitles", subtitleHandler.SearchRemoteSubtitles)
+	r.registerRoute(router, http.MethodPost, "/items/{id}/subtitles/{subtitleId}", subtitleHandler.DownloadRemoteSubtitles)
+	r.registerRoute(router, http.MethodDelete, "/items/{id}/subtitles/{subtitleId}", subtitleHandler.DeleteSubtitle)
+}
+
+func (r *Router) registerRemoteSearchRoutes(router *chi.Mux) {
+	remoteSearchHandler := handlers.NewRemoteSearchHandler()
+
+	r.registerRoute(router, http.MethodPost, "/items/{id}/remotesearch/movies", remoteSearchHandler.GetMovieRemoteSearchResults)
+	r.registerRoute(router, http.MethodPost, "/items/{id}/remotesearch/series", remoteSearchHandler.GetSeriesRemoteSearchResults)
+	r.registerRoute(router, http.MethodPost, "/items/{id}/remotesearch/trailers", remoteSearchHandler.GetTrailerRemoteSearchResults)
+	r.registerRoute(router, http.MethodPost, "/items/{id}/remotesearch/books", remoteSearchHandler.GetBookRemoteSearchResults)
+	r.registerRoute(router, http.MethodPost, "/items/{id}/remotesearch/games", remoteSearchHandler.GetGameRemoteSearchResults)
+	r.registerRoute(router, http.MethodPost, "/items/{id}/remotesearch/boxsets", remoteSearchHandler.GetBoxSetRemoteSearchResults)
+	r.registerRoute(router, http.MethodPost, "/items/{id}/remotesearch/musicvideos", remoteSearchHandler.GetMusicVideoRemoteSearchResults)
+	r.registerRoute(router, http.MethodPost, "/items/{id}/remotesearch/people", remoteSearchHandler.GetPersonRemoteSearchResults)
+	r.registerRoute(router, http.MethodPost, "/items/{id}/remotesearch/albums", remoteSearchHandler.GetMusicAlbumRemoteSearchResults)
+	r.registerRoute(router, http.MethodPost, "/items/{id}/remotesearch/artists", remoteSearchHandler.GetMusicArtistRemoteSearchResults)
+	r.registerRoute(router, http.MethodGet, "/items/{id}/remotesearch/images/{imageType}", remoteSearchHandler.GetRemoteSearchImage)
+	r.registerRoute(router, http.MethodPost, "/items/{id}/apply/remotesearch", remoteSearchHandler.ApplySearchCriteria)
 }

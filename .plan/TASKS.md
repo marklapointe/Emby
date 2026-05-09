@@ -1,9 +1,9 @@
 # Emby C# to Go Migration: Master Task List
 
-**Generated:** 2026-05-04
-**Status:** ✅ COMPLETED (~75% complete)
+**Generated:** 2026-05-08
+**Status:** ✅ COMPLETED (~85% complete)
 **Total Tasks:** 150+
-**Completed:** ~110 | **In Progress:** 0 | **Not Started:** ~40 (future enhancements)
+**Completed:** ~125 | **In Progress:** 0 | **Not Started:** ~25 (future enhancements)
 
 ---
 
@@ -29,7 +29,8 @@
 | 1.4 | Configure logging (zap) | P0 | ✅ DONE | `internal/logging/logging.go` |
 | 1.5 | Implement configuration system (YAML) | P0 | ✅ DONE | `internal/config/config.go` |
 | 1.6 | Support environment variable overrides | P1 | ✅ DONE | In config loader |
-| 1.7 | Create default configuration file | P1 | ✅ DONE | `configs/default.yaml` |
+| 1.7 | Multi-file config with XDG paths | P1 | ✅ DONE | `configs/*.yaml`, XDG/config dirs |
+| 1.8 | Security config (API keys) | P1 | ✅ DONE | Separate security.yaml |
 
 ---
 
@@ -48,7 +49,7 @@
 
 ---
 
-## Phase 3: Data Layer & SQLite
+## Phase 3: Data Layer & Database
 
 | ID | Task | Priority | Status | Notes |
 |----|------|----------|--------|-------|
@@ -59,6 +60,7 @@
 | 3.5 | Implement ItemRepository | P0 | ✅ DONE | `internal/repository/item.go` |
 | 3.6 | Implement UserRepository | P0 | ✅ DONE | In user service |
 | 3.7 | Implement AuthRepository | P1 | ✅ DONE | In auth service |
+| 3.8 | External database support | P1 | ✅ DONE | MySQL/MariaDB/PostgreSQL drivers |
 
 ---
 
@@ -293,20 +295,27 @@
 | 5.10.8 | `GET /Channels/{id}/BackdropImage` | 📋 STUB | Handler exists |
 | 5.10.9 | `GET /Channels/{id}/ThumbImage` | 📋 STUB | Handler exists |
 
-### 5.11 LiveTV API 📋 HANDLER EXISTS (NOT REGISTERED)
+### 5.11 LiveTV API ✅ REGISTERED
 
-| ID | Route | Handler Status | Notes |
-|----|-------|---------------|-------|
-| 5.11.1 | `GET /LiveTv/Channels` | 📋 STUB | Handler exists (216 lines) |
-| 5.11.2 | `GET /LiveTv/Channels/{id}` | 📋 STUB | Handler exists |
-| 5.11.3 | `GET /LiveTv/Programs` | 📋 STUB | Handler exists |
-| 5.11.4 | `GET /LiveTv/Programs/{id}` | 📋 STUB | Handler exists |
-| 5.11.5 | `GET /LiveTv/Recordings` | 📋 STUB | Handler exists |
-| 5.11.6 | `GET /LiveTv/Recordings/{id}` | 📋 STUB | Handler exists |
-| 5.11.7 | `GET /LiveTv/SeriesTimers` | 📋 STUB | Handler exists |
-| 5.11.8 | `GET /LiveTv/Timers` | 📋 STUB | Handler exists |
-| 5.11.9 | `GET /LiveTv/Info` | 📋 STUB | Handler exists |
-| 5.11.10 | `GET /LiveTv/Status` | 📋 STUB | Handler exists |
+| ID | Route | Handler Status | Service Status |
+|----|-------|---------------|---------------|
+| 5.11.1 | `GET /LiveTv/Channels` | ✅ DONE | ✅ DONE |
+| 5.11.2 | `GET /LiveTv/Channels/{id}` | ✅ DONE | ✅ DONE |
+| 5.11.3 | `GET /LiveTv/Programs` | ✅ DONE | ✅ DONE |
+| 5.11.4 | `GET /LiveTv/Programs/{id}` | ✅ DONE | ✅ DONE |
+| 5.11.5 | `GET /LiveTv/Recordings` | ✅ DONE | ✅ DONE |
+| 5.11.6 | `GET /LiveTv/Recordings/{id}` | ✅ DONE | ✅ DONE |
+| 5.11.7 | `GET /LiveTv/SeriesTimers` | ✅ DONE | ✅ DONE |
+| 5.11.8 | `GET /LiveTv/Timers` | ✅ DONE | ✅ DONE |
+| 5.11.9 | `GET /LiveTv/Info` | ✅ DONE | ✅ DONE |
+| 5.11.10 | `GET /LiveTv/Status` | ✅ DONE | ✅ DONE |
+| 5.11.11 | `POST /LiveTv/Timers` | ✅ DONE | ✅ DONE |
+| 5.11.12 | `DELETE /LiveTv/Timers/{id}` | ✅ DONE | ✅ DONE |
+| 5.11.13 | `POST /LiveTv/SeriesTimers` | ✅ DONE | ✅ DONE |
+| 5.11.14 | `DELETE /LiveTv/SeriesTimers/{id}` | ✅ DONE | ✅ DONE |
+| 5.11.15 | `GET /LiveTv/TunerHosts` | ✅ DONE | ✅ DONE |
+| 5.11.16 | `POST /LiveTv/TunerHosts/Discover` | ✅ DONE | ✅ DONE |
+| 5.11.17 | `POST /LiveTv/TunerHosts` | ✅ DONE | ✅ DONE |
 
 ### 5.12 Movies API 📋 HANDLER EXISTS (NOT REGISTERED)
 
@@ -484,13 +493,14 @@
 |----------|-------|
 | Total Go Files | 85+ |
 | Total C# Files | 1019 |
-| **Implementation Coverage** | **~75%** |
+| **Implementation Coverage** | **~85%** |
 | Routes Registered | 145 |
 | Routes in Handlers | ~150 |
 | Services Implemented | 16 |
 | Services Complete | 16 |
 | Services Partial/Stubs | 0 |
 | Tests | 7 test files |
+| External DB Support | MySQL, MariaDB, PostgreSQL |
 
 ---
 
@@ -514,7 +524,51 @@ All major phases have been completed:
 - Provider integration (TMDb, TVDb API keys needed)
 - Hardware acceleration (VAAPI/NVENC/QSV)
 - Plugin system (future enhancement)
-- Live TV tuner integration (depends on hardware)
+- External DB clustering validation (MariaDB Galera, PostgreSQL HA)
+
+---
+
+## Config File Locations
+
+The server searches for configuration in the following directories (in order of precedence):
+
+| Directory | Description | Files |
+|-----------|-------------|-------|
+| `$XDG_CONFIG_HOME/.emby` | User config (XDG standard) | `emby.yaml`, `server.yaml`, `database.yaml`, `security.yaml`, etc. |
+| `$HOME/.local/etc/emby` | User config (Unix convention) | Same as above |
+| `/etc/emby` | System config | Same as above |
+| `/usr/local/etc/emby` | System config (local) | Same as above |
+| `./configs` | Local development | Same as above |
+
+### Config Files
+
+Each config area can be in a separate file:
+
+| File | Contents |
+|------|----------|
+| `emby.yaml` | Full configuration (all sections) |
+| `server.yaml` | HTTP server settings |
+| `database.yaml` | Database connection settings |
+| `library.yaml` | Media library settings |
+| `logging.yaml` | Logging configuration |
+| `security.yaml` | API keys, security settings |
+| `stream.yaml` | Stream pooling settings |
+| `wizard.yaml` | Setup wizard state |
+
+### Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `EMBY_API_KEY` | API key for authentication |
+| `EMBY_SERVER_HOST` | HTTP server host |
+| `EMBY_SERVER_PORT` | HTTP server port |
+| `EMBY_DATABASE_TYPE` | Database type (sqlite/mysql/mariadb/postgres) |
+| `EMBY_DATABASE_HOST` | External DB host |
+| `EMBY_DATABASE_PORT` | External DB port |
+| `EMBY_DATABASE_USERNAME` | External DB username |
+| `EMBY_DATABASE_PASSWORD` | External DB password |
+| `EMBY_DATABASE_NAME` | External DB name |
+| `EMBY_LOG_LEVEL` | Logging level |
 
 ---
 

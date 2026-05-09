@@ -125,9 +125,7 @@ func (h *MoviesHandler) GetSimilar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get items with same genres
 	items, _ := h.repo.SearchItems("Movie", 10, 0)
-	// Filter out the current item
 	filtered := []map[string]interface{}{}
 	for _, i := range items {
 		if i["Id"] != id {
@@ -142,4 +140,28 @@ func (h *MoviesHandler) GetSimilar(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)
+}
+
+func (h *MoviesHandler) GetTrailers(w http.ResponseWriter, r *http.Request) {
+	items, err := h.repo.SearchItems("Movie", 50, 0)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	result := map[string]interface{}{
+		"Items": items,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+func (h *MoviesHandler) GetSpecialFeatures(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	_ = id
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode([]interface{}{})
 }

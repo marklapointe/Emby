@@ -2,8 +2,13 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
+	"net"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/emby/emby-go/internal/repository"
 	"github.com/go-chi/chi/v5"
@@ -322,8 +327,14 @@ func (h *LiveTVHandler) DeleteTimer(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *LiveTVHandler) GetSeriesTimers(w http.ResponseWriter, r *http.Request) {
+	timers, err := h.repo.GetSeriesTimers()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode([]interface{}{})
+	json.NewEncoder(w).Encode(timers)
 }
 
 func (h *LiveTVHandler) GetSeriesTimer(w http.ResponseWriter, r *http.Request) {
@@ -420,8 +431,113 @@ func (h *LiveTVHandler) TunerReset(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *LiveTVHandler) DiscoverTuners(w http.ResponseWriter, r *http.Request) {
+	tuners, err := discoverHDHomeRunTuners()
+	if err != nil {
+		h.logger.Warn("HDHomeRun discovery failed", zap.Error(err))
+		tuners = []map[string]interface{}{}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode([]interface{}{})
+	json.NewEncoder(w).Encode(tuners)
+}
+
+func discoverHDHomeRunTuners() ([]map[string]interface{}, error) {
+	msg := "M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:65001\r\nMAN: \"ssdp:discover\"\r\nMX: 3\r\nST: urn:schemas-silicondust-com:device:HDHomeRun:1\r\n\r\n"
+
+	addr, err := net.ResolveUDPAddr("udp", "239.255.255.250:65001")
+	if err != nil {
+		return nil, fmt.Errorf("resolve UDP addr: %w", err)
+	}
+
+	conn, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.IPv4zero, Port: 0})
+	if err != nil {
+		return nil, fmt.Errorf("listen UDP: %w", err)
+	}
+	defer conn.Close()
+
+	if err := conn.SetDeadline(time.Now().Add(4 * time.Second)); err != nil {
+		return nil, fmt.Errorf("set deadline: %w", err)
+	}
+
+	if _, err := conn.WriteToUDP([]byte(msg), addr); err != nil {
+		return nil, fmt.Errorf("send broadcast: %w", err)
+	}
+
+	var tuners []map[string]interface{}
+	buf := make([]byte, 4096)
+
+	for {
+		n, _, err := conn.ReadFromUDP(buf)
+		if err != nil {
+			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+				break
+			}
+			return nil, fmt.Errorf("read UDP: %w", err)
+		}
+
+		response := string(buf[:n])
+		if !strings.Contains(response, "HDHomeRun") {
+			continue
+		}
+
+		tuner := parseHDHomeRunResponse(response)
+		if tuner != nil {
+			tuners = append(tuners, tuner)
+		}
+	}
+
+	return tuners, nil
+}
+
+func parseHDHomeRunResponse(response string) map[string]interface{} {
+	lines := strings.Split(response, "\r\n")
+	info := make(map[string]string)
+
+	for _, line := range lines {
+		if idx := strings.Index(line, ":"); idx > 0 {
+			key := strings.ToLower(strings.TrimSpace(line[:idx]))
+			val := strings.TrimSpace(line[idx+1:])
+			info[key] = val
+		}
+	}
+
+	if info["st"] == "" && info["location"] == "" {
+		return nil
+	}
+
+	tuner := map[string]interface{}{
+		"Type":        "HDHomeRun",
+		"FriendlyName": "HDHomeRun",
+		"Enabled":     true,
+	}
+
+	if info["location"] != "" {
+		parsedURL, err := url.Parse(info["location"])
+		if err == nil && parsedURL.Host != "" {
+			host, portStr, _ := net.SplitHostPort(parsedURL.Host)
+			port, _ := strconv.Atoi(portStr)
+			if host != "" {
+				tuner["Host"] = host
+				tuner["TunerIp"] = host
+			}
+			if port > 0 {
+				tuner["Port"] = port
+			}
+		}
+
+		if host, _, _ := net.SplitHostPort(parsedURL.Host); host != "" {
+			if hn := strings.Split(host, "-"); len(hn) >= 2 {
+				tuner["Id"] = host
+				tuner["FriendlyName"] = "HDHomeRun " + hn[len(hn)-1]
+			}
+		}
+	}
+
+	if _, hasID := tuner["Id"]; !hasID {
+		tuner["Id"] = fmt.Sprintf("hdhomerun-%d", time.Now().UnixNano()%10000)
+	}
+
+	return tuner
 }
 
 func (h *LiveTVHandler) GetGuideInfo(w http.ResponseWriter, r *http.Request) {
@@ -479,13 +595,23 @@ func (h *LiveTVHandler) GetProgramWithImage(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *LiveTVHandler) GetTimerProviders(w http.ResponseWriter, r *http.Request) {
+	providers := []map[string]interface{}{
+		{"Name": "Schedules Direct", "Id": "sd"},
+		{"Name": "XmlTV", "Id": "xmltv"},
+	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode([]interface{}{})
+	json.NewEncoder(w).Encode(providers)
 }
 
 func (h *LiveTVHandler) GetTunerHosts(w http.ResponseWriter, r *http.Request) {
+	hosts, err := h.repo.GetTunerHosts()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode([]interface{}{})
+	json.NewEncoder(w).Encode(hosts)
 }
 
 func (h *LiveTVHandler) GetTunerHost(w http.ResponseWriter, r *http.Request) {

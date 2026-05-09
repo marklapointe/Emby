@@ -417,3 +417,59 @@ func (h *StartupHandler) GetWizardSettings(w http.ResponseWriter, r *http.Reques
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(wizardSettings)
 }
+
+func (h *StartupHandler) GetRegistration(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"IsRegistered": true,
+		"RegError":    "",
+		"RegErrorCode": "",
+	})
+}
+
+func (h *StartupHandler) GetRegistrationStatus(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"IsRegistered": true,
+		"Status":      "Registered",
+	})
+}
+
+func (h *StartupHandler) GetAdditionalParts(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode([]interface{}{})
+}
+
+func (h *StartupHandler) DeleteAlternateSources(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *StartupHandler) GetRemoteAccessConfiguration(w http.ResponseWriter, r *http.Request) {
+	config, err := h.configRepo.GetConfig()
+	if err != nil {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"EnableRemoteAccess": !config.EnableUPnP,
+	})
+}
+
+func (h *StartupHandler) PostRemoteAccessConfiguration(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		EnableRemoteAccess bool `json:"EnableRemoteAccess"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *StartupHandler) ReportWizardComplete(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNoContent)
+}

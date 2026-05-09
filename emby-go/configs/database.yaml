@@ -1,0 +1,13 @@
+database:
+  type: "sqlite"
+  path: "data/emby-server.db"
+  host: ""
+  port: 3306
+  username: ""
+  password: ""
+  database: "emby"
+  max_open_conns: 25
+  max_idle_conns: 10
+  conn_max_lifetime: 300
+  enable_wal: true
+  pragma_journal_mode: "WAL"

@@ -158,3 +158,63 @@ func (h *ImageHandler) GetRemoteImageProviders(w http.ResponseWriter, r *http.Re
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode([]map[string]interface{}{})
 }
+
+func (h *ImageHandler) PostUserImage(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	imageType := chi.URLParam(r, "type")
+
+	_ = id
+	_ = imageType
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *ImageHandler) PostItemImage(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	imageType := chi.URLParam(r, "type")
+
+	_ = id
+	_ = imageType
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *ImageHandler) DeleteUserImage(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	imageType := chi.URLParam(r, "type")
+
+	_ = id
+	_ = imageType
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *ImageHandler) DeleteItemImage(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	imageType := chi.URLParam(r, "type")
+
+	_ = id
+	_ = imageType
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *ImageHandler) UpdateItemImageIndex(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	imageType := chi.URLParam(r, "type")
+
+	var req struct {
+		Index int `json:"Index"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	_ = id
+	_ = imageType
+	_ = req.Index
+
+	w.WriteHeader(http.StatusNoContent)
+}

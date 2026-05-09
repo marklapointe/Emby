@@ -1,0 +1,6 @@
+stream_pooling:
+  enabled: true
+  max_concurrent_streams: 50
+  idle_timeout: "5m"
+  health_check_interval: "30s"
+  metrics_enabled: true

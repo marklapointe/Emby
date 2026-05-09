@@ -233,6 +233,40 @@ func (m *Manager) UpdateUser(id string, name, email *string, password *string) e
 	return nil
 }
 
+// UpdateUserConfiguration updates a user's configuration.
+func (m *Manager) UpdateUserConfiguration(id string, config *model.UserConfiguration) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	user, exists := m.users[id]
+	if !exists {
+		return fmt.Errorf("user not found: %s", id)
+	}
+
+	user.Configuration = config
+	if m.logger != nil {
+		m.logger.Info("user configuration updated", zap.String("id", id))
+	}
+	return nil
+}
+
+// UpdateUserPolicy updates a user's policy.
+func (m *Manager) UpdateUserPolicy(id string, policy *model.UserPolicy) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	user, exists := m.users[id]
+	if !exists {
+		return fmt.Errorf("user not found: %s", id)
+	}
+
+	user.Policy = policy
+	if m.logger != nil {
+		m.logger.Info("user policy updated", zap.String("id", id))
+	}
+	return nil
+}
+
 // DeleteUser deletes a user.
 func (m *Manager) DeleteUser(id string) error {
 	m.mu.Lock()

@@ -130,3 +130,16 @@ func (h *ChannelHandler) GetChannelThumbImage(w http.ResponseWriter, r *http.Req
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": "thumb image"})
 }
+
+func (h *ChannelHandler) GetLatestChannelItems(w http.ResponseWriter, r *http.Request) {
+	userId := r.URL.Query().Get("UserId")
+
+	items, err := h.repo.GetLatestChannelItems(userId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(items)
+}
