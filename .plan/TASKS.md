@@ -154,8 +154,10 @@
 | ID | Task | Status | Notes |
 |----|------|--------|-------|
 | 4.10.1 | Authentication middleware | ✅ DONE | `internal/service/auth/auth.go` |
-| 4.10.2 | API key validation | ✅ DONE | |
+| 4.10.2 | API key validation (local-first) | ✅ DONE | Check local DB before external |
 | 4.10.3 | Token refresh | ✅ DONE | |
+| 4.10.4 | Emby Premiere/Supporter validation | ✅ DONE | `ValidateSupporterKey()` calls mb3admin.com |
+| 4.10.5 | External auth (Emby Connect) | 📋 STUB | Not implemented - was incorrectly using api.emby.media |
 
 ---
 
@@ -559,7 +561,7 @@ Each config area can be in a separate file:
 
 | Variable | Description |
 |----------|-------------|
-| `EMBY_API_KEY` | API key for authentication |
+| `EMBY_API_KEY` | Local API key for this server (not Emby Premiere) |
 | `EMBY_SERVER_HOST` | HTTP server host |
 | `EMBY_SERVER_PORT` | HTTP server port |
 | `EMBY_DATABASE_TYPE` | Database type (sqlite/mysql/mariadb/postgres) |
@@ -569,6 +571,46 @@ Each config area can be in a separate file:
 | `EMBY_DATABASE_PASSWORD` | External DB password |
 | `EMBY_DATABASE_NAME` | External DB name |
 | `EMBY_LOG_LEVEL` | Logging level |
+
+---
+
+## Emby Premiere Key Validation (CORRECTED)
+
+**Important:** The Emby Premiere key (`5086e7864a9439e0ab284177b5c8009d`) is NOT validated via `api.emby.media`. It validates against **mb3admin.com**.
+
+### C# Implementation (PluginSecurityManager.cs)
+```csharp
+private const string MBValidateUrl = "https://mb3admin.com/admin/service/registration/validate";
+
+// POST form data:
+{
+  "feature": "MBSupporter",
+  "key": "<premiere_key>",
+  "mac": "<system_id>",
+  "systemid": "<system_id>",
+  "ver": "4.8.1.0",
+  "platform": "Linux"
+}
+
+// Response:
+{
+  "registered": true/false,
+  "expDate": "2027-01-01T00:00:00Z"
+}
+```
+
+### Go Implementation
+```go
+// ValidateSupporterKey calls mb3admin.com to validate Emby Premiere subscription
+func (m *Manager) ValidateSupporterKey(supporterKey string) (registered bool, expDate time.Time, error)
+```
+
+### Key Distinctions
+| Key Type | Purpose | Validation Endpoint |
+|----------|---------|---------------------|
+| Local API Key | Authenticates to THIS server | Local DB (`AuthenticationTokens` table) |
+| Emby Premiere Key | Server subscription | `https://mb3admin.com/admin/service/registration/validate` |
+| Emby Connect Token | User linking | `api.emby.media` (external, optional) |
 
 ---
 
