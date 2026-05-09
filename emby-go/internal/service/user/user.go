@@ -116,6 +116,27 @@ func (m *Manager) SetEmbyServer(url, apiKey string) {
 	m.apiKey = apiKey
 }
 
+// ValidateAPITokenLocally checks if an API key exists in the local authentication repository.
+// Returns the user ID and name if found, nil if not found.
+// This is the LOCAL-FIRST check that mirrors C# AuthorizationContext.cs behavior.
+func (m *Manager) ValidateAPITokenLocally(accessToken string) (userID, userName string, found bool) {
+	if m.dbManager == nil {
+		return "", "", false
+	}
+
+	var token model.AuthenticationToken
+	result := m.dbManager.DB().Where("AccessToken = ?", accessToken).First(&token)
+	if result.Error != nil {
+		return "", "", false
+	}
+
+	if token.UserID == "" {
+		return "", "", false
+	}
+
+	return token.UserID, token.UserName, true
+}
+
 // ValidateAPIKey validates an Emby Premiere API key against Emby's servers.
 func (m *Manager) ValidateAPIKey(apiKey string) (*User, error) {
 	if m.embyServerURL == "" || m.apiKey == "" {

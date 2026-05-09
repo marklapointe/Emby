@@ -255,3 +255,21 @@ type GORMListingProvider struct {
 func (GORMListingProvider) TableName() string {
 	return "ListingProviders"
 }
+
+// AuthenticationToken represents an API key/token stored in the local database
+// Mirrors the C# AuthenticationInfo class from AuthenticationRepository.cs
+type AuthenticationToken struct {
+	AccessToken       string    `gorm:"column:AccessToken;primaryKey"`
+	DeviceID          string    `gorm:"column:DeviceId"`
+	AppName           string    `gorm:"column:AppName"`
+	AppVersion        string    `gorm:"column:AppVersion"`
+	DeviceName        string    `gorm:"column:DeviceName"`
+	UserID           string    `gorm:"column:UserId"`
+	UserName         string    `gorm:"column:UserName"`
+	DateCreated      time.Time `gorm:"column:DateCreated"`
+	DateLastActivity time.Time `gorm:"column:DateLastActivity"`
+}
+
+func (AuthenticationToken) TableName() string {
+	return "AuthenticationTokens"
+}

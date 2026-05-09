@@ -115,13 +115,20 @@ func AuthenticationMiddleware(userSvc *user.Manager, embyServerURL, embyAPIKey s
 					ctx = context.WithValue(ctx, SessionIDKey, token)
 					r = r.WithContext(ctx)
 				} else if embyServerURL != "" && embyAPIKey != "" {
-					userSvc.SetEmbyServer(embyServerURL, embyAPIKey)
-					if validatedUser, err := userSvc.ValidateAPIKey(token); err == nil && validatedUser != nil {
+					userID, _, found := userSvc.ValidateAPITokenLocally(token)
+					if !found {
+						userSvc.SetEmbyServer(embyServerURL, embyAPIKey)
+						validatedUser, err := userSvc.ValidateAPIKey(token)
+						if err == nil && validatedUser != nil {
+							userID = validatedUser.ID
+							found = true
+							userSvc.AddSessionForAPIKey(token, validatedUser.ID, validatedUser.Name)
+						}
+					}
+					if found {
 						newToken := "emby-api-" + token[:16]
-						userSvc.AddSessionForAPIKey(token, validatedUser.ID, validatedUser.Name)
-						ctx := context.WithValue(r.Context(), UserIDKey, validatedUser.ID)
+						ctx := context.WithValue(r.Context(), UserIDKey, userID)
 						ctx = context.WithValue(ctx, SessionIDKey, newToken)
-						ctx = context.WithValue(ctx, IsPremiereKey, true)
 						r = r.WithContext(ctx)
 					}
 				}
