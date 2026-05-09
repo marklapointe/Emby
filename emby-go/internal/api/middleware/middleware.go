@@ -118,12 +118,6 @@ func AuthenticationMiddleware(userSvc *user.Manager, embyServerURL, embyAPIKey s
 					userID, _, found := userSvc.ValidateAPITokenLocally(token)
 					if !found {
 						userSvc.SetEmbyServer(embyServerURL, embyAPIKey)
-						validatedUser, err := userSvc.ValidateAPIKey(token)
-						if err == nil && validatedUser != nil {
-							userID = validatedUser.ID
-							found = true
-							userSvc.AddSessionForAPIKey(token, validatedUser.ID, validatedUser.Name)
-						}
 					}
 					if found {
 						newToken := "emby-api-" + token[:16]

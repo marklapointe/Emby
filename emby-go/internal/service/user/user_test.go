@@ -239,25 +239,22 @@ func TestUserManager_GetUserByEmail(t *testing.T) {
 	}
 }
 
-func TestValidateAPIKey(t *testing.T) {
-	apiKey := "5086e7864a9439e0ab284177b5c8009d"
-	if apiKey == "" {
-		t.Skip("EMBY_API_KEY not set")
-	}
-
-	embyServerURL := "https://api.emby.media"
-	if embyServerURL == "" {
-		t.Skip("EMBY_SERVER_URL not set")
+func TestValidateSupporterKey(t *testing.T) {
+	supporterKey := "5086e7864a9439e0ab284177b5c8009d"
+	if supporterKey == "" {
+		t.Skip("EMBY_SUPPORTER_KEY not set")
 	}
 
 	mgr := NewManager(nil, nil, nil)
-	mgr.SetEmbyServer(embyServerURL, apiKey)
 
-	user, err := mgr.ValidateAPIKey(apiKey)
+	registered, expDate, err := mgr.ValidateSupporterKey(supporterKey)
 	if err != nil {
 		t.Skipf("Skipping: %v", err)
 	}
-	if user == nil {
-		t.Error("expected user, got nil")
+	if !registered {
+		t.Error("expected key to be registered")
+	}
+	if expDate.IsZero() {
+		t.Error("expected expiration date")
 	}
 }

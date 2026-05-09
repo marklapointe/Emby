@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -95,6 +97,7 @@ type Manager struct {
 	sessions       map[string]*Session
 	embyServerURL  string
 	apiKey         string
+	systemID       string
 }
 
 // NewManager creates a new user manager.
@@ -137,49 +140,50 @@ func (m *Manager) ValidateAPITokenLocally(accessToken string) (userID, userName 
 	return token.UserID, token.UserName, true
 }
 
-// ValidateAPIKey validates an Emby Premiere API key against Emby's servers.
-func (m *Manager) ValidateAPIKey(apiKey string) (*User, error) {
-	if m.embyServerURL == "" || m.apiKey == "" {
-		return nil, fmt.Errorf("emby server not configured")
+// ValidateSupporterKey validates an Emby Premiere/Supporter key against mb3admin.com.
+// C# equivalent: PluginSecurityManager.cs calls https://mb3admin.com/admin/service/registration/validate
+// Returns whether the key is registered and expiration date.
+func (m *Manager) ValidateSupporterKey(supporterKey string) (registered bool, expDate time.Time, err error) {
+	if supporterKey == "" {
+		return false, time.Time{}, fmt.Errorf("supporter key empty")
 	}
 
-	url := fmt.Sprintf("%s/Users/AuthenticateByApiKey?api_key=%s", m.embyServerURL, apiKey)
+	endpoint := "https://mb3admin.com/admin/service/registration/validate"
 
-	req, err := http.NewRequest("GET", url, nil)
+	form := url.Values{}
+	form.Set("feature", "MBSupporter")
+	form.Set("key", supporterKey)
+	form.Set("mac", m.systemID)
+	form.Set("systemid", m.systemID)
+	form.Set("ver", "4.8.1.0")
+	form.Set("platform", "Linux")
+
+	req, err := http.NewRequest("POST", endpoint, strings.NewReader(form.Encode()))
 	if err != nil {
-		return nil, fmt.Errorf("create request: %w", err)
+		return false, time.Time{}, fmt.Errorf("create request: %w", err)
 	}
-
-	req.Header.Set("X-Emby-Token", m.apiKey)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", err)
+		return false, time.Time{}, fmt.Errorf("request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("invalid API key (status %d)", resp.StatusCode)
+		return false, time.Time{}, fmt.Errorf("validation request failed (status %d)", resp.StatusCode)
 	}
 
-	var authResult struct {
-		User struct {
-			ID   string `json:"Id"`
-			Name string `json:"Name"`
-		} `json:"User"`
+	var regResult struct {
+		Registered bool      `json:"registered"`
+		ExpDate    time.Time `json:"expDate"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&regResult); err != nil {
+		return false, time.Time{}, fmt.Errorf("parse response: %w", err)
 	}
 
-	if err := json.NewDecoder(resp.Body).Decode(&authResult); err != nil {
-		return nil, fmt.Errorf("parse response: %w", err)
-	}
-
-	user := &User{
-		ID:   authResult.User.ID,
-		Name: authResult.User.Name,
-	}
-
-	return user, nil
+	return regResult.Registered, regResult.ExpDate, nil
 }
 
 // CreateUser creates a new user.
