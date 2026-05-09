@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/emby/emby-go/internal/repository"
@@ -108,13 +109,15 @@ func TestCreateTunerHost(t *testing.T) {
 	itemRepo := &repository.ItemRepository{}
 	h := NewLiveTVHandler(itemRepo, logger)
 
-	req := httptest.NewRequest("POST", "/LiveTv/TunerHosts", nil)
+	body := `{"Type":"m3u","Host":"192.168.1.100","Port":8080}`
+	req := httptest.NewRequest("POST", "/LiveTv/TunerHosts", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
 	h.CreateTunerHost(w, req)
 
-	if w.Code != http.StatusOK {
-		t.Errorf("expected status 200, got %d", w.Code)
+	if w.Code != http.StatusCreated {
+		t.Errorf("expected status 201, got %d", w.Code)
 	}
 }
 
@@ -171,13 +174,15 @@ func TestCreateListingProvider(t *testing.T) {
 	itemRepo := &repository.ItemRepository{}
 	h := NewLiveTVHandler(itemRepo, logger)
 
-	req := httptest.NewRequest("POST", "/LiveTv/ListingProviders", nil)
+	body := `{"Type":"schedulesdirect","Username":"user","Password":"pass","Country":"USA","ZipCode":"12345"}`
+	req := httptest.NewRequest("POST", "/LiveTv/ListingProviders", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
 	h.CreateListingProvider(w, req)
 
-	if w.Code != http.StatusOK {
-		t.Errorf("expected status 200, got %d", w.Code)
+	if w.Code != http.StatusCreated {
+		t.Errorf("expected status 201, got %d", w.Code)
 	}
 }
 
@@ -216,13 +221,15 @@ func TestCreateChannelMapping(t *testing.T) {
 	itemRepo := &repository.ItemRepository{}
 	h := NewLiveTVHandler(itemRepo, logger)
 
-	req := httptest.NewRequest("POST", "/LiveTv/ChannelMappings", nil)
+	body := `{"TunerChannelNumber":"5","ProviderChannelNumber":"5","ProviderId":"provider-1"}`
+	req := httptest.NewRequest("POST", "/LiveTv/ChannelMappings", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
 	h.CreateChannelMapping(w, req)
 
-	if w.Code != http.StatusOK {
-		t.Errorf("expected status 200, got %d", w.Code)
+	if w.Code != http.StatusNoContent {
+		t.Errorf("expected status 204, got %d", w.Code)
 	}
 }
 

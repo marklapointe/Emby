@@ -10,13 +10,11 @@ import (
 	"go.uber.org/zap"
 )
 
-// LiveTVHandler handles Live TV-related API endpoints.
 type LiveTVHandler struct {
 	repo   *repository.ItemRepository
 	logger *zap.Logger
 }
 
-// NewLiveTVHandler creates a new Live TV handler.
 func NewLiveTVHandler(repo *repository.ItemRepository, logger *zap.Logger) *LiveTVHandler {
 	return &LiveTVHandler{
 		repo:   repo,
@@ -24,7 +22,21 @@ func NewLiveTVHandler(repo *repository.ItemRepository, logger *zap.Logger) *Live
 	}
 }
 
-// GetChannels handles GET /LiveTv/Channels
+func (h *LiveTVHandler) GetLiveTvInfo(w http.ResponseWriter, r *http.Request) {
+	info := map[string]interface{}{
+		"EnableUsers":              true,
+		"EnableProgramGuide":       true,
+		"EnableRecordingScheduling": true,
+		"EnableChannelRetrieval":   true,
+		"EnableTunerDiscovery":     true,
+		"EnabledMediaTypes":        []string{"Audio", "Video"},
+		"SupportedServices":        []string{"m3u", "htsp"},
+		"Version":                  "1.0.0.0",
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(info)
+}
+
 func (h *LiveTVHandler) GetChannels(w http.ResponseWriter, r *http.Request) {
 	userId := r.URL.Query().Get("UserId")
 	isFavorite := r.URL.Query().Get("IsFavorite")
@@ -40,7 +52,23 @@ func (h *LiveTVHandler) GetChannels(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(channels)
 }
 
-// GetPrograms handles GET /LiveTv/Programs
+func (h *LiveTVHandler) GetChannel(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	channel, err := h.repo.GetChannel(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if channel == nil {
+		http.Error(w, "channel not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(channel)
+}
+
 func (h *LiveTVHandler) GetPrograms(w http.ResponseWriter, r *http.Request) {
 	userId := r.URL.Query().Get("UserId")
 	isAiring := r.URL.Query().Get("IsAiring")
@@ -73,13 +101,16 @@ func (h *LiveTVHandler) GetPrograms(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(programs)
 }
 
-// GetProgram handles GET /LiveTv/Programs/{id}
 func (h *LiveTVHandler) GetProgram(w http.ResponseWriter, r *http.Request) {
-	programId := chi.URLParam(r, "id")
+	id := chi.URLParam(r, "id")
 
-	program, err := h.repo.GetProgram(programId)
+	program, err := h.repo.GetProgram(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if program == nil {
+		http.Error(w, "program not found", http.StatusNotFound)
 		return
 	}
 
@@ -87,7 +118,6 @@ func (h *LiveTVHandler) GetProgram(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(program)
 }
 
-// GetRecordings handles GET /LiveTv/Recordings
 func (h *LiveTVHandler) GetRecordings(w http.ResponseWriter, r *http.Request) {
 	userId := r.URL.Query().Get("UserId")
 
@@ -101,13 +131,16 @@ func (h *LiveTVHandler) GetRecordings(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(recordings)
 }
 
-// GetRecording handles GET /LiveTv/Recordings/{id}
 func (h *LiveTVHandler) GetRecording(w http.ResponseWriter, r *http.Request) {
-	recordingId := chi.URLParam(r, "id")
+	id := chi.URLParam(r, "id")
 
-	recording, err := h.repo.GetRecording(recordingId)
+	recording, err := h.repo.GetRecording(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if recording == nil {
+		http.Error(w, "recording not found", http.StatusNotFound)
 		return
 	}
 
@@ -115,79 +148,57 @@ func (h *LiveTVHandler) GetRecording(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(recording)
 }
 
-// GetTimers handles GET /LiveTv/Timers
-func (h *LiveTVHandler) GetTimers(w http.ResponseWriter, r *http.Request) {
-	userId := r.URL.Query().Get("UserId")
+func (h *LiveTVHandler) DeleteRecording(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
 
-	timers, err := h.repo.GetTimers(userId)
+	err := h.repo.DeleteRecording(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *LiveTVHandler) GetRecordingSeries(w http.ResponseWriter, r *http.Request) {
+	recordings, err := h.repo.GetRecordingSeries()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(timers)
+	json.NewEncoder(w).Encode(recordings)
 }
 
-// CreateTimer handles POST /LiveTv/Timers
-func (h *LiveTVHandler) CreateTimer(w http.ResponseWriter, r *http.Request) {
-	var req map[string]interface{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	_ = req
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "timer created"})
-}
-
-// GetGuideInfo handles GET /LiveTv/GuideInfo
-func (h *LiveTVHandler) GetGuideInfo(w http.ResponseWriter, r *http.Request) {
-	guideInfo := map[string]interface{}{
-		"HasImage":      false,
-		"MinProgramDate": "2026-04-29T00:00:00Z",
-		"MaxProgramDate": "2026-05-06T00:00:00Z",
-		"HasChannels":   true,
-		"HasPrograms":   true,
-		"HasRecordings": true,
-		"HasTimers":     true,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(guideInfo)
-}
-
-// GetChannelsWithImage handles GET /LiveTv/ChannelsWithImage
-func (h *LiveTVHandler) GetChannelsWithImage(w http.ResponseWriter, r *http.Request) {
-	userId := r.URL.Query().Get("UserId")
-
-	channels, err := h.repo.GetChannelsWithImage(userId)
+func (h *LiveTVHandler) GetRecordingGroups(w http.ResponseWriter, r *http.Request) {
+	groups, err := h.repo.GetRecordingGroups()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(channels)
+	json.NewEncoder(w).Encode(groups)
 }
 
-// GetProgramWithImage handles GET /LiveTv/ProgramsWithImage
-func (h *LiveTVHandler) GetProgramWithImage(w http.ResponseWriter, r *http.Request) {
-	userId := r.URL.Query().Get("UserId")
+func (h *LiveTVHandler) GetRecordingGroup(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
 
-	programs, err := h.repo.GetProgramsWithImage(userId)
+	group, err := h.repo.GetRecordingGroup(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	if group == nil {
+		http.Error(w, "recording group not found", http.StatusNotFound)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(programs)
+	json.NewEncoder(w).Encode(group)
 }
 
-// GetRecordingFolders handles GET /LiveTv/RecordingFolders
 func (h *LiveTVHandler) GetRecordingFolders(w http.ResponseWriter, r *http.Request) {
 	userId := r.URL.Query().Get("UserId")
 
@@ -201,7 +212,233 @@ func (h *LiveTVHandler) GetRecordingFolders(w http.ResponseWriter, r *http.Reque
 	json.NewEncoder(w).Encode(folders)
 }
 
-// GetRecommendedPrograms handles GET /LiveTv/RecommendedPrograms
+func (h *LiveTVHandler) GetTimers(w http.ResponseWriter, r *http.Request) {
+	userId := r.URL.Query().Get("UserId")
+
+	timers, err := h.repo.GetTimers(userId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(timers)
+}
+
+func (h *LiveTVHandler) GetTimer(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	timer, err := h.repo.GetTimer(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if timer == nil {
+		http.Error(w, "timer not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(timer)
+}
+
+func (h *LiveTVHandler) GetDefaultTimer(w http.ResponseWriter, r *http.Request) {
+	defaultTimer := map[string]interface{}{
+		"PrePadding":       0,
+		"PostPadding":      0,
+		"RecordAnyTime":    false,
+		"RecordAnyChannel": false,
+		"RecordNewOnly":    true,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(defaultTimer)
+}
+
+func (h *LiveTVHandler) CreateTimer(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		ChannelID    string `json:"ChannelId"`
+		ProgramID    string `json:"ProgramId"`
+		StartDate    string `json:"StartDate"`
+		EndDate      string `json:"EndDate"`
+		PrePadding   int    `json:"PrePadding"`
+		PostPadding  int    `json:"PostPadding"`
+		Name         string `json:"Name"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	timer, err := h.repo.CreateTimer(&req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(timer)
+}
+
+func (h *LiveTVHandler) UpdateTimer(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	var req struct {
+		ChannelID    string `json:"ChannelId"`
+		ProgramID    string `json:"ProgramId"`
+		StartDate    string `json:"StartDate"`
+		EndDate      string `json:"EndDate"`
+		PrePadding   int    `json:"PrePadding"`
+		PostPadding  int    `json:"PostPadding"`
+		Name         string `json:"Name"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err := h.repo.UpdateTimer(id, &req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *LiveTVHandler) DeleteTimer(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	err := h.repo.DeleteTimer(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *LiveTVHandler) GetSeriesTimers(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode([]interface{}{})
+}
+
+func (h *LiveTVHandler) GetSeriesTimer(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	seriesTimer, err := h.repo.GetSeriesTimer(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if seriesTimer == nil {
+		http.Error(w, "series timer not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(seriesTimer)
+}
+
+func (h *LiveTVHandler) CreateSeriesTimer(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		ChannelID        string `json:"ChannelId"`
+		ProgramName     string `json:"ProgramName"`
+		StartDate       string `json:"StartDate"`
+		EndDate         string `json:"EndDate"`
+		PrePadding      int    `json:"PrePadding"`
+		PostPadding     int    `json:"PostPadding"`
+		Days            []int  `json:"Days"`
+		RecordAnyTime   bool   `json:"RecordAnyTime"`
+		RecordAnyChannel bool   `json:"RecordAnyChannel"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	seriesTimer, err := h.repo.CreateSeriesTimer(&req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(seriesTimer)
+}
+
+func (h *LiveTVHandler) UpdateSeriesTimer(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	var req struct {
+		ChannelID        string `json:"ChannelId"`
+		ProgramName     string `json:"ProgramName"`
+		StartDate       string `json:"StartDate"`
+		EndDate         string `json:"EndDate"`
+		PrePadding      int    `json:"PrePadding"`
+		PostPadding     int    `json:"PostPadding"`
+		Days            []int  `json:"Days"`
+		RecordAnyTime   bool   `json:"RecordAnyTime"`
+		RecordAnyChannel bool   `json:"RecordAnyChannel"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err := h.repo.UpdateSeriesTimer(id, &req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *LiveTVHandler) DeleteSeriesTimer(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	err := h.repo.DeleteSeriesTimer(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *LiveTVHandler) TunerReset(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	h.logger.Info("resetting tuner", zap.String("tunerId", id))
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *LiveTVHandler) DiscoverTuners(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode([]interface{}{})
+}
+
+func (h *LiveTVHandler) GetGuideInfo(w http.ResponseWriter, r *http.Request) {
+	guideInfo := map[string]interface{}{
+		"HasImage":       false,
+		"MinProgramDate": "2026-04-29T00:00:00Z",
+		"MaxProgramDate": "2026-05-06T00:00:00Z",
+		"HasChannels":    true,
+		"HasPrograms":    true,
+		"HasRecordings":  true,
+		"HasTimers":      true,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(guideInfo)
+}
+
 func (h *LiveTVHandler) GetRecommendedPrograms(w http.ResponseWriter, r *http.Request) {
 	userId := r.URL.Query().Get("UserId")
 
@@ -215,9 +452,30 @@ func (h *LiveTVHandler) GetRecommendedPrograms(w http.ResponseWriter, r *http.Re
 	json.NewEncoder(w).Encode(programs)
 }
 
-func (h *LiveTVHandler) GetSeriesTimers(w http.ResponseWriter, r *http.Request) {
+func (h *LiveTVHandler) GetChannelsWithImage(w http.ResponseWriter, r *http.Request) {
+	userId := r.URL.Query().Get("UserId")
+
+	channels, err := h.repo.GetChannelsWithImage(userId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode([]interface{}{})
+	json.NewEncoder(w).Encode(channels)
+}
+
+func (h *LiveTVHandler) GetProgramWithImage(w http.ResponseWriter, r *http.Request) {
+	userId := r.URL.Query().Get("UserId")
+
+	programs, err := h.repo.GetProgramsWithImage(userId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(programs)
 }
 
 func (h *LiveTVHandler) GetTimerProviders(w http.ResponseWriter, r *http.Request) {
@@ -237,17 +495,51 @@ func (h *LiveTVHandler) GetTunerHost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *LiveTVHandler) CreateTunerHost(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Type     string `json:"Type"`
+		Host     string `json:"Host"`
+		Port     int    `json:"Port"`
+		TunerIP  string `json:"TunerIp"`
+		Friendly string `json:"FriendlyName"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	tunerHost, err := h.repo.CreateTunerHost(&req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{})
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(tunerHost)
 }
 
 func (h *LiveTVHandler) DeleteTunerHost(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	err := h.repo.DeleteTunerHost(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *LiveTVHandler) GetTunerHostTypes(w http.ResponseWriter, r *http.Request) {
+	types := []map[string]string{
+		{"Name": "M3U", "Type": "m3u", "Id": "m3u"},
+		{"Name": "HTSP", "Type": "htsp", "Id": "htsp"},
+		{"Name": "DVB", "Type": "dvb", "Id": "dvb"},
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode([]interface{}{})
+	json.NewEncoder(w).Encode(types)
 }
 
 func (h *LiveTVHandler) GetListingProviders(w http.ResponseWriter, r *http.Request) {
@@ -256,8 +548,40 @@ func (h *LiveTVHandler) GetListingProviders(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *LiveTVHandler) CreateListingProvider(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Type     string `json:"Type"`
+		Username string `json:"Username"`
+		Password string `json:"Password"`
+		Country  string `json:"Country"`
+		ZipCode  string `json:"ZipCode"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	provider, err := h.repo.CreateListingProvider(&req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{})
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(provider)
+}
+
+func (h *LiveTVHandler) DeleteListingProvider(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	err := h.repo.DeleteListingProvider(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *LiveTVHandler) GetDefaultListingProvider(w http.ResponseWriter, r *http.Request) {
@@ -266,16 +590,53 @@ func (h *LiveTVHandler) GetDefaultListingProvider(w http.ResponseWriter, r *http
 }
 
 func (h *LiveTVHandler) GetSchedulesDirectCountries(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode([]interface{}{})
-}
+	countries := []map[string]interface{}{
+		{"Name": "United States", "ShortCode": "USA"},
+		{"Name": "Canada", "ShortCode": "CAN"},
+	}
 
-func (h *LiveTVHandler) CreateChannelMapping(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{})
+	json.NewEncoder(w).Encode(countries)
 }
 
 func (h *LiveTVHandler) GetChannelMappingOptions(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{})
+}
+
+func (h *LiveTVHandler) CreateChannelMapping(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		TunerChannelNumber     string `json:"TunerChannelNumber"`
+		ProviderChannelNumber string `json:"ProviderChannelNumber"`
+		ProviderId           string `json:"ProviderId"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err := h.repo.CreateChannelMapping(&req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *LiveTVHandler) GetLiveStream(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	h.logger.Info("getting live stream", zap.String("streamId", id))
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *LiveTVHandler) GetRecordingStream(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	h.logger.Info("getting recording stream", zap.String("recordingId", id))
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.WriteHeader(http.StatusOK)
 }

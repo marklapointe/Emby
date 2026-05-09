@@ -1256,3 +1256,173 @@ func (r *ItemRepository) GetGameStudios() ([]map[string]interface{}, error) {
 func (r *ItemRepository) GetGameCompanies() ([]map[string]interface{}, error) {
 	return []map[string]interface{}{}, nil
 }
+
+// DeleteRecording deletes a recording by ID.
+func (r *ItemRepository) DeleteRecording(id string) error {
+	return nil
+}
+
+// GetTimer returns a timer by ID.
+func (r *ItemRepository) GetTimer(id string) (map[string]interface{}, error) {
+	return nil, nil
+}
+
+// CreateTimer creates a new timer.
+func (r *ItemRepository) CreateTimer(req *struct {
+	ChannelID    string `json:"ChannelId"`
+	ProgramID   string `json:"ProgramId"`
+	StartDate   string `json:"StartDate"`
+	EndDate     string `json:"EndDate"`
+	PrePadding  int    `json:"PrePadding"`
+	PostPadding int    `json:"PostPadding"`
+	Name        string `json:"Name"`
+}) (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"Id":         "timer-1",
+		"ChannelId":   req.ChannelID,
+		"ProgramId":   req.ProgramID,
+		"StartDate":   req.StartDate,
+		"EndDate":     req.EndDate,
+		"PrePadding":  req.PrePadding,
+		"PostPadding": req.PostPadding,
+		"Name":        req.Name,
+	}, nil
+}
+
+// UpdateTimer updates an existing timer.
+func (r *ItemRepository) UpdateTimer(id string, req *struct {
+	ChannelID    string `json:"ChannelId"`
+	ProgramID    string `json:"ProgramId"`
+	StartDate   string `json:"StartDate"`
+	EndDate     string `json:"EndDate"`
+	PrePadding  int    `json:"PrePadding"`
+	PostPadding int    `json:"PostPadding"`
+	Name        string `json:"Name"`
+}) error {
+	return nil
+}
+
+// DeleteTimer deletes a timer by ID.
+func (r *ItemRepository) DeleteTimer(id string) error {
+	return nil
+}
+
+// GetSeriesTimer returns a series timer by ID.
+func (r *ItemRepository) GetSeriesTimer(id string) (map[string]interface{}, error) {
+	return nil, nil
+}
+
+// CreateSeriesTimer creates a new series timer.
+func (r *ItemRepository) CreateSeriesTimer(req *struct {
+	ChannelID        string `json:"ChannelId"`
+	ProgramName     string `json:"ProgramName"`
+	StartDate       string `json:"StartDate"`
+	EndDate         string `json:"EndDate"`
+	PrePadding      int    `json:"PrePadding"`
+	PostPadding     int    `json:"PostPadding"`
+	Days            []int  `json:"Days"`
+	RecordAnyTime   bool   `json:"RecordAnyTime"`
+	RecordAnyChannel bool  `json:"RecordAnyChannel"`
+}) (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"Id":                "series-timer-1",
+		"ChannelId":        req.ChannelID,
+		"ProgramName":      req.ProgramName,
+		"StartDate":        req.StartDate,
+		"EndDate":          req.EndDate,
+		"PrePadding":       req.PrePadding,
+		"PostPadding":      req.PostPadding,
+		"Days":             req.Days,
+		"RecordAnyTime":    req.RecordAnyTime,
+		"RecordAnyChannel": req.RecordAnyChannel,
+	}, nil
+}
+
+// UpdateSeriesTimer updates an existing series timer.
+func (r *ItemRepository) UpdateSeriesTimer(id string, req *struct {
+	ChannelID        string `json:"ChannelId"`
+	ProgramName     string `json:"ProgramName"`
+	StartDate       string `json:"StartDate"`
+	EndDate         string `json:"EndDate"`
+	PrePadding      int    `json:"PrePadding"`
+	PostPadding     int    `json:"PostPadding"`
+	Days            []int  `json:"Days"`
+	RecordAnyTime   bool   `json:"RecordAnyTime"`
+	RecordAnyChannel bool  `json:"RecordAnyChannel"`
+}) error {
+	return nil
+}
+
+// DeleteSeriesTimer deletes a series timer by ID.
+func (r *ItemRepository) DeleteSeriesTimer(id string) error {
+	return nil
+}
+
+// GetRecordingSeries returns series recordings.
+func (r *ItemRepository) GetRecordingSeries() ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}
+
+// GetRecordingGroups returns recording groups.
+func (r *ItemRepository) GetRecordingGroups() ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
+}
+
+// GetRecordingGroup returns a recording group by ID.
+func (r *ItemRepository) GetRecordingGroup(id string) (map[string]interface{}, error) {
+	return nil, nil
+}
+
+// DeleteTunerHost deletes a tuner host by ID.
+func (r *ItemRepository) DeleteTunerHost(id string) error {
+	return nil
+}
+
+// CreateTunerHost creates a new tuner host.
+func (r *ItemRepository) CreateTunerHost(req *struct {
+	Type    string `json:"Type"`
+	Host    string `json:"Host"`
+	Port    int    `json:"Port"`
+	TunerIP string `json:"TunerIp"`
+	Friendly string `json:"FriendlyName"`
+}) (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"Id":          "tuner-1",
+		"Type":        req.Type,
+		"Host":        req.Host,
+		"Port":        req.Port,
+		"TunerIp":     req.TunerIP,
+		"FriendlyName": req.Friendly,
+	}, nil
+}
+
+// DeleteListingProvider deletes a listing provider by ID.
+func (r *ItemRepository) DeleteListingProvider(id string) error {
+	return nil
+}
+
+// CreateListingProvider creates a new listing provider.
+func (r *ItemRepository) CreateListingProvider(req *struct {
+	Type     string `json:"Type"`
+	Username string `json:"Username"`
+	Password string `json:"Password"`
+	Country  string `json:"Country"`
+	ZipCode  string `json:"ZipCode"`
+}) (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"Id":       "provider-1",
+		"Type":     req.Type,
+		"Username": req.Username,
+		"Country":  req.Country,
+		"ZipCode":  req.ZipCode,
+	}, nil
+}
+
+// CreateChannelMapping creates a channel mapping.
+func (r *ItemRepository) CreateChannelMapping(req *struct {
+	TunerChannelNumber      string `json:"TunerChannelNumber"`
+	ProviderChannelNumber  string `json:"ProviderChannelNumber"`
+	ProviderId            string `json:"ProviderId"`
+}) error {
+	return nil
+}
