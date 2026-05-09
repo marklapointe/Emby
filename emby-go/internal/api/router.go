@@ -77,7 +77,7 @@ func (r *Router) RegisterRoutes(router *chi.Mux) {
 	r.mediaSvc = media.NewManager(r.config, r.logger)
 	r.sessionSvc = session.NewManager(r.config, r.logger)
 	r.deviceSvc = device.NewManager(r.logger)
-	r.imageSvc = image.NewManager(r.logger)
+	r.imageSvc = image.NewManager(r.logger, r.config.Server.CachePath)
 	r.notificationSvc = notification.NewManager()
 	r.scheduledSvc = scheduled.NewManager(r.logger)
 	r.transcodingSvc = transcoding.NewManager(r.config, r.logger, sqlDB)

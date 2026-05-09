@@ -1,8 +1,13 @@
 package image
 
 import (
+	"bytes"
 	"fmt"
+	"image"
+	"image/jpeg"
+	"image/png"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -42,17 +47,26 @@ type ImageInfo struct {
 
 // Manager handles image-related operations.
 type Manager struct {
-	mu       sync.RWMutex
-	images   map[string][]*ImageInfo
-	logger   *zap.Logger
+	mu        sync.RWMutex
+	images    map[string][]*ImageInfo
+	logger    *zap.Logger
+	processor *Processor
+	cacheDir string
 }
 
 // NewManager creates a new image manager.
-func NewManager(logger *zap.Logger) *Manager {
+func NewManager(logger *zap.Logger, cacheDir string) *Manager {
 	return &Manager{
-		images: make(map[string][]*ImageInfo),
-		logger: logger,
+		images:    make(map[string][]*ImageInfo),
+		logger:    logger,
+		processor: NewProcessor(cacheDir),
+		cacheDir:  cacheDir,
 	}
+}
+
+// SetProcessor sets the image processor.
+func (m *Manager) SetProcessor(processor *Processor) {
+	m.processor = processor
 }
 
 // GetItemImage returns an image for an item.
@@ -188,7 +202,16 @@ func (m *Manager) GetImageCrop(itemID string, imageType ImageType, width, height
 
 	for _, img := range images {
 		if img.Type == imageType {
-			return m.readImageFile(img.Path)
+			data, contentType, err := m.readImageFile(img.Path)
+			if err != nil {
+				return nil, "", err
+			}
+
+			if width <= 0 || height <= 0 {
+				return data, contentType, nil
+			}
+
+			return m.processAndCacheImage(data, contentType, width, height, 85, "crop", itemID, string(imageType))
 		}
 	}
 
@@ -207,7 +230,16 @@ func (m *Manager) GetImageResize(itemID string, imageType ImageType, width, heig
 
 	for _, img := range images {
 		if img.Type == imageType {
-			return m.readImageFile(img.Path)
+			data, contentType, err := m.readImageFile(img.Path)
+			if err != nil {
+				return nil, "", err
+			}
+
+			if width <= 0 || height <= 0 {
+				return data, contentType, nil
+			}
+
+			return m.processAndCacheImage(data, contentType, width, height, quality, "resize", itemID, string(imageType))
 		}
 	}
 
@@ -226,7 +258,35 @@ func (m *Manager) GetImageRotation(itemID string, imageType ImageType, angle int
 
 	for _, img := range images {
 		if img.Type == imageType {
-			return m.readImageFile(img.Path)
+			data, contentType, err := m.readImageFile(img.Path)
+			if err != nil {
+				return nil, "", err
+			}
+
+			if angle == 0 {
+				return data, contentType, nil
+			}
+
+			if m.processor == nil {
+				return data, contentType, nil
+			}
+
+			img, _, err := image.Decode(bytes.NewReader(data))
+			if err != nil {
+				return data, contentType, nil
+			}
+
+			rotated, err := m.processor.RotateImage(img, angle)
+			if err != nil {
+				return data, contentType, nil
+			}
+
+			var buf bytes.Buffer
+			if err := jpeg.Encode(&buf, rotated, &jpeg.Options{Quality: 85}); err != nil {
+				return data, contentType, nil
+			}
+
+			return buf.Bytes(), "image/jpeg", nil
 		}
 	}
 
@@ -357,4 +417,57 @@ func getContentType(imageType ImageType) string {
 	default:
 		return "image/jpeg"
 	}
+}
+
+func (m *Manager) processAndCacheImage(data []byte, contentType string, width, height, quality int, operation, itemID, imageType string) ([]byte, string, error) {
+	if m.processor == nil {
+		return data, contentType, nil
+	}
+
+	cacheKey := fmt.Sprintf("%s_%s_%s_%dx%d_%d", operation, itemID, imageType, width, height, quality)
+
+	if cached, err := m.processor.GetCachedImage(cacheKey); err == nil {
+		return cached.Data, "image/jpeg", nil
+	}
+
+	img, _, err := image.Decode(bytes.NewReader(data))
+	if err != nil {
+		return data, contentType, nil
+	}
+
+	resized, err := m.processor.ResizeImage(img, width, height)
+	if err != nil {
+		return data, contentType, nil
+	}
+
+	var buf bytes.Buffer
+	switch contentType {
+	case "image/jpeg":
+		q := 85
+		if quality > 0 {
+			q = quality
+		}
+		err = jpeg.Encode(&buf, resized, &jpeg.Options{Quality: q})
+	case "image/png":
+		err = png.Encode(&buf, resized)
+	default:
+		err = jpeg.Encode(&buf, resized, &jpeg.Options{Quality: 85})
+	}
+	if err != nil {
+		return data, contentType, nil
+	}
+
+	result := buf.Bytes()
+	m.processor.CacheImage(cacheKey, result, "jpeg", width, height)
+
+	return result, "image/jpeg", nil
+}
+
+func (m *Manager) getCachePath() string {
+	if m.cacheDir == "" {
+		return ""
+	}
+	path := filepath.Join(m.cacheDir, "processed-images")
+	os.MkdirAll(path, 0755)
+	return path
 }

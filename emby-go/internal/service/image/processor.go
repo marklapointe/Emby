@@ -295,8 +295,50 @@ func (p *Processor) ResizeImage(src image.Image, width, height int) (image.Image
 
 func bilinearInterpolate(c00, c10, c01, c11, px, py float64) float64 {
 	c0 := c00*(1-px) + c10*px
-	c1 := c01*(1-px) + c11*px
+	c1 := c01*(1-px) + c11*py
 	return c0*(1-py) + c1*py
+}
+
+func (p *Processor) RotateImage(src image.Image, angle int) (image.Image, error) {
+	angle = angle % 360
+	if angle < 0 {
+		angle += 360
+	}
+
+	srcBounds := src.Bounds()
+	width := srcBounds.Dx()
+	height := srcBounds.Dy()
+
+	switch angle {
+	case 0:
+		return src, nil
+	case 90:
+		dst := image.NewRGBA(image.Rect(0, 0, height, width))
+		for y := 0; y < height; y++ {
+			for x := 0; x < width; x++ {
+				dst.Set(height-1-y, x, src.At(x, y))
+			}
+		}
+		return dst, nil
+	case 180:
+		dst := image.NewRGBA(image.Rect(0, 0, width, height))
+		for y := 0; y < height; y++ {
+			for x := 0; x < width; x++ {
+				dst.Set(width-1-x, height-1-y, src.At(x, y))
+			}
+		}
+		return dst, nil
+	case 270, -90:
+		dst := image.NewRGBA(image.Rect(0, 0, height, width))
+		for y := 0; y < height; y++ {
+			for x := 0; x < width; x++ {
+				dst.Set(y, width-1-x, src.At(x, y))
+			}
+		}
+		return dst, nil
+	default:
+		return nil, fmt.Errorf("unsupported rotation angle: %d (only 0, 90, 180, 270 supported)", angle)
+	}
 }
 
 // ConvertFormat converts an image to the specified format.

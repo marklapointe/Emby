@@ -32,6 +32,7 @@ type ServerConfig struct {
 	WriteTimeout    int    `yaml:"write_timeout"`
 	PublicPort      int    `yaml:"public_port"`
 	PublicHTTPSPort int    `yaml:"public_https_port"`
+	CachePath       string `yaml:"cache_path"`
 }
 
 type DatabaseConfig struct {
