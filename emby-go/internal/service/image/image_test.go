@@ -222,3 +222,89 @@ func TestSaveImage_CreateDir(t *testing.T) {
 		t.Errorf("SaveImage returned error: %v", err)
 	}
 }
+
+func TestRotateImage(t *testing.T) {
+	p := NewProcessor("/tmp/cache")
+	img := image.NewRGBA(image.Rect(0, 0, 100, 50))
+
+	rotated, err := p.RotateImage(img, 90)
+	if err != nil {
+		t.Fatalf("RotateImage(90) returned error: %v", err)
+	}
+	bounds := rotated.Bounds()
+	if bounds.Dx() != 50 || bounds.Dy() != 100 {
+		t.Errorf("expected 50x100, got %dx%d", bounds.Dx(), bounds.Dy())
+	}
+
+	rotated180, err := p.RotateImage(img, 180)
+	if err != nil {
+		t.Fatalf("RotateImage(180) returned error: %v", err)
+	}
+	bounds180 := rotated180.Bounds()
+	if bounds180.Dx() != 100 || bounds180.Dy() != 50 {
+		t.Errorf("expected 100x50, got %dx%d", bounds180.Dx(), bounds180.Dy())
+	}
+
+	rotated270, err := p.RotateImage(img, 270)
+	if err != nil {
+		t.Fatalf("RotateImage(270) returned error: %v", err)
+	}
+	bounds270 := rotated270.Bounds()
+	if bounds270.Dx() != 50 || bounds270.Dy() != 100 {
+		t.Errorf("expected 50x100, got %dx%d", bounds270.Dx(), bounds270.Dy())
+	}
+
+	rotated0, err := p.RotateImage(img, 0)
+	if err != nil {
+		t.Fatalf("RotateImage(0) returned error: %v", err)
+	}
+	bounds0 := rotated0.Bounds()
+	if bounds0.Dx() != 100 || bounds0.Dy() != 50 {
+		t.Errorf("expected 100x50, got %dx%d", bounds0.Dx(), bounds0.Dy())
+	}
+}
+
+func TestRotateImage_UnsupportedAngle(t *testing.T) {
+	p := NewProcessor("/tmp/cache")
+	img := image.NewRGBA(image.Rect(0, 0, 100, 100))
+
+	_, err := p.RotateImage(img, 45)
+	if err == nil {
+		t.Error("expected error for unsupported angle 45")
+	}
+}
+
+func TestManagerGetImageResize_Processes(t *testing.T) {
+	m := NewManager(nil, "/tmp/image-cache")
+
+	proc := NewProcessor("/tmp/image-cache")
+	m.SetProcessor(proc)
+
+	m.images["item1"] = []*ImageInfo{
+		{Type: ImageTypePrimary, Path: "/tmp/test-image.png"},
+	}
+
+	data, contentType, err := m.GetImageResize("item1", ImageTypePrimary, 50, 50, 85)
+	if err != nil {
+		t.Fatalf("GetImageResize returned error: %v", err)
+	}
+	if len(data) == 0 {
+		t.Error("expected processed image data")
+	}
+	if contentType != "image/jpeg" && contentType != "image/png" {
+		t.Errorf("unexpected content type: %s", contentType)
+	}
+}
+
+func TestManagerGetImageResize_NoProcessor(t *testing.T) {
+	m := NewManager(nil, "/tmp/image-cache")
+	m.images["item1"] = []*ImageInfo{
+		{Type: ImageTypePrimary, Path: "/tmp/nonexistent.png"},
+	}
+
+	data, _, err := m.GetImageResize("item1", ImageTypePrimary, 50, 50, 85)
+	if err == nil {
+		t.Error("expected error for nonexistent file")
+	}
+	_ = data
+}
