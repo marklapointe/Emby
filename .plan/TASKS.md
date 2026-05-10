@@ -231,13 +231,13 @@
 
 | ID | Route | Handler Status | Service Status |
 |----|-------|---------------|---------------|
-| 5.5.1 | `GET /Items/{id}/Images/{type}` | ✅ DONE | 📋 STUB |
-| 5.5.2 | `GET /Items/{id}/Images/{type}/BlurHash` | ✅ DONE | 📋 STUB |
-| 5.5.3 | `GET /Items/{id}/Images/{type}/{index}` | ✅ DONE | 📋 STUB |
-| 5.5.4 | `GET /Items/{id}/Images/{type}/Tag/{tag}` | ✅ DONE | 📋 STUB |
-| 5.5.5 | `GET /Items/{id}/Images/{type}/Crop` | ✅ DONE | 📋 STUB |
-| 5.5.6 | `GET /Items/{id}/Images/{type}/Resize` | ✅ DONE | 📋 STUB |
-| 5.5.7 | `GET /Items/{id}/Images/{type}/Rotate` | ✅ DONE | 📋 STUB |
+| 5.5.1 | `GET /Items/{id}/Images/{type}` | ✅ DONE | ✅ DONE |
+| 5.5.2 | `GET /Items/{id}/Images/{type}/BlurHash` | ✅ DONE | ✅ DONE |
+| 5.5.3 | `GET /Items/{id}/Images/{type}/{index}` | ✅ DONE | ✅ DONE |
+| 5.5.4 | `GET /Items/{id}/Images/{type}/Tag/{tag}` | ✅ DONE | ✅ DONE |
+| 5.5.5 | `GET /Items/{id}/Images/{type}/Crop` | ✅ DONE | ✅ DONE |
+| 5.5.6 | `GET /Items/{id}/Images/{type}/Resize` | ✅ DONE | ✅ DONE |
+| 5.5.7 | `GET /Items/{id}/Images/{type}/Rotate` | ✅ DONE | ✅ DONE |
 
 ### 5.6 Media API ✅ REGISTERED
 
@@ -390,11 +390,11 @@
 
 | ID | Task | Status | Notes |
 |----|------|--------|-------|
-| 7.1 | ImageMagick backend | ⏳ NOT STARTED | |
-| 7.2 | Skia backend | ⏳ NOT STARTED | |
-| 7.3 | .NET Drawing fallback | ⏳ NOT STARTED | |
-| 7.4 | Thumbnail generation | 📋 STUB | Partial |
-| 7.5 | BlurHash computation | ⏳ NOT STARTED | |
+| 7.1 | ImageMagick backend | ⏳ NOT STARTED | libvips/govips future |
+| 7.2 | Skia backend | ⏳ NOT STARTED | Future optimization |
+| 7.3 | .NET Drawing fallback | ⏳ NOT STARTED | N/A for Go |
+| 7.4 | Thumbnail generation | ✅ DONE | Via Processor.ResizeImage |
+| 7.5 | BlurHash computation | ✅ DONE | Pure Go implementation | |
 
 ---
 
